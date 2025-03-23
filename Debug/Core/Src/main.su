@@ -1,0 +1,8 @@
+../Core/Src/main.c:94:6:Motor_Init	24	static
+../Core/Src/main.c:123:6:Motor_SetSpeed	24	static
+../Core/Src/main.c:143:9:Motor_GetEncoder	24	static
+../Core/Src/main.c:161:7:PID_Calculate	40	static
+../Core/Src/main.c:184:6:HAL_UART_RxCpltCallback	16	static
+../Core/Src/main.c:194:5:main	216	static
+../Core/Src/main.c:320:6:SystemClock_Config	88	static
+../Core/Src/main.c:370:6:Error_Handler	4	static,ignoring_inline_asm

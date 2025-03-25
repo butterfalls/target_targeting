@@ -1542,7 +1542,7 @@ void Motor_Init(Motor_ID id,
 
 08000e4c <Motor_SetSpeed>:
 
-// 设置电机速度�??-100%~100%�??
+// 设置电机速度�??-100%~100%�??
 void Motor_SetSpeed(Motor_ID id, int16_t speed)
 {
  8000e4c:	b580      	push	{r7, lr}
@@ -1669,7 +1669,7 @@ void Motor_SetSpeed(Motor_ID id, int16_t speed)
  8000f3a:	80bb      	strh	r3, [r7, #4]
     }
 
-    // 设置PWM占空比（假�?�ARR=999�??
+    // 设置PWM占空比（假�?�ARR=999�??
     uint32_t duty = (speed * 999) / 100;
  8000f3c:	f9b7 3004 	ldrsh.w	r3, [r7, #4]
  8000f40:	f240 32e7 	movw	r2, #999	@ 0x3e7
@@ -1778,7 +1778,7 @@ void Motor_SetSpeed(Motor_ID id, int16_t speed)
 
 08001008 <Motor_GetEncoder>:
 
-// ��ȡ������ֵ�����ֵ��?
+// ��ȡ������ֵ�����ֵ��?
 int32_t Motor_GetEncoder(Motor_ID id)
 {
  8001008:	b480      	push	{r7}
@@ -1813,7 +1813,7 @@ int32_t Motor_GetEncoder(Motor_ID id)
  800103e:	1ad3      	subs	r3, r2, r3
  8001040:	60fb      	str	r3, [r7, #12]
     
-    // ���������������������ʹ��?16λ��������
+    // ���������������������ʹ��?16λ��������
     if (diff > 32767) diff -= 65536;
  8001042:	68fb      	ldr	r3, [r7, #12]
  8001044:	f5b3 4f00 	cmp.w	r3, #32768	@ 0x8000
@@ -1894,7 +1894,7 @@ float PID_Calculate(PIDController* pid, float error, float dt) {
  80010ca:	60f8      	str	r0, [r7, #12]
  80010cc:	ed87 0a02 	vstr	s0, [r7, #8]
  80010d0:	edc7 0a01 	vstr	s1, [r7, #4]
-    // 比例�??
+    // 比例�??
     float proportional = pid->Kp * error;
  80010d4:	68fb      	ldr	r3, [r7, #12]
  80010d6:	edd3 7a00 	vldr	s15, [r3]
@@ -1902,7 +1902,7 @@ float PID_Calculate(PIDController* pid, float error, float dt) {
  80010de:	ee67 7a27 	vmul.f32	s15, s14, s15
  80010e2:	edc7 7a07 	vstr	s15, [r7, #28]
 
-    // �??分项（带限幅�??
+    // �??分项（带限幅�??
     pid->integral += error * dt;
  80010e6:	68fb      	ldr	r3, [r7, #12]
  80010e8:	ed93 7a03 	vldr	s14, [r3, #12]
@@ -1931,7 +1931,7 @@ float PID_Calculate(PIDController* pid, float error, float dt) {
  8001138:	68fb      	ldr	r3, [r7, #12]
  800113a:	edc3 7a03 	vstr	s15, [r3, #12]
 
-    // �??分项
+    // �??分项
     float derivative = pid->Kd * (error - pid->prev_error) / dt;
  800113e:	68fb      	ldr	r3, [r7, #12]
  8001140:	ed93 7a02 	vldr	s14, [r3, #8]
@@ -1957,7 +1957,7 @@ float PID_Calculate(PIDController* pid, float error, float dt) {
  800117e:	ee77 7a27 	vadd.f32	s15, s14, s15
  8001182:	edc7 7a05 	vstr	s15, [r7, #20]
 
-    // 保存当前�??�??
+    // 保存当前�??�??
     pid->prev_error = error;
  8001186:	68fb      	ldr	r3, [r7, #12]
  8001188:	68ba      	ldr	r2, [r7, #8]
@@ -2142,7 +2142,7 @@ int main(void)
             M4_IN2_GPIO_Port, M4_IN2_Pin,
             &htim2);
 
-  pid.Kp = 0.001f;    // 需要根�??实际调试
+  pid.Kp = 0.001f;    // 需要根�??实际调试
  8001294:	4b75      	ldr	r3, [pc, #468]	@ (800146c <main+0x294>)
  8001296:	4a76      	ldr	r2, [pc, #472]	@ (8001470 <main+0x298>)
  8001298:	601a      	str	r2, [r3, #0]
@@ -2154,7 +2154,7 @@ int main(void)
  80012a0:	4b72      	ldr	r3, [pc, #456]	@ (800146c <main+0x294>)
  80012a2:	4a73      	ldr	r2, [pc, #460]	@ (8001470 <main+0x298>)
  80012a4:	609a      	str	r2, [r3, #8]
-  pid.max_integral = 100.0f;  // 限制�??分项范围
+  pid.max_integral = 100.0f;  // 限制�??分项范围
  80012a6:	4b71      	ldr	r3, [pc, #452]	@ (800146c <main+0x294>)
  80012a8:	4a72      	ldr	r2, [pc, #456]	@ (8001474 <main+0x29c>)
  80012aa:	615a      	str	r2, [r3, #20]
@@ -2171,7 +2171,7 @@ int main(void)
 	  uint32_t current_time = HAL_GetTick();
  80012b6:	f001 f827 	bl	8002308 <HAL_GetTick>
  80012ba:	f8c7 00a4 	str.w	r0, [r7, #164]	@ 0xa4
-	      float dt = (current_time - prev_time) / 1000.0f;  // �??�??为�??
+	      float dt = (current_time - prev_time) / 1000.0f;  // �??�??为�??
  80012be:	4b6e      	ldr	r3, [pc, #440]	@ (8001478 <main+0x2a0>)
  80012c0:	681b      	ldr	r3, [r3, #0]
  80012c2:	f8d7 20a4 	ldr.w	r2, [r7, #164]	@ 0xa4
@@ -2186,26 +2186,26 @@ int main(void)
  80012de:	f8d7 30a4 	ldr.w	r3, [r7, #164]	@ 0xa4
  80012e2:	6013      	str	r3, [r2, #0]
 
-	      // 读取编码器值（注意方向�??
+	      // 读取编码器值（注意方向�??
 	      int32_t enc1 = Motor_GetEncoder(MOTOR_1);  // 正转时�?�加
  80012e4:	2000      	movs	r0, #0
  80012e6:	f7ff fe8f 	bl	8001008 <Motor_GetEncoder>
  80012ea:	f8c7 009c 	str.w	r0, [r7, #156]	@ 0x9c
-	      int32_t enc2 = -Motor_GetEncoder(MOTOR_2); // 反转时取�??
+	      int32_t enc2 = -Motor_GetEncoder(MOTOR_2); // 反转时取�??
  80012ee:	2001      	movs	r0, #1
  80012f0:	f7ff fe8a 	bl	8001008 <Motor_GetEncoder>
  80012f4:	4603      	mov	r3, r0
  80012f6:	425b      	negs	r3, r3
  80012f8:	f8c7 3098 	str.w	r3, [r7, #152]	@ 0x98
 
-	      // 计算位置�??�??
+	      // 计算位置�??�??
 	      int32_t position_error = enc1 - enc2;
  80012fc:	f8d7 209c 	ldr.w	r2, [r7, #156]	@ 0x9c
  8001300:	f8d7 3098 	ldr.w	r3, [r7, #152]	@ 0x98
  8001304:	1ad3      	subs	r3, r2, r3
  8001306:	f8c7 3094 	str.w	r3, [r7, #148]	@ 0x94
 
-	      // PID计算（目标�??�??�??0�??
+	      // PID计算（目标�??�??�??0�??
 	      float pid_output = PID_Calculate(&pid, position_error, dt);
  800130a:	f8d7 3094 	ldr.w	r3, [r7, #148]	@ 0x94
  800130e:	ee07 3a90 	vmov	s15, r3
@@ -2222,15 +2222,15 @@ int main(void)
  800132a:	681b      	ldr	r3, [r3, #0]
  800132c:	f8c7 308c 	str.w	r3, [r7, #140]	@ 0x8c
 
-	      // 速度分配（动态调整两�??电机�??
+	      // 速度分配（动态调整两�??电机�??
 	      float speed1 = base_speed - pid_output;
  8001330:	ed97 7a23 	vldr	s14, [r7, #140]	@ 0x8c
  8001334:	edd7 7a24 	vldr	s15, [r7, #144]	@ 0x90
  8001338:	ee77 7a67 	vsub.f32	s15, s14, s15
  800133c:	edc7 7a22 	vstr	s15, [r7, #136]	@ 0x88
-	      float speed2 = -base_speed + pid_output;
- 8001340:	ed97 7a24 	vldr	s14, [r7, #144]	@ 0x90
- 8001344:	edd7 7a23 	vldr	s15, [r7, #140]	@ 0x8c
+	      float speed2 = base_speed - pid_output;
+ 8001340:	ed97 7a23 	vldr	s14, [r7, #140]	@ 0x8c
+ 8001344:	edd7 7a24 	vldr	s15, [r7, #144]	@ 0x90
  8001348:	ee77 7a67 	vsub.f32	s15, s14, s15
  800134c:	edc7 7a21 	vstr	s15, [r7, #132]	@ 0x84
 
@@ -2272,7 +2272,7 @@ int main(void)
  80013b6:	2001      	movs	r0, #1
  80013b8:	f7ff fd48 	bl	8000e4c <Motor_SetSpeed>
 
-	      // �������?
+	      // �������?
 	      static uint32_t last_debug = 0;
 	      if (HAL_GetTick() - last_debug > 100) {
  80013bc:	f000 ffa4 	bl	8002308 <HAL_GetTick>
@@ -2321,7 +2321,7 @@ int main(void)
  8001426:	6013      	str	r3, [r2, #0]
 	      }
 
-	      HAL_Delay(10);  // 控制周期�??10ms
+	      HAL_Delay(10);  // 控制周期�??10ms
  8001428:	200a      	movs	r0, #10
  800142a:	f000 ff79 	bl	8002320 <HAL_Delay>
   {

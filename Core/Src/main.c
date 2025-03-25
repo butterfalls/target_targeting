@@ -275,6 +275,11 @@ int main(void)
   MX_TIM8_Init();
   MX_TIM9_Init();
   MX_TIM10_Init();
+  MX_UART4_Init();
+  MX_UART5_Init();
+  MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
+  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_UART_Receive_IT(&huart1, receivedata, 2);

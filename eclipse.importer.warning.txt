@@ -22,17 +22,20 @@ Incompatible Args:
             - <Floating-point ABI> = com.st.stm32cube.ide.mcu.gnu.managedbuild.option.floatabi.value.hard
             - <Board> = genericBoard
             - "<Defaults> = com.st.stm32cube.ide.common.services.build.inputs.revA.1.0.6 || Debug || true || Executable || com.st.stm32cube.ide.mcu.gnu.managedbuild.option.toolchain.value.workspace || STM32F407ZETx || 0 || 0 || arm-none-eabi- || ${gnu_tools_for_stm32_compiler_path} || ../Core/Inc | ../Drivers/STM32F4xx_HAL_Driver/Inc | ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy | ../Drivers/CMSIS/Device/ST/STM32F4xx/Include | ../Drivers/CMSIS/Include ||  ||  || USE_HAL_DRIVER | STM32F407xx ||  || Drivers | Core/Startup | Core ||  ||  || ${workspace_loc:/${ProjName}/STM32F407ZETX_FLASH.ld} || true || NonSecure ||  || secure_nsclib.o ||  || None ||  ||  || "
-            - <undefined> = 72
+            - <Cpu clock frequence> = 168
+            - <undefined> = true
         cIncDirs: []
         cMacros: []
         cCompilerArgs:
             - <Debug level> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.debuglevel.value.g3
             - <Optimization level> = undefined
+            - <Include files (-include)> = undefined
+            - <Other flags> = undefined
             - <Debug level> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.debuglevel.value.g3
         sIncDirs: []
         sMacros: []
         assemblerArgs:
-            - <Debug level> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel.value.g3
+            - <Debug level> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel.value.g
         linkerArgs: []
         linkerLibArgs: []
 
@@ -44,25 +47,25 @@ Incompatible Args:
 Incompatible Args:
     /:
         globalArgs:
-            - <undefined> = STM32F407ZETx
-            - <undefined> = 0
-            - <undefined> = com.st.stm32cube.ide.mcu.gnu.managedbuild.option.fpu.value.fpv4-sp-d16
-            - <undefined> = com.st.stm32cube.ide.mcu.gnu.managedbuild.option.floatabi.value.hard
-            - <undefined> = genericBoard
-            - "<undefined> = com.st.stm32cube.ide.common.services.build.inputs.revA.1.0.6 || Release || false || Executable || com.st.stm32cube.ide.mcu.gnu.managedbuild.option.toolchain.value.workspace || STM32F407ZETx || 0 || 0 || arm-none-eabi- || ${gnu_tools_for_stm32_compiler_path} || ../Core/Inc | ../Drivers/STM32F4xx_HAL_Driver/Inc | ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy | ../Drivers/CMSIS/Device/ST/STM32F4xx/Include | ../Drivers/CMSIS/Include ||  ||  || USE_HAL_DRIVER | STM32F407xx ||  || Drivers | Core/Startup | Core ||  ||  || ${workspace_loc:/${ProjName}/STM32F407ZETX_FLASH.ld} || true || NonSecure ||  || secure_nsclib.o ||  || None ||  ||  || "
-            - <undefined> = 72
+            - <MCU> = STM32F407ZETx
+            - <CPU> = 0
+            - <Core> = 0
+            - <Floating-point unit> = com.st.stm32cube.ide.mcu.gnu.managedbuild.option.fpu.value.fpv4-sp-d16
+            - <Floating-point ABI> = com.st.stm32cube.ide.mcu.gnu.managedbuild.option.floatabi.value.hard
+            - <Board> = genericBoard
+            - "<Defaults> = com.st.stm32cube.ide.common.services.build.inputs.revA.1.0.6 || Release || false || Executable || com.st.stm32cube.ide.mcu.gnu.managedbuild.option.toolchain.value.workspace || STM32F407ZETx || 0 || 0 || arm-none-eabi- || ${gnu_tools_for_stm32_compiler_path} || ../Core/Inc | ../Drivers/STM32F4xx_HAL_Driver/Inc | ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy | ../Drivers/CMSIS/Device/ST/STM32F4xx/Include | ../Drivers/CMSIS/Include ||  ||  || USE_HAL_DRIVER | STM32F407xx ||  || Drivers | Core/Startup | Core ||  ||  || ${workspace_loc:/${ProjName}/STM32F407ZETX_FLASH.ld} || true || NonSecure ||  || secure_nsclib.o ||  || None ||  ||  || "
+            - <Cpu clock frequence> = 168
         cIncDirs: []
         cMacros: []
         cCompilerArgs:
-            - <undefined> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.debuglevel.value.g0
-            - <undefined> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.value.os
-            - <undefined> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.debuglevel.value.g0
-            - <undefined> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.optimization.level.value.os
+            - <Debug level> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.debuglevel.value.g0
+            - <Optimization level> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.value.os
+            - <Debug level> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.debuglevel.value.g0
+            - <Optimization level> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.optimization.level.value.os
         sIncDirs: []
         sMacros: []
         assemblerArgs:
-            - <undefined> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel.value.g0
-        linkerArgs:
-            - <undefined> = ${workspace_loc:/${ProjName}/STM32F407ZETX_FLASH.ld}
+            - <Debug level> = com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel.value.g0
+        linkerArgs: []
         linkerLibArgs: []
 

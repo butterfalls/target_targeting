@@ -1,7 +1,10 @@
-../Core/Src/motor.c:11:6:Motor_Init	24	static
-../Core/Src/motor.c:34:6:Motor_SetSpeed	24	static
-../Core/Src/motor.c:51:9:Motor_GetEncoder	24	static
-../Core/Src/motor.c:65:7:PID_Calculate	40	static
-../Core/Src/motor.c:80:6:Motor_Forward	56	static
-../Core/Src/motor.c:106:6:Motor_Rightward	56	static
-../Core/Src/motor.c:132:6:Debug_Output	200	static
+../Core/Src/motor.c:24:6:Motor_Init	24	static
+../Core/Src/motor.c:47:6:Motor_SetSpeed	24	static
+../Core/Src/motor.c:64:9:Motor_GetEncoder	24	static
+../Core/Src/motor.c:78:7:PID_Calculate	40	static
+../Core/Src/motor.c:93:6:Motor_Forward	56	static
+../Core/Src/motor.c:119:6:Motor_Rightward	56	static
+../Core/Src/motor.c:145:6:Motor_Straight	96	static
+../Core/Src/motor.c:194:6:Motor_TurnLeft90	88	static
+../Core/Src/motor.c:260:6:Debug_Output	200	static
+../Core/Src/motor.c:271:6:Debug_Output_Yaw	256	static

@@ -27,5 +27,4 @@ APP/MPU6050 \
 Core/Src \
 Core/Startup \
 Drivers/STM32F4xx_HAL_Driver/Src \
-APP/MPU6050/src \
 

@@ -7,6 +7,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "pid_controller.h"
 
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
@@ -31,20 +32,10 @@ typedef enum {
     MOTOR_COUNT
 } Motor_ID;
 
-typedef struct {
-    float Kp;
-    float Ki;
-    float Kd;
-    float integral;
-    float prev_error;
-    float max_integral;
-} PIDController;
-
 /* Exported variables -------------------------------------------------------*/
 extern Motor motors[MOTOR_COUNT];
-extern PIDController pid;  // 前轮方向
-extern PIDController pid2; // 左右方向
 extern float target_speed;
+extern float target_yaw;   // 目标偏航角
 extern uint32_t prev_time;
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -56,10 +47,13 @@ void Motor_Init(Motor_ID id,
 
 void Motor_SetSpeed(Motor_ID id, int16_t speed);
 int32_t Motor_GetEncoder(Motor_ID id);
-float PID_Calculate(PIDController* pid, float error, float dt);
 void Motor_Forward(Motor_ID id, Motor_ID id2, int16_t speed);
 void Motor_Rightward(Motor_ID id, Motor_ID id2, int16_t speed);
+void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
+void Motor_TurnLeft90(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
+void Motor_TurnLeft90_Blocking(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
 void Debug_Output(const char* movement, int32_t error, float pid_out, float speed1, float speed2);
+void Debug_Output_Yaw(const char* movement, float yaw_error, float pid_out, float speed1, float speed2, float speed3, float speed4);
 
 #ifdef __cplusplus
 }

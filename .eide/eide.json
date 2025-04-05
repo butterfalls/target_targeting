@@ -3,22 +3,13 @@
   "type": "ARM",
   "dependenceList": [],
   "srcDirs": [
+    "APP/MPU6050",
     "Core",
     "Drivers"
   ],
   "virtualFolder": {
     "name": "<virtual_root>",
-    "files": [
-      {
-        "path": "APP/MPU6050/inv_mpu.c"
-      },
-      {
-        "path": "APP/MPU6050/inv_mpu_dmp_motion_driver.c"
-      },
-      {
-        "path": "APP/MPU6050/mpu6050.c"
-      }
-    ],
+    "files": [],
     "folders": []
   },
   "outDir": "build",
@@ -71,11 +62,11 @@
         "name": "default",
         "incList": [
           "Core/Inc",
+          "APP/MPU6050",
           "Drivers/STM32F4xx_HAL_Driver/Inc",
           "Drivers/STM32F4xx_HAL_Driver/Inc/Legacy",
           "Drivers/CMSIS/Device/ST/STM32F4xx/Include",
-          "Drivers/CMSIS/Include",
-          "APP/MPU6050"
+          "Drivers/CMSIS/Include"
         ],
         "libList": [],
         "defineList": [
@@ -110,7 +101,7 @@
           "linker": {
             "output-format": "elf",
             "remove-unused-input-sections": true,
-            "LD_FLAGS": "-TSTM32F407ZETX_FLASH.ld",
+            "LD_FLAGS": "-TSTM32F407ZETX_FLASH.ld -u _printf_float",
             "LIB_FLAGS": ""
           }
         }
@@ -130,19 +121,31 @@
         },
         "options": "null"
       },
-      "uploader": "JLink",
+      "uploader": "STLink",
       "uploadConfig": {
         "bin": "",
-        "baseAddr": "",
-        "cpuInfo": {
-          "vendor": "null",
-          "cpuName": "null"
-        },
-        "proType": 1,
-        "speed": 8000,
+        "proType": "SWD",
+        "resetMode": "default",
+        "runAfterProgram": true,
+        "speed": 4000,
+        "address": "0x08000000",
+        "elFile": "None",
+        "optionBytes": ".eide/debug.st.option.bytes.ini",
         "otherCmds": ""
       },
-      "uploadConfigMap": {},
+      "uploadConfigMap": {
+        "JLink": {
+          "bin": "",
+          "baseAddr": "",
+          "cpuInfo": {
+            "vendor": "null",
+            "cpuName": "null"
+          },
+          "proType": 1,
+          "speed": 8000,
+          "otherCmds": ""
+        }
+      },
       "builderOptions": {
         "GCC": {
           "version": 5,
@@ -169,7 +172,7 @@
           "linker": {
             "output-format": "elf",
             "remove-unused-input-sections": true,
-            "LD_FLAGS": "",
+            "LD_FLAGS": "-TSTM32F407ZETX_FLASH.ld",
             "LIB_FLAGS": ""
           }
         }

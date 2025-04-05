@@ -29,6 +29,7 @@
 #include "Servo.h"
 #include "motor.h"
 #include "mpu6050.h"
+#include "pid_controller.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,24 +51,6 @@
 
 /* USER CODE BEGIN PV */
 Motor motors[MOTOR_COUNT] = {0};
-PIDController pid = {
-    .Kp = 2.0f,
-    .Ki = 0.5f,
-    .Kd = 0.1f,
-    .integral = 0.0f,
-    .prev_error = 0.0f,
-    .max_integral = 100.0f
-}; //前轮方向
-
-PIDController pid2 = {
-    .Kp = 2.0f,
-    .Ki = 0.5f,
-    .Kd = 0.1f,
-    .integral = 0.0f,
-    .prev_error = 0.0f,
-    .max_integral = 100.0f
-}; //左右方向
-
 float target_speed = 50.0f;
 uint32_t prev_time = 0;
 
@@ -203,69 +186,34 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    /*舵机执行部分*/
-    Servo_SetAngle(&servo1, 0);    // 0° 舵机测试((WARNING)未完成)
+    /*-------------------------------------------------舵机执行部分-------------------------------------------*/
+    // Servo_SetAngle(&servo1, 0);    // 0° 舵机测试((WARNING)未完成)
 
-    /*超声波执行部分*/
+    /*--------------------------------------------------超声波执行部分-------------------------------------*/
 
     // 更新超声波传感器状态
-    Ultrasonic_Update(&ultrasonic_sensor);
-    // 获取距离数据
-    float distance = Ultrasonic_GetDistance(&ultrasonic_sensor);
-    if (distance > 0) {
-        char buf[32];
-        sprintf(buf, "Distance: %.1f cm\r\n", distance);
-        HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
-    }
-    // 开始下一次测量
-    Ultrasonic_StartMeasurement(&ultrasonic_sensor);
+    // Ultrasonic_Update(&ultrasonic_sensor);
+    // // 获取距离数据
+    // float distance = Ultrasonic_GetDistance(&ultrasonic_sensor);
+    // if (distance > 0) {
+    //     char buf[32];
+    //     sprintf(buf, "Distance: %.1f cm\r\n", distance);
+    //     HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
+    // }
+    // // 开始下一次测量
+    // Ultrasonic_StartMeasurement(&ultrasonic_sensor);
 
-    /*MPU6050 DMP执行部分*/
+    /*------------------------------------MPU6050 DMP执行部分-------------------------------------*/
     if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) == 0) {
         char mpu_buf[64];
         sprintf(mpu_buf, "Pitch: %.2f, Roll: %.2f, Yaw: %.2f\r\n", pitch, roll, yaw);
         HAL_UART_Transmit(&huart1, (uint8_t*)mpu_buf, strlen(mpu_buf), 100);
     }
+    target_yaw = yaw;
 
-    /*电机执行部分*/
-
-    uint32_t current_time = HAL_GetTick();
-    float dt = (current_time - prev_time) / 1000.0f;  
-    prev_time = current_time;
-
-    // 读取编码器值（注意方向
-    int32_t enc1 = Motor_GetEncoder(MOTOR_1);  
-    int32_t enc2 = -Motor_GetEncoder(MOTOR_2); 
-
-    // 计算位置
-    int32_t position_error = enc1 - enc2;
-
-    // PID计算
-    float pid_output = PID_Calculate(&pid, position_error, dt);
-
-    // 速度设置
-    float base_speed = target_speed;
-
-    // 速度分配
-    float speed1 = base_speed - pid_output;
-    float speed2 = -base_speed + pid_output;
-
-    // 限幅处理
-    speed1 = fmaxf(fminf(speed1, 100.0f), -100.0f);
-    speed2 = fmaxf(fminf(speed2, 100.0f), -100.0f);
-
-    // 设置电机速度
-    Motor_SetSpeed(MOTOR_1, speed1);
-    Motor_SetSpeed(MOTOR_2, speed2);
-
-    static uint32_t last_debug = 0;
-    if (HAL_GetTick() - last_debug > 100) {
-        char buf[128];
-        sprintf(buf, "Err: %4ld | PID: %6.2f | M1: %5.1f%% | M2: %5.1f%%\r\n", 
-                position_error, pid_output, speed1, speed2);
-        HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
-        last_debug = HAL_GetTick();
-    }
+    /*--------------------------------------电机执行部分---------------------------------------------*/
+    // 使用四轮直行控制，速度为50
+    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 15);
 
     HAL_Delay(10);  
   }

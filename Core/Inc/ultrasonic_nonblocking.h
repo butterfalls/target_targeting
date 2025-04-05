@@ -3,40 +3,42 @@
 
 #include "stm32f4xx_hal.h"
 
+#define MAX_ULTRASONIC_SENSORS 4  // æœ€å¤§æ”¯æŒçš„è¶…å£°æ³¢ä¼ æ„Ÿå™¨æ•°é‡
+
 typedef enum {
-    US_STATE_IDLE,          // ¿ÕÏĞ×´Ì¬
-    US_STATE_TRIG_START,    // ´¥·¢¿ªÊ¼
-    US_STATE_TRIG_PULSE,    // ´¥·¢Âö³åÖĞ
-    US_STATE_WAIT_ECHO      // µÈ´ı»Ø²¨
+    US_STATE_IDLE,          // ç©ºé—²çŠ¶æ€
+    US_STATE_TRIG_START,    // è§¦å‘å¼€å§‹
+    US_STATE_TRIG_PULSE,    // è§¦å‘è„‰å†²
+    US_STATE_WAIT_ECHO      // ç­‰å¾…å›æ³¢
 } UltrasonicState;
 
 typedef struct {
-    // Ó²¼ş½Ó¿Ú
+    // ç¡¬ä»¶æ¥å£
     GPIO_TypeDef* trig_port;
     uint16_t trig_pin;
     GPIO_TypeDef* echo_port;
     uint16_t echo_pin;
     
-    // ×´Ì¬¹ÜÀí
+    // çŠ¶æ€å˜é‡
     UltrasonicState state;
-    uint32_t timestamp;     // »ùÓÚSysTickµÄÊ±¼ä´Á
-    uint32_t pulse_start;   // »Ø²¨¿ªÊ¼Ê±¼ä
+    uint32_t timestamp;     // åŸºäºSysTickçš„æ—¶é—´æˆ³
+    uint32_t pulse_start;   // å›æ³¢å¼€å§‹æ—¶é—´
     
-    // ²âÁ¿½á¹û
+    // æµ‹é‡ç»“æœ
     float distance;
     uint8_t data_ready;
 } UltrasonicSensor;
 
-// ³õÊ¼»¯´«¸ĞÆ÷
+// åˆå§‹åŒ–ä¼ æ„Ÿå™¨
 void Ultrasonic_Init(UltrasonicSensor* sensor);
 
-// ·Ç×èÈû´¥·¢²âÁ¿
+// å¼€å§‹ä¸€æ¬¡æ–°çš„æµ‹é‡
 void Ultrasonic_StartMeasurement(UltrasonicSensor* sensor);
 
-// Ö÷×´Ì¬»ú¸üĞÂ£¨ĞèÖÜÆÚĞÔµ÷ÓÃ£©
+// çŠ¶æ€æœºæ›´æ–°ï¼Œéœ€è¦å®šæœŸè°ƒç”¨
 void Ultrasonic_Update(UltrasonicSensor* sensor);
 
-// »ñÈ¡×îĞÂ²âÁ¿½á¹û
+// è·å–æœ€æ–°æµ‹é‡ç»“æœ
 float Ultrasonic_GetDistance(UltrasonicSensor* sensor);
 
 #endif

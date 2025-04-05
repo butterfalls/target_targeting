@@ -22,12 +22,13 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include "motor.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ultrasonic_nonblocking.h"
 #include "Servo.h"
+#include "motor.h"
+#include "mpu6050.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,6 +74,17 @@ uint32_t prev_time = 0;
 uint8_t receivedata[2];
 uint8_t message[] = "Hello World";
 Servo servo1, servo2;
+
+// 定义超声波传感器实例(WARNING)需要修改
+UltrasonicSensor ultrasonic_sensor = {
+    .trig_port = GPIOA,
+    .trig_pin = GPIO_PIN_0,
+    .echo_port = GPIOA,
+    .echo_pin = GPIO_PIN_1
+};
+
+// MPU6050 DMP数据
+float pitch, roll, yaw;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -95,6 +107,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -138,6 +151,20 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_UART_Receive_IT(&huart1, receivedata, 2);
+
+  // 初始化超声波传感器
+  Ultrasonic_Init(&ultrasonic_sensor);
+
+  // 初始化MPU6050 DMP
+  int mpu_result = MPU6050_DMP_Init();
+  if (mpu_result != 0) {
+      char error_msg[50];
+      sprintf(error_msg, "MPU6050 DMP初始化失败，错误码: %d\r\n", mpu_result);
+      HAL_UART_Transmit(&huart1, (uint8_t*)error_msg, strlen(error_msg), 100);
+  } else {
+      HAL_UART_Transmit(&huart1, (uint8_t*)"MPU6050 DMP初始化成功\r\n", strlen("MPU6050 DMP初始化成功\r\n"), 100);
+  }
+
   Motor_Init(MOTOR_1,
             &htim5, TIM_CHANNEL_3,
             M1_IN1_GPIO_Port, M1_IN1_Pin,
@@ -175,7 +202,32 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    Servo_SetAngle(&servo1, 0);    // 0° 舵机测试(未完成)
+
+    /*舵机执行部分*/
+    Servo_SetAngle(&servo1, 0);    // 0° 舵机测试((WARNING)未完成)
+
+    /*超声波执行部分*/
+
+    // 更新超声波传感器状态
+    Ultrasonic_Update(&ultrasonic_sensor);
+    // 获取距离数据
+    float distance = Ultrasonic_GetDistance(&ultrasonic_sensor);
+    if (distance > 0) {
+        char buf[32];
+        sprintf(buf, "Distance: %.1f cm\r\n", distance);
+        HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
+    }
+    // 开始下一次测量
+    Ultrasonic_StartMeasurement(&ultrasonic_sensor);
+
+    /*MPU6050 DMP执行部分*/
+    if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) == 0) {
+        char mpu_buf[64];
+        sprintf(mpu_buf, "Pitch: %.2f, Roll: %.2f, Yaw: %.2f\r\n", pitch, roll, yaw);
+        HAL_UART_Transmit(&huart1, (uint8_t*)mpu_buf, strlen(mpu_buf), 100);
+    }
+
+    /*电机执行部分*/
 
     uint32_t current_time = HAL_GetTick();
     float dt = (current_time - prev_time) / 1000.0f;  

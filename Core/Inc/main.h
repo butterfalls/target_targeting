@@ -61,6 +61,10 @@ void Error_Handler(void);
 #define M3_PWM_GPIO_Port GPIOE
 #define M4_PWM_Pin GPIO_PIN_6
 #define M4_PWM_GPIO_Port GPIOF
+#define Servo2_Pin GPIO_PIN_8
+#define Servo2_GPIO_Port GPIOF
+#define Servo1_Pin GPIO_PIN_9
+#define Servo1_GPIO_Port GPIOF
 #define M4_IN1_Pin GPIO_PIN_1
 #define M4_IN1_GPIO_Port GPIOC
 #define M4_IN2_Pin GPIO_PIN_3

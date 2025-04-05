@@ -1,13 +1,19 @@
 #include "ultrasonic_nonblocking.h"
 
-// SysTickÊ±¼ä»ù×¼£¨1ms·Ö±æÂÊ£©
+// SysTickæ—¶é—´åŸºå‡†ä¸º1msåˆ†è¾¨ç‡
 #define SYSTICK_FREQ 1000
 
-// ´¥·¢Âö³å¿í¶È£¨¦Ìs£©
+// è§¦å‘è„‰å†²å®½åº¦ï¼ˆÎ¼sï¼‰
 #define TRIG_PULSE_WIDTH 20
 
+// å…¨å±€ä¼ æ„Ÿå™¨æ•°ç»„
+static UltrasonicSensor* active_sensors[MAX_ULTRASONIC_SENSORS] = {0};
+static uint8_t sensor_count = 0;
+
 void Ultrasonic_Init(UltrasonicSensor* sensor) {
-    // ÅäÖÃTrigÎªÊä³ö
+    if (sensor_count >= MAX_ULTRASONIC_SENSORS) return;
+    
+    // é…ç½®Trigä¸ºè¾“å‡º
     GPIO_InitTypeDef gpio_init = {
         .Pin = sensor->trig_pin,
         .Mode = GPIO_MODE_OUTPUT_PP,
@@ -16,7 +22,7 @@ void Ultrasonic_Init(UltrasonicSensor* sensor) {
     };
     HAL_GPIO_Init(sensor->trig_port, &gpio_init);
     
-    // ÅäÖÃEchoÎªÖĞ¶ÏÊäÈë
+    // é…ç½®Echoä¸ºä¸­æ–­è¾“å…¥
     gpio_init.Pin = sensor->echo_pin;
     gpio_init.Mode = GPIO_MODE_IT_RISING_FALLING;
     gpio_init.Pull = GPIO_PULLDOWN;
@@ -24,6 +30,9 @@ void Ultrasonic_Init(UltrasonicSensor* sensor) {
     
     sensor->state = US_STATE_IDLE;
     sensor->data_ready = 0;
+    
+    // æ·»åŠ åˆ°æ´»åŠ¨ä¼ æ„Ÿå™¨æ•°ç»„
+    active_sensors[sensor_count++] = sensor;
 }
 
 void Ultrasonic_StartMeasurement(UltrasonicSensor* sensor) {
@@ -38,15 +47,15 @@ void Ultrasonic_Update(UltrasonicSensor* sensor) {
     
     switch (sensor->state) {
         case US_STATE_TRIG_START:
-            // ´¥·¢¿ªÊ¼£ºÉèÖÃTrigÎªµÍµçÆ½
+            // è§¦å‘å¼€å§‹ï¼Œè®¾ç½®Trigä¸ºä½ç”µå¹³
             HAL_GPIO_WritePin(sensor->trig_port, sensor->trig_pin, GPIO_PIN_RESET);
             sensor->timestamp = now;
             sensor->state = US_STATE_TRIG_PULSE;
             break;
             
         case US_STATE_TRIG_PULSE:
-            // ´¥·¢Âö³åÎ¬³Ö½×¶Î
-            if ((now - sensor->timestamp) >= 2) { // µÈ´ı2msµÍµçÆ½
+            // è§¦å‘è„‰å†²ç»´æŒé˜¶æ®µ
+            if ((now - sensor->timestamp) >= 2) { // ç­‰å¾…2msä½ç”µå¹³
                 HAL_GPIO_WritePin(sensor->trig_port, sensor->trig_pin, GPIO_PIN_SET);
                 sensor->timestamp = now;
                 sensor->state = US_STATE_WAIT_ECHO;
@@ -54,8 +63,8 @@ void Ultrasonic_Update(UltrasonicSensor* sensor) {
             break;
             
         case US_STATE_WAIT_ECHO:
-            // Î¬³Ö´¥·¢Âö³å¿í¶È
-            if ((now - sensor->timestamp) * 1000 >= TRIG_PULSE_WIDTH) { // ×ª»»Îª¦Ìs
+            // ç»´æŒè§¦å‘è„‰å†²
+            if ((now - sensor->timestamp) * 1000 >= TRIG_PULSE_WIDTH) { // è½¬æ¢ä¸ºÎ¼s
                 HAL_GPIO_WritePin(sensor->trig_port, sensor->trig_pin, GPIO_PIN_RESET);
                 sensor->state = US_STATE_IDLE;
             }
@@ -66,22 +75,19 @@ void Ultrasonic_Update(UltrasonicSensor* sensor) {
     }
 }
 
-// EchoÖĞ¶Ï»Øµ÷
+// Echoä¸­æ–­å›è°ƒ
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-    // ±éÀúËùÓĞ´«¸ĞÆ÷²éÕÒÆ¥ÅäµÄEchoÒı½Å
-    extern UltrasonicSensor* active_sensors[]; // ÓÃ»§ĞèÔÚÓ¦ÓÃ²ã¶¨Òå
-    
-    for (uint8_t i=0; active_sensors[i]; i++) {
+    for (uint8_t i = 0; i < sensor_count; i++) {
         UltrasonicSensor* s = active_sensors[i];
         
         if (GPIO_Pin == s->echo_pin) {
             if (HAL_GPIO_ReadPin(s->echo_port, s->echo_pin)) {
-                // ÉÏÉıÑØ£º¼ÇÂ¼¿ªÊ¼Ê±¼ä
+                // ä¸Šå‡æ²¿ï¼Œè®°å½•å¼€å§‹æ—¶é—´
                 s->pulse_start = HAL_GetTick();
             } else {
-                // ÏÂ½µÑØ£º¼ÆËã³ÖĞøÊ±¼ä
+                // ä¸‹é™æ²¿ï¼Œè®¡ç®—æ—¶é—´
                 uint32_t duration = HAL_GetTick() - s->pulse_start;
-                s->distance = (duration * 34300.0f) / (2 * SYSTICK_FREQ); // µ¥Î»£ºÀåÃ×
+                s->distance = (duration * 34300.0f) / (2 * SYSTICK_FREQ); // å•ä½ï¼šå˜ç±³
                 s->data_ready = 1;
             }
         }
@@ -93,5 +99,5 @@ float Ultrasonic_GetDistance(UltrasonicSensor* sensor) {
         sensor->data_ready = 0;
         return sensor->distance;
     }
-    return -1.0f; // ÎŞĞ§Êı¾İ
+    return -1.0f; // æ— æ•ˆæ•°æ®
 }

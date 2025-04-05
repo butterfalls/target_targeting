@@ -1,0 +1,7 @@
+../Core/Src/motor.c:11:6:Motor_Init	1
+../Core/Src/motor.c:34:6:Motor_SetSpeed	6
+../Core/Src/motor.c:51:9:Motor_GetEncoder	3
+../Core/Src/motor.c:65:7:PID_Calculate	1
+../Core/Src/motor.c:80:6:Motor_Forward	1
+../Core/Src/motor.c:106:6:Motor_Rightward	1
+../Core/Src/motor.c:132:6:Debug_Output	2

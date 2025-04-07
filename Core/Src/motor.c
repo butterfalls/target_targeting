@@ -151,6 +151,11 @@ void Motor_Rightward(Motor_ID id, Motor_ID id2, int16_t speed) {
 void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed) {
     uint32_t current_time = HAL_GetTick();
     float dt = (current_time - prev_time) / 1000.0f;
+    
+    // 添加时间差保护
+    if (dt <= 0.001f) {
+        dt = 0.001f;  // 最小时间差为1ms
+    }
     prev_time = current_time;
 
     // 获取编码器值
@@ -161,7 +166,14 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
 
     // 获取当前偏航角
     float pitch, roll, yaw;
-    MPU6050_DMP_Get_Data(&pitch, &roll, &yaw);
+    if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) != 0) {
+        // MPU6050读取失败，停止所有电机
+        Motor_SetSpeed(id1, 0);
+        Motor_SetSpeed(id2, 0);
+        Motor_SetSpeed(id3, 0);
+        Motor_SetSpeed(id4, 0);
+        return;
+    }
 
     // 计算偏航角误差
     float yaw_error = target_yaw - yaw;

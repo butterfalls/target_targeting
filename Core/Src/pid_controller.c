@@ -21,6 +21,11 @@ PIDController pid_yaw = {
 
 /* Exported functions --------------------------------------------------------*/
 float PID_Calculate(PIDController* pid, float error, float dt) {
+    // 添加时间差保护
+    if (dt <= 0.001f) {
+        dt = 0.001f;  // 最小时间差为1ms
+    }
+
     float proportional = pid->Kp * error;
 
     pid->integral += error * dt;

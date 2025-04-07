@@ -142,10 +142,10 @@ int main(void)
   int mpu_result = MPU6050_DMP_Init();
   if (mpu_result != 0) {
       char error_msg[50];
-      sprintf(error_msg, "MPU6050 DMP初始化失败，错误码: %d\r\n", mpu_result);
+      sprintf(error_msg, "MPU6050 DMP Init err : %d\r\n", mpu_result);
       HAL_UART_Transmit(&huart1, (uint8_t*)error_msg, strlen(error_msg), 100);
   } else {
-      HAL_UART_Transmit(&huart1, (uint8_t*)"MPU6050 DMP初始化成功\r\n", strlen("MPU6050 DMP初始化成功\r\n"), 100);
+      HAL_UART_Transmit(&huart1, (uint8_t*)"MPU6050 Init success\r\n", strlen("MPU6050 Init success\r\n"), 100);
   }
 
   Motor_Init(MOTOR_1,
@@ -176,6 +176,14 @@ int main(void)
   Servo_Init(&servo2, &htim14, TIM_CHANNEL_1, GPIOF, GPIO_PIN_9);
 
   prev_time = HAL_GetTick();
+
+    /*------------------------------------MPU6050 DMP执行部分-------------------------------------*/
+  if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) == 0) {
+      char mpu_buf[64];
+      sprintf(mpu_buf, "Pitch: %.2f, Roll: %.2f, Yaw: %.2f\r\n", pitch, roll, yaw);
+      HAL_UART_Transmit(&huart1, (uint8_t*)mpu_buf, strlen(mpu_buf), 100);
+  }
+  target_yaw = yaw;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -203,17 +211,9 @@ int main(void)
     // // 开始下一次测量
     // Ultrasonic_StartMeasurement(&ultrasonic_sensor);
 
-    /*------------------------------------MPU6050 DMP执行部分-------------------------------------*/
-    if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) == 0) {
-        char mpu_buf[64];
-        sprintf(mpu_buf, "Pitch: %.2f, Roll: %.2f, Yaw: %.2f\r\n", pitch, roll, yaw);
-        HAL_UART_Transmit(&huart1, (uint8_t*)mpu_buf, strlen(mpu_buf), 100);
-    }
-    target_yaw = yaw;
-
     /*--------------------------------------电机执行部分---------------------------------------------*/
     // 使用四轮直行控制，速度为50
-    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 15);
+    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 50);
 
     HAL_Delay(10);  
   }

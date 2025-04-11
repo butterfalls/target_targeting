@@ -69,12 +69,14 @@ void Error_Handler(void);
 #define M4_IN1_GPIO_Port GPIOC
 #define M4_IN2_Pin GPIO_PIN_3
 #define M4_IN2_GPIO_Port GPIOC
-#define M4_E1_Pin GPIO_PIN_0
-#define M4_E1_GPIO_Port GPIOA
-#define M4_E2_Pin GPIO_PIN_1
-#define M4_E2_GPIO_Port GPIOA
-#define M1_PWM_Pin GPIO_PIN_5
+#define TX_1_Pin GPIO_PIN_0
+#define TX_1_GPIO_Port GPIOA
+#define RX_1_Pin GPIO_PIN_1
+#define RX_1_GPIO_Port GPIOA
+#define M1_PWM_Pin GPIO_PIN_2
 #define M1_PWM_GPIO_Port GPIOA
+#define M4_E1_Pin GPIO_PIN_5
+#define M4_E1_GPIO_Port GPIOA
 #define M3_E1_Pin GPIO_PIN_6
 #define M3_E1_GPIO_Port GPIOA
 #define M3_E2_Pin GPIO_PIN_7
@@ -91,6 +93,16 @@ void Error_Handler(void);
 #define M1_E1_GPIO_Port GPIOE
 #define M1_E2_Pin GPIO_PIN_11
 #define M1_E2_GPIO_Port GPIOE
+#define Trig_4_Pin GPIO_PIN_14
+#define Trig_4_GPIO_Port GPIOE
+#define Trig_3_Pin GPIO_PIN_15
+#define Trig_3_GPIO_Port GPIOE
+#define Echo_4_Pin GPIO_PIN_10
+#define Echo_4_GPIO_Port GPIOB
+#define Echo_4_EXTI_IRQn EXTI15_10_IRQn
+#define Echo_3_Pin GPIO_PIN_11
+#define Echo_3_GPIO_Port GPIOB
+#define Echo_3_EXTI_IRQn EXTI15_10_IRQn
 #define M2_E1_Pin GPIO_PIN_12
 #define M2_E1_GPIO_Port GPIOD
 #define M2_E2_Pin GPIO_PIN_13
@@ -101,6 +113,13 @@ void Error_Handler(void);
 #define M2_IN1_GPIO_Port GPIOG
 #define M2_PWM_Pin GPIO_PIN_6
 #define M2_PWM_GPIO_Port GPIOC
+#define Echo_2_Pin GPIO_PIN_13
+#define Echo_2_GPIO_Port GPIOG
+#define Echo_2_EXTI_IRQn EXTI15_10_IRQn
+#define Trig_2_Pin GPIO_PIN_15
+#define Trig_2_GPIO_Port GPIOG
+#define M4_E2_Pin GPIO_PIN_3
+#define M4_E2_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

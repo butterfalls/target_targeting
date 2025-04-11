@@ -30,6 +30,9 @@
 #include "motor.h"
 #include "mpu6050.h"
 #include "pid_controller.h"
+#include "us100_uart.h"
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,15 +59,15 @@ uint32_t prev_time = 0;
 
 uint8_t receivedata[2];
 uint8_t message[] = "Hello World";
-Servo servo1, servo2;
+uint8_t uart4_rx_buffer;
+Servo servo1, servo2 ,servo3;
 
-// 定义超声波传感器实例(WARNING)需要修改
-UltrasonicSensor ultrasonic_sensor = {
-    .trig_port = GPIOA,
-    .trig_pin = GPIO_PIN_0,
-    .echo_port = GPIOA,
-    .echo_pin = GPIO_PIN_1
-};
+// 定义超声波传感器实例
+// UltrasonicSensor ultrasonic_sensors[5];  // 最多5个超声波传感器
+// float ultrasonic_distances[5];  // 存储所有超声波传感器的距离值
+
+// 定义US100传感器实例
+US100Sensor us100_sensor;  // US100传感器实例
 
 // MPU6050 DMP数据
 float pitch, roll, yaw;
@@ -79,9 +82,28 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-    HAL_UART_Transmit(&huart1, message , strlen(message), 100);
-    HAL_UART_Receive_IT(&huart1, receivedata, 2);
+    // 检查是否是UART5（US100传感器使用的串口）
+    if (huart == &huart5) {
+        // 调用US100库的回调函数
+        US100_UART_RxCpltCallback(huart, 1);
+    } 
+    if (huart == &huart1) {
+        // 处理其他串口的回调
+        HAL_UART_Transmit(&huart1, message, strlen(message), 100);
+        HAL_UART_Receive_IT(&huart1, receivedata, 2);
+    }
+    if (huart == &huart4) {
+        // 输出调试信息
+        char debug_msg[50];
+        sprintf(debug_msg, "UART4 received: 0x%02X\r\n", uart4_rx_buffer);
+        HAL_UART_Transmit(&huart1, (uint8_t*)debug_msg, strlen(debug_msg), 100);
+        
+        // 继续接收下一个字节
+        HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
+    }
 }
+
+
 /* USER CODE END 0 */
 
 /**
@@ -117,36 +139,62 @@ int main(void)
   MX_I2C3_Init();
   MX_USART1_UART_Init();
   MX_TIM1_Init();
-  MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_TIM5_Init();
   MX_TIM8_Init();
   MX_TIM9_Init();
   MX_TIM10_Init();
+  MX_TIM13_Init();
+  MX_TIM14_Init();
+  MX_TIM2_Init();
+  MX_TIM11_Init();
   MX_UART4_Init();
   MX_UART5_Init();
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   MX_USART6_UART_Init();
-  MX_TIM13_Init();
-  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_UART_Receive_IT(&huart1, receivedata, 2);
+  // 初始化UART4接收
+  HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
+  
+// 初始化MPU6050 DMP
+  int mpu_result;
+  int retry_count = 0;
+  // do {
+      mpu_result = MPU6050_DMP_Init();
+  //     if (mpu_result != 0) {
+  //         char error_msg[100];
+  //         sprintf(error_msg, "MPU6050 DMP 初始化失败，错误码: %d，重试次数: %d\r\n", mpu_result, retry_count);
+  //         HAL_UART_Transmit(&huart1, (uint8_t*)error_msg, strlen(error_msg), 100);
+          
+  //         // 等待一段时间后重试
+  //         HAL_Delay(500); // 等待500ms
+  //         retry_count++;
+  //     } else {
+  //         char success_msg[100];
+  //         sprintf(success_msg, "MPU6050 初始化成功，共尝试 %d 次\r\n", retry_count + 1);
+  //         HAL_UART_Transmit(&huart1, (uint8_t*)success_msg, strlen(success_msg), 100);
+  //     }
+  // } while (mpu_result != 0);
 
   // 初始化超声波传感器
-  Ultrasonic_Init(&ultrasonic_sensor);
+  // Ultrasonic_Init(&ultrasonic_sensors[1], Trig_1_GPIO_Port, Trig_1_Pin, Echo_1_GPIO_Port, Echo_1_Pin);  // 传感器1
+  // Ultrasonic_Init(&ultrasonic_sensors[0], Trig_2_GPIO_Port, Trig_2_Pin, Echo_2_GPIO_Port, Echo_2_Pin);  // 传感器2
+  // Ultrasonic_Init(&ultrasonic_sensors[2], Trig_3_GPIO_Port, Trig_3_Pin, Echo_3_GPIO_Port, Echo_3_Pin);  // 传感器3
+  // Ultrasonic_Init(&ultrasonic_sensors[3], Trig_4_GPIO_Port, Trig_4_Pin, Echo_4_GPIO_Port, Echo_4_Pin);  // 传感器4
+  // Ultrasonic_Init(&ultrasonic_sensors[4], Trig_5_GPIO_Port, Trig_5_Pin, Echo_5_GPIO_Port, Echo_5_Pin);  // 传感器5
 
-  // 初始化MPU6050 DMP
-  int mpu_result = MPU6050_DMP_Init();
-  if (mpu_result != 0) {
-      char error_msg[50];
-      sprintf(error_msg, "MPU6050 DMP Init err : %d\r\n", mpu_result);
-      HAL_UART_Transmit(&huart1, (uint8_t*)error_msg, strlen(error_msg), 100);
-  } else {
-      HAL_UART_Transmit(&huart1, (uint8_t*)"MPU6050 Init success\r\n", strlen("MPU6050 Init success\r\n"), 100);
-  }
+  // 初始化US100传感器，使用UART5接口
+  US100_Init(&us100_sensor, &huart5);
+  
+  // 等待一段时间，确保传感器稳定
+  HAL_Delay(100);
+  
+  // 开始第一次测量
+  US100_StartMeasurement(&us100_sensor);
 
   Motor_Init(MOTOR_1,
             &htim5, TIM_CHANNEL_3,
@@ -174,16 +222,27 @@ int main(void)
 
   Servo_Init(&servo1, &htim13, TIM_CHANNEL_1, GPIOF, GPIO_PIN_8);
   Servo_Init(&servo2, &htim14, TIM_CHANNEL_1, GPIOF, GPIO_PIN_9);
+  Servo_Init(&servo3, &htim11, TIM_CHANNEL_1, GPIOF, GPIO_PIN_7);
 
   prev_time = HAL_GetTick();
 
-    /*------------------------------------MPU6050 DMP执行部分-------------------------------------*/
+  /*------------------------------------MPU6050 DMP执行部分-------------------------------------*/
   if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) == 0) {
       char mpu_buf[64];
       sprintf(mpu_buf, "Pitch: %.2f, Roll: %.2f, Yaw: %.2f\r\n", pitch, roll, yaw);
       HAL_UART_Transmit(&huart1, (uint8_t*)mpu_buf, strlen(mpu_buf), 100);
   }
+  
+  // 设置目标偏航角为当前偏航角
   target_yaw = yaw;
+  
+  // 重置PID控制器，避免积分项累积
+  PID_Reset(&pid_yaw);
+  PID_Reset(&pid_encoder);
+  
+  char debug_buf[64];
+  sprintf(debug_buf, "target_yaw: %.2f\r\n", target_yaw);
+  HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -200,20 +259,84 @@ int main(void)
     /*--------------------------------------------------超声波执行部分-------------------------------------*/
 
     // 更新超声波传感器状态
-    // Ultrasonic_Update(&ultrasonic_sensor);
-    // // 获取距离数据
-    // float distance = Ultrasonic_GetDistance(&ultrasonic_sensor);
+    // Ultrasonic_Update(&ultrasonic_sensors[0]);
+    
+    // 获取超声波传感器的距离值
+    // float distance = Ultrasonic_GetDistance(&ultrasonic_sensors[0]);
+    
+    // 输出超声波传感器的距离值
     // if (distance > 0) {
     //     char buf[32];
-    //     sprintf(buf, "Distance: %.1f cm\r\n", distance);
+    //     sprintf(buf, "US1: %.1f cm\r\n", distance);
     //     HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
     // }
-    // // 开始下一次测量
-    // Ultrasonic_StartMeasurement(&ultrasonic_sensor);
+    
+    // 开始下一次测量
+    // Ultrasonic_StartMeasurement(&ultrasonic_sensors[0]);
+    
+    // 添加延时，确保超声波传感器有足够的时间完成测量
+    // HAL_Delay(50);  // 增加延时到50ms，给传感器更多恢复时间
+
+    /*--------------------------------------------------US100传感器执行部分-------------------------------------*/
+    // 更新US100传感器状态
+    US100_Update(&us100_sensor);
+    
+    // 获取US100传感器的距离值
+    float us100_distance = US100_GetDistance(&us100_sensor);
+    
+    // 输出US100传感器的距离值
+    if (us100_distance > 0) {
+        char buf[32];
+        sprintf(buf, "US100: %.1f mm\r\n", us100_distance);
+        HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
+        
+        // 开始下一次测量
+        US100_StartMeasurement(&us100_sensor);
+    } else {
+        // 如果连续多次获取不到有效数据，尝试重新初始化传感器
+        static uint32_t last_measurement_time = 0;
+        static uint8_t timeout_count = 0;
+        
+        uint32_t current_time = HAL_GetTick();
+        
+        // 如果超过500ms没有收到有效数据，增加超时计数
+        if (current_time - last_measurement_time > 500) {
+            timeout_count++;
+            
+            // 输出调试信息
+            char debug_buf[64];
+            sprintf(debug_buf, "US100: No valid data for %d times\r\n", timeout_count);
+            HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+            
+            // 如果连续5次超时，尝试重新初始化传感器
+            if (timeout_count >= 5) {
+                // 重新初始化US100传感器
+                US100_Init(&us100_sensor, &huart5);
+                
+                // 输出调试信息
+                sprintf(debug_buf, "US100: Reinitializing sensor\r\n");
+                HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+                
+                // 等待一段时间，确保传感器稳定
+                HAL_Delay(100);
+                
+                // 开始新的测量
+                US100_StartMeasurement(&us100_sensor);
+                
+                // 重置超时计数
+                timeout_count = 0;
+            } else {
+                // 尝试重新开始测量
+                US100_StartMeasurement(&us100_sensor);
+            }
+            
+            last_measurement_time = current_time;
+        }
+    }
 
     /*--------------------------------------电机执行部分---------------------------------------------*/
     // 使用四轮直行控制，速度为50
-    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 50);
+    // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 50);
 
     HAL_Delay(10);  
   }

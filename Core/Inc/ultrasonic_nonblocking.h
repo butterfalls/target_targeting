@@ -3,7 +3,7 @@
 
 #include "stm32f4xx_hal.h"
 
-#define MAX_ULTRASONIC_SENSORS 4  // 最大支持的超声波传感器数量
+#define MAX_ULTRASONIC_SENSORS 5  // 最大支持的超声波传感器数量
 
 typedef enum {
     US_STATE_IDLE,          // 空闲状态
@@ -29,8 +29,13 @@ typedef struct {
     uint8_t data_ready;
 } UltrasonicSensor;
 
+// 全局变量
+extern uint8_t sensor_count;  // 当前活动的传感器数量
+
 // 初始化传感器
-void Ultrasonic_Init(UltrasonicSensor* sensor);
+void Ultrasonic_Init(UltrasonicSensor* sensor,
+                    GPIO_TypeDef* trig_port, uint16_t trig_pin,
+                    GPIO_TypeDef* echo_port, uint16_t echo_pin);
 
 // 开始一次新的测量
 void Ultrasonic_StartMeasurement(UltrasonicSensor* sensor);
@@ -41,4 +46,7 @@ void Ultrasonic_Update(UltrasonicSensor* sensor);
 // 获取最新测量结果
 float Ultrasonic_GetDistance(UltrasonicSensor* sensor);
 
-#endif
+// 测试Trig引脚
+void Ultrasonic_TestTrig(UltrasonicSensor* sensor);
+
+#endif 

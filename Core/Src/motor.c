@@ -31,7 +31,7 @@ void Motor_Init(Motor_ID id,
     motors[id].encoder_total = 0;
 
     HAL_TIM_PWM_Start(pwm_tim, pwm_ch);
-    HAL_TIM_Encoder_Start(encoder_tim, TIM_CHANNEL_ALL);
+    HAL_TIM_Encoder_Start(encoder_tim, TIM_CHANNEL_1|TIM_CHANNEL_2);
     motors[id].encoder_offset = (int32_t)__HAL_TIM_GET_COUNTER(encoder_tim);
 }
 
@@ -166,14 +166,14 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
 
     // 获取当前偏航角
     float pitch, roll, yaw;
-    if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) != 0) {
-        // MPU6050读取失败，停止所有电机
-        Motor_SetSpeed(id1, 0);
-        Motor_SetSpeed(id2, 0);
-        Motor_SetSpeed(id3, 0);
-        Motor_SetSpeed(id4, 0);
-        return;
-    }
+    // if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) != 0) {
+    //     // MPU6050读取失败，停止所有电机
+    //     Motor_SetSpeed(id1, 0);
+    //     Motor_SetSpeed(id2, 0);
+    //     Motor_SetSpeed(id3, 0);
+    //     Motor_SetSpeed(id4, 0);
+    //     return;
+    // }
 
     // 计算偏航角误差
     float yaw_error = target_yaw - yaw;

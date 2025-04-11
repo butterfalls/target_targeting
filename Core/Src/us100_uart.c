@@ -74,8 +74,28 @@ void US100_Update(US100Sensor* sensor) {
             
         case US100_STATE_RECEIVING:
             if (sensor->rx_index >= 2) {
+                // 检查数据有效性
+                if (sensor->rx_buffer[0] == 0xFF && sensor->rx_buffer[1] == 0xFF) {
+                    // 无效数据，不更新距离值
+                    sensor->state = US100_STATE_IDLE;
+                    sensor->rx_index = 0;
+                    HAL_UART_Receive_IT(sensor->uart, &sensor->rx_buffer[0], 1);
+                    return;
+                }
+                
+                // 计算距离：低字节在前，高字节在后
                 uint16_t raw_distance = (sensor->rx_buffer[1] << 8) | sensor->rx_buffer[0];
-                sensor->distance = (float)raw_distance;
+                
+                // 检查距离值是否在合理范围内（例如0-4000mm）
+                if (raw_distance > 4000) {
+                    // 距离值超出范围，视为无效数据
+                    sensor->state = US100_STATE_IDLE;
+                    sensor->rx_index = 0;
+                    HAL_UART_Receive_IT(sensor->uart, &sensor->rx_buffer[0], 1);
+                    return;
+                }
+                
+                sensor->distance = raw_distance;
                 sensor->data_ready = 1;
                 sensor->state = US100_STATE_IDLE;
             }

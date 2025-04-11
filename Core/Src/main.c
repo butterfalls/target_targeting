@@ -92,15 +92,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
         HAL_UART_Transmit(&huart1, message, strlen(message), 100);
         HAL_UART_Receive_IT(&huart1, receivedata, 2);
     }
-    if (huart == &huart4) {
-        // 输出调试信息
-        char debug_msg[50];
-        sprintf(debug_msg, "UART4 received: 0x%02X\r\n", uart4_rx_buffer);
-        HAL_UART_Transmit(&huart1, (uint8_t*)debug_msg, strlen(debug_msg), 100);
+    // if (huart == &huart4) {
+    //     // 输出调试信息
+    //     char debug_msg[50];
+    //     sprintf(debug_msg, "UART4 received: 0x%02X\r\n", uart4_rx_buffer);
+    //     HAL_UART_Transmit(&huart1, (uint8_t*)debug_msg, strlen(debug_msg), 100);
         
-        // 继续接收下一个字节
-        HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
-    }
+    //     // 继续接收下一个字节
+    //     HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
+    // }
 }
 
 
@@ -191,7 +191,7 @@ int main(void)
   US100_Init(&us100_sensor, &huart5);
   
   // 等待一段时间，确保传感器稳定
-  HAL_Delay(100);
+  HAL_Delay(50);
   
   // 开始第一次测量
   US100_StartMeasurement(&us100_sensor);
@@ -292,21 +292,21 @@ int main(void)
         
         // 开始下一次测量
         US100_StartMeasurement(&us100_sensor);
-    } else {
+    } 
+    else {
         // 如果连续多次获取不到有效数据，尝试重新初始化传感器
         static uint32_t last_measurement_time = 0;
         static uint8_t timeout_count = 0;
         
         uint32_t current_time = HAL_GetTick();
         
-        // 如果超过500ms没有收到有效数据，增加超时计数
-        if (current_time - last_measurement_time > 500) {
+        if (current_time - last_measurement_time > 100) {
             timeout_count++;
             
             // 输出调试信息
-            char debug_buf[64];
-            sprintf(debug_buf, "US100: No valid data for %d times\r\n", timeout_count);
-            HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+            // char debug_buf[64];
+            // sprintf(debug_buf, "US100: No valid data for %d times\r\n", timeout_count);
+            // HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
             
             // 如果连续5次超时，尝试重新初始化传感器
             if (timeout_count >= 5) {
@@ -314,11 +314,11 @@ int main(void)
                 US100_Init(&us100_sensor, &huart5);
                 
                 // 输出调试信息
-                sprintf(debug_buf, "US100: Reinitializing sensor\r\n");
-                HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+                // sprintf(debug_buf, "US100: Reinitializing sensor\r\n");
+                // HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
                 
                 // 等待一段时间，确保传感器稳定
-                HAL_Delay(100);
+                HAL_Delay(50);
                 
                 // 开始新的测量
                 US100_StartMeasurement(&us100_sensor);

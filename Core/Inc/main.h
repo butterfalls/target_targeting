@@ -73,7 +73,7 @@ void Error_Handler(void);
 #define M4_E1_GPIO_Port GPIOA
 #define M4_E2_Pin GPIO_PIN_1
 #define M4_E2_GPIO_Port GPIOA
-#define M1_PWM_Pin GPIO_PIN_2
+#define M1_PWM_Pin GPIO_PIN_5
 #define M1_PWM_GPIO_Port GPIOA
 #define M3_E1_Pin GPIO_PIN_6
 #define M3_E1_GPIO_Port GPIOA

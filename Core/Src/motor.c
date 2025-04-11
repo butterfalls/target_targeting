@@ -180,25 +180,40 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     if (yaw_error > 180) yaw_error -= 360;
     else if (yaw_error < -180) yaw_error += 360;
 
-    // 先计算偏航角PID输出
-    float yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-
     // 计算编码器误差 - 修正后的计算方式
     int32_t left_error = enc1 - enc3;  // 左侧轮子同步
     int32_t right_error = enc2 - enc4;  // 右侧轮子同步
     int32_t position_error = (left_error + right_error) / 2;  // 左右两侧同步
 
-    // 使用偏航角PID输出作为编码器PID的目标值
-    float encoder_pid_output = PID_Calculate(&pid_encoder, position_error - yaw_pid_output, dt);
-
     // 速度分配 - 修正后的分配方式
     float base_speed = speed;
-    // 左侧轮子
+    
+    // 限制PID输出的最大值，防止过度修正
+    float max_pid_output = base_speed * 0.3f;  // 降低PID输出最大值为基准速度的30%
+    
+    float yaw_pid_output = 0.0f;
+    float encoder_pid_output = 0.0f;
+    
+    // 只有当偏航角误差大于1度时才进行PID调整
+    if (fabs(yaw_error) > 1.0f) {
+        yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
+        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output), -max_pid_output);
+    } else {
+        // 误差小于1度时，重置PID控制器
+        PID_Reset(&pid_yaw);
+    }
+    
+    // 使用偏航角PID输出作为编码器PID的目标值
+    encoder_pid_output = PID_Calculate(&pid_encoder, position_error - yaw_pid_output, dt);
+    encoder_pid_output = fmaxf(fminf(encoder_pid_output, max_pid_output), -max_pid_output);
+    
+    // 左侧轮子 - 正转
     float speed1 = base_speed - encoder_pid_output - yaw_pid_output;  // 左前
     float speed3 = base_speed - encoder_pid_output - yaw_pid_output;  // 左后
-    // 右侧轮子
-    float speed2 = base_speed + encoder_pid_output + yaw_pid_output;  // 右前
-    float speed4 = base_speed + encoder_pid_output + yaw_pid_output;  // 右后
+    
+    // 右侧轮子 - 反转
+    float speed2 = (base_speed + encoder_pid_output + yaw_pid_output);  // 右前
+    float speed4 = (base_speed + encoder_pid_output + yaw_pid_output);  // 右后
 
     // 限幅
     speed1 = fmaxf(fminf(speed1, 100.0f), -100.0f);
@@ -212,6 +227,7 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     Motor_SetSpeed(id3, speed3);
     Motor_SetSpeed(id4, speed4);
 
+    // 输出调试信息，包括编码器误差和PID输出
     Debug_Output_Yaw("STRAIGHT", yaw_error, yaw_pid_output, speed1, speed2, speed3, speed4);
 }
 
@@ -362,9 +378,19 @@ void Debug_Output(const char* movement, int32_t error, float pid_out, float spee
 void Debug_Output_Yaw(const char* movement, float yaw_error, float pid_out, float speed1, float speed2, float speed3, float speed4) {
     static uint32_t last_debug = 0;
     if (HAL_GetTick() - last_debug > 100) {
-        char buf[128];
-        sprintf(buf, "%s | YawErr: %5.1f | PID: %6.2f | M1: %5.1f | M2: %5.1f | M3: %5.1f | M4: %5.1f\r\n",
-                movement, yaw_error, pid_out, speed1, speed2, speed3, speed4);
+        // 获取编码器值
+        int32_t enc1 = Motor_GetEncoder(MOTOR_1);
+        int32_t enc2 = -Motor_GetEncoder(MOTOR_2);
+        int32_t enc3 = Motor_GetEncoder(MOTOR_3);
+        int32_t enc4 = -Motor_GetEncoder(MOTOR_4);
+        
+        // 计算编码器误差
+        int32_t left_error = enc1 - enc3;  // 左侧轮子同步
+        int32_t right_error = enc2 - enc4;  // 右侧轮子同步
+        
+        char buf[200];
+        sprintf(buf, "%s | YawErr: %5.1f | PID: %6.2f | enc1:%5ld, enc2:%5ld, enc3:%5ld, enc4:%5ld | EncPID: %6.2f | M1: %5.1f | M2: %5.1f | M3: %5.1f | M4: %5.1f\r\n",
+                movement, yaw_error, pid_out, enc1, enc2, enc3, enc4, pid_encoder.integral, speed1, speed2, speed3, speed4);
         HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
         last_debug = HAL_GetTick();
     }

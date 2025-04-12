@@ -1,7 +1,7 @@
 #include "servo.h"
 
-// 定时器时钟频率（假设APB1=84MHz，TIMx使用84MHz）
-#define TIMER_CLK_FREQ 84000000  // 单位：Hz
+// 定时器时钟频率（APB2=84MHz，TIMx使用84MHz）
+#define TIMER_CLK_FREQ 168000000  // 单位：Hz
 
 void Servo_Init(Servo* servo, TIM_HandleTypeDef* timer, uint32_t channel,
                 GPIO_TypeDef* gpio_port, uint16_t gpio_pin) 

@@ -254,9 +254,13 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
     /*-------------------------------------------------舵机执行部分-------------------------------------------*/
-    // Servo_SetAngle(&servo1, 0);    // 0° 舵机测试((WARNING)未完成)
+    Servo_SetAngle(&servo3, 0);
+    HAL_Delay(200);
+    Servo_SetAngle(&servo3, 60);
+    HAL_Delay(200);
+    
 
-    /*--------------------------------------------------超声波执行部分-------------------------------------*/
+    /*--------------------------------------------------超声波执行部分（暂不使用）-------------------------------------*/
 
     // 更新超声波传感器状态
     // Ultrasonic_Update(&ultrasonic_sensors[0]);
@@ -279,60 +283,60 @@ int main(void)
 
     /*--------------------------------------------------US100传感器执行部分-------------------------------------*/
     // 更新US100传感器状态
-    US100_Update(&us100_sensor);
+    // US100_Update(&us100_sensor);
     
-    // 获取US100传感器的距离值
-    float us100_distance = US100_GetDistance(&us100_sensor);
+    // // 获取US100传感器的距离值
+    // float us100_distance = US100_GetDistance(&us100_sensor);
     
-    // 输出US100传感器的距离值
-    if (us100_distance > 0) {
-        char buf[32];
-        sprintf(buf, "US100: %.1f mm\r\n", us100_distance);
-        HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
+    // // 输出US100传感器的距离值
+    // if (us100_distance > 0) {
+    //     char buf[32];
+    //     sprintf(buf, "US100: %.1f mm\r\n", us100_distance);
+    //     HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
         
-        // 开始下一次测量
-        US100_StartMeasurement(&us100_sensor);
-    } 
-    else {
-        // 如果连续多次获取不到有效数据，尝试重新初始化传感器
-        static uint32_t last_measurement_time = 0;
-        static uint8_t timeout_count = 0;
+    //     // 开始下一次测量
+    //     US100_StartMeasurement(&us100_sensor);
+    // } 
+    // else {
+    //     // 如果连续多次获取不到有效数据，尝试重新初始化传感器
+    //     static uint32_t last_measurement_time = 0;
+    //     static uint8_t timeout_count = 0;
         
-        uint32_t current_time = HAL_GetTick();
+    //     uint32_t current_time = HAL_GetTick();
         
-        if (current_time - last_measurement_time > 100) {
-            timeout_count++;
+    //     if (current_time - last_measurement_time > 100) {
+    //         timeout_count++;
             
-            // 输出调试信息
-            // char debug_buf[64];
-            // sprintf(debug_buf, "US100: No valid data for %d times\r\n", timeout_count);
-            // HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+    //         // 输出调试信息
+    //         // char debug_buf[64];
+    //         // sprintf(debug_buf, "US100: No valid data for %d times\r\n", timeout_count);
+    //         // HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
             
-            // 如果连续5次超时，尝试重新初始化传感器
-            if (timeout_count >= 5) {
-                // 重新初始化US100传感器
-                US100_Init(&us100_sensor, &huart5);
+    //         // 如果连续5次超时，尝试重新初始化传感器
+    //         if (timeout_count >= 20) {
+    //             // 重新初始化US100传感器
+    //             US100_Init(&us100_sensor, &huart5);
                 
-                // 输出调试信息
-                // sprintf(debug_buf, "US100: Reinitializing sensor\r\n");
-                // HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+    //             // 输出调试信息
+    //             // sprintf(debug_buf, "US100: Reinitializing sensor\r\n");
+    //             // HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
                 
-                // 等待一段时间，确保传感器稳定
-                HAL_Delay(50);
+    //             // 等待一段时间，确保传感器稳定
+    //             HAL_Delay(50);
                 
-                // 开始新的测量
-                US100_StartMeasurement(&us100_sensor);
+    //             // 开始新的测量
+    //             US100_StartMeasurement(&us100_sensor);
                 
-                // 重置超时计数
-                timeout_count = 0;
-            } else {
-                // 尝试重新开始测量
-                US100_StartMeasurement(&us100_sensor);
-            }
+    //             // 重置超时计数
+    //             timeout_count = 0;
+    //         } else {
+    //             // 尝试重新开始测量
+    //             US100_StartMeasurement(&us100_sensor);
+    //         }
             
-            last_measurement_time = current_time;
-        }
-    }
+    //         last_measurement_time = current_time;
+    //     }
+    // }
 
     /*--------------------------------------电机执行部分---------------------------------------------*/
     // 使用四轮直行控制，速度为50

@@ -457,8 +457,8 @@ void straight_us100(float distance)/*需要调整参数*/
     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, speed);
     
     // 输出调试信息
-    // char debug_buf[64];
-    // sprintf(debug_buf, "Distance: %.0f mm, Speed: %d\r\n", distance_forward, speed);
-    // HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+    char debug_buf[64];
+    sprintf(debug_buf, "Distance: %.0f mm, Speed: %d\r\n", distance_forward, speed);
+    HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
 
 }

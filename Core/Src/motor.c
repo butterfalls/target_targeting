@@ -431,3 +431,34 @@ void Debug_Output_Yaw(const char* movement, float yaw_error, float pid_out, floa
         last_debug = HAL_GetTick();
     }
 }
+
+void straight_us100(float distance)/*需要调整参数*/
+{
+    float distance_forward = distance;
+    
+    if (distance_forward <= 0) {
+        distance_forward = distance;
+    } else {
+        distance = distance_forward;
+    }
+    
+    int16_t speed = 0;
+    if (distance_forward > 1000) { 
+        speed = 80;
+    } else if (distance_forward > 500) { 
+        speed = 30;
+    } else if (distance_forward > 200) {
+        speed = 15;
+    } else { 
+        speed = 0;
+    }
+    
+    // 使用四轮直行控制
+    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, speed);
+    
+    // 输出调试信息
+    // char debug_buf[64];
+    // sprintf(debug_buf, "Distance: %.0f mm, Speed: %d\r\n", distance_forward, speed);
+    // HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+
+}

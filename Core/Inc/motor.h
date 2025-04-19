@@ -54,6 +54,7 @@ void Motor_TurnLeft90(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, in
 void Motor_TurnLeft90_Blocking(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
 void Debug_Output(const char* movement, int32_t error, float pid_out, float speed1, float speed2);
 void Debug_Output_Yaw(const char* movement, float yaw_error, float pid_out, float speed1, float speed2, float speed3, float speed4);
+void straight_us100(float distance);
 
 #ifdef __cplusplus
 }

@@ -111,8 +111,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     //     HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
     // }
 }
-
-
 /* USER CODE END 0 */
 
 /**
@@ -351,10 +349,9 @@ int main(void)
     }
 
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
-    // 使用四轮直行控制，速度为50
-    // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 50);
+  straight_us100(last_valid_distance1);
 
-    HAL_Delay(10);  
+
   }
   /* USER CODE END 3 */
 }

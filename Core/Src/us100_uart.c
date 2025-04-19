@@ -129,3 +129,76 @@ float US100_GetDistance(US100Sensor* sensor) {
     }
     return -1.0f; // 无效数据
 }
+
+/*--------------------------------------------------使用实例------------------------------------------------------------*/
+    // static float last_valid_distance1 = 0;
+    // static float last_valid_distance2 = 0;
+    // static float last_valid_distance3 = 0;
+    // static float last_valid_distance4 = 0;
+
+    // US100Sensor us100_sensor1;  // US100传感器实例
+    // US100Sensor us100_sensor2;  // US100传感器实例
+    // US100Sensor us100_sensor3;  // US100传感器实例
+    // US100Sensor us100_sensor4;  // US100传感器实例
+
+
+
+    // US100_StartMeasurement(&us100_sensor1);
+    // US100_StartMeasurement(&us100_sensor2);
+    // US100_StartMeasurement(&us100_sensor3);
+    // US100_StartMeasurement(&us100_sensor4);
+
+
+    // US100_Update(&us100_sensor1);
+    // US100_Update(&us100_sensor2);
+    // US100_Update(&us100_sensor3);
+    // US100_Update(&us100_sensor4);
+        
+    // float us100_distance1 = US100_GetDistance(&us100_sensor1);
+    // float us100_distance2 = US100_GetDistance(&us100_sensor2);
+    // float us100_distance3 = US100_GetDistance(&us100_sensor3);
+    // float us100_distance4 = US100_GetDistance(&us100_sensor4);
+    
+    // if (us100_distance1 > 0) last_valid_distance1 = us100_distance1;
+    // if (us100_distance2 > 0) last_valid_distance2 = us100_distance2;
+    // if (us100_distance3 > 0) last_valid_distance3 = us100_distance3;
+    // if (us100_distance4 > 0) last_valid_distance4 = us100_distance4;
+    
+    // if (last_valid_distance1 > 0 && last_valid_distance2 > 0 && last_valid_distance3 > 0 && last_valid_distance4 > 0) {
+    //     char buf[128];
+    //     sprintf(buf, "US100: %.0f, %.0f, %.0f, %.0f mm\r\n", 
+    //             last_valid_distance1, last_valid_distance2, last_valid_distance3, last_valid_distance4);
+    //     HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
+        
+    //     // 开始下一次测量
+    //     US100_StartMeasurement(&us100_sensor1);
+    //     US100_StartMeasurement(&us100_sensor2);
+    //     US100_StartMeasurement(&us100_sensor3);
+    //     US100_StartMeasurement(&us100_sensor4);
+    // } 
+    // else if ((us100_distance1 == 0||us100_distance1 == -1) && (us100_distance2 == 0||us100_distance2 == -1) && 
+    //          (us100_distance3 == 0||us100_distance3 == -1) && (us100_distance4 == 0||us100_distance4 == -1)){
+    //     static uint32_t last_measurement_time = 0;
+    //     static uint8_t timeout_count = 0;
+        
+    //     uint32_t current_time = HAL_GetTick();
+        
+    //     if (current_time - last_measurement_time > 300) {
+    //         timeout_count++;
+            
+    //         // 输出调试信息
+    //         char debug_buf[64];
+    //         sprintf(debug_buf, "US100: No valid data for %d times\r\n", timeout_count);
+    //         HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+            
+    //         if (timeout_count >= 20) {
+    //             US100_StartMeasurement(&us100_sensor1);
+    //             US100_StartMeasurement(&us100_sensor2);
+    //             US100_StartMeasurement(&us100_sensor3);
+    //             US100_StartMeasurement(&us100_sensor4);
+    //             timeout_count = 0;
+    //         }
+            
+    //         last_measurement_time = current_time;
+    //     }
+    // }

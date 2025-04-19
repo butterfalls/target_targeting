@@ -49,6 +49,6 @@ void US100_Update(US100Sensor* sensor);
 float US100_GetDistance(US100Sensor* sensor);
 
 // 串口接收回调函数
-void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart, uint16_t Size);
+void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 
 #endif /* US100_UART_H */

@@ -107,45 +107,86 @@ void Motor_Forward(Motor_ID id, Motor_ID id2, int16_t speed){
     Debug_Output("Forward", position_error, encoder_pid_output, speed1, speed2);
 }
 
-void Motor_Rightward(Motor_ID id, Motor_ID id2, int16_t speed) {
+void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed) {
     uint32_t current_time = HAL_GetTick();
     float dt = (current_time - prev_time) / 1000.0f;
+
+    if (dt <= 0.001f) {
+        dt = 0.001f;  // 最小时间差为1ms
+    }
     prev_time = current_time;
 
     // 获取编码器值
-    int32_t enc1 = Motor_GetEncoder(id);
+    int32_t enc1 = Motor_GetEncoder(id1);
     int32_t enc2 = -Motor_GetEncoder(id2);
+    int32_t enc3 = Motor_GetEncoder(id3);
+    int32_t enc4 = -Motor_GetEncoder(id4);
+
 
     // 获取当前偏航角
     float pitch, roll, yaw;
-    MPU6050_DMP_Get_Data(&pitch, &roll, &yaw);
+    if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) != 0) {
+        Motor_SetSpeed(id1, 0);
+        Motor_SetSpeed(id2, 0);
+        Motor_SetSpeed(id3, 0);
+        Motor_SetSpeed(id4, 0);
+        return;
+    }
 
     // 计算偏航角误差
     float yaw_error = target_yaw - yaw;
     if (yaw_error > 180) yaw_error -= 360;
     else if (yaw_error < -180) yaw_error += 360;
 
-    // 先计算偏航角PID输出
-    float yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
+    // 计算编码器误差 - 修正后的计算方式
+    int32_t front_error = enc1 - enc2;  // 前侧轮子同步
+    int32_t rear_error = enc3 - enc4;   // 后侧轮子同步
+    int32_t position_error = (front_error + rear_error) / 2;  // 前后两侧同步
 
-    // 计算编码器误差
-    int32_t position_error = enc1 - enc2;
-
-    // 使用偏航角PID输出作为编码器PID的目标值
-    float encoder_pid_output = PID_Calculate(&pid_encoder, position_error - yaw_pid_output, dt);
-
+    // 速度分配 - 修正后的分配方式
     float base_speed = speed;
-
-    float speed1 = base_speed - encoder_pid_output - yaw_pid_output;
-    float speed2 = -(base_speed + encoder_pid_output + yaw_pid_output);
     
+    // 限制PID输出的最大值，防止过度修正
+    float max_pid_output = base_speed * 0.3f;  // 降低PID输出最大值为基准速度的30%
+    
+    float yaw_pid_output = 0.0f;
+    float encoder_pid_output = 0.0f;
+    
+    // 只有当偏航角误差大于1度时才进行PID调整
+    if (fabs(yaw_error) > 1.0f) {
+        yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
+        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output), -max_pid_output);
+    } else {
+        // 误差小于1度时，重置PID控制器
+        PID_Reset(&pid_yaw);
+    }
+    
+    // 使用偏航角PID输出作为编码器PID的目标值
+    encoder_pid_output = PID_Calculate(&pid_encoder, position_error - yaw_pid_output, dt);
+    encoder_pid_output = fmaxf(fminf(encoder_pid_output, max_pid_output), -max_pid_output);
+    
+    // 前侧轮子 - 向内运动
+    float speed1 = base_speed - encoder_pid_output - yaw_pid_output;  // 左前
+    float speed2 = -(base_speed + encoder_pid_output + yaw_pid_output);  // 右前
+    
+    // 后侧轮子 - 向内运动
+    float speed3 = -(base_speed - encoder_pid_output - yaw_pid_output);  // 左后
+    float speed4 = base_speed + encoder_pid_output + yaw_pid_output;  // 右后
+
+    // 限幅
     speed1 = fmaxf(fminf(speed1, 100.0f), -100.0f);
     speed2 = fmaxf(fminf(speed2, 100.0f), -100.0f);
+    speed3 = fmaxf(fminf(speed3, 100.0f), -100.0f);
+    speed4 = fmaxf(fminf(speed4, 100.0f), -100.0f);
 
-    Motor_SetSpeed(id, speed1);
+    // 设置电机速度
+    Motor_SetSpeed(id1, speed1);
     Motor_SetSpeed(id2, speed2);
-    
-    Debug_Output("RIGHT", position_error, encoder_pid_output, speed1, speed2);
+    Motor_SetSpeed(id3, speed3);
+    Motor_SetSpeed(id4, speed4);
+
+    // 输出调试信息，包括编码器误差和PID输出
+    Debug_Output_Yaw("RIGHTWARD", yaw_error, yaw_pid_output, speed1, speed2, speed3, speed4);
 }
 
 void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed) {
@@ -166,14 +207,13 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
 
     // 获取当前偏航角
     float pitch, roll, yaw;
-    // if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) != 0) {
-    //     // MPU6050读取失败，停止所有电机
-    //     Motor_SetSpeed(id1, 0);
-    //     Motor_SetSpeed(id2, 0);
-    //     Motor_SetSpeed(id3, 0);
-    //     Motor_SetSpeed(id4, 0);
-    //     return;
-    // }
+    if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) != 0) {
+        Motor_SetSpeed(id1, 0);
+        Motor_SetSpeed(id2, 0);
+        Motor_SetSpeed(id3, 0);
+        Motor_SetSpeed(id4, 0);
+        return;
+    }
 
     // 计算偏航角误差
     float yaw_error = target_yaw - yaw;
@@ -212,8 +252,8 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float speed3 = base_speed - encoder_pid_output - yaw_pid_output;  // 左后
     
     // 右侧轮子 - 反转
-    float speed2 = (base_speed + encoder_pid_output + yaw_pid_output);  // 右前
-    float speed4 = (base_speed + encoder_pid_output + yaw_pid_output);  // 右后
+    float speed2 = -(base_speed + encoder_pid_output + yaw_pid_output);  // 右前
+    float speed4 = -(base_speed + encoder_pid_output + yaw_pid_output);  // 右后
 
     // 限幅
     speed1 = fmaxf(fminf(speed1, 100.0f), -100.0f);
@@ -383,10 +423,6 @@ void Debug_Output_Yaw(const char* movement, float yaw_error, float pid_out, floa
         int32_t enc2 = -Motor_GetEncoder(MOTOR_2);
         int32_t enc3 = Motor_GetEncoder(MOTOR_3);
         int32_t enc4 = -Motor_GetEncoder(MOTOR_4);
-        
-        // 计算编码器误差
-        int32_t left_error = enc1 - enc3;  // 左侧轮子同步
-        int32_t right_error = enc2 - enc4;  // 右侧轮子同步
         
         char buf[200];
         sprintf(buf, "%s | YawErr: %5.1f | PID: %6.2f | enc1:%5ld, enc2:%5ld, enc3:%5ld, enc4:%5ld | EncPID: %6.2f | M1: %5.1f | M2: %5.1f | M3: %5.1f | M4: %5.1f\r\n",

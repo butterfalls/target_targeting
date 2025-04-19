@@ -37,7 +37,6 @@ void US100_Init(US100Sensor* sensor, UART_HandleTypeDef* uart) {
 }
 
 void US100_StartMeasurement(US100Sensor* sensor) {
-    // 如果传感器不在IDLE状态，先重置状态
     if (sensor->state != US100_STATE_IDLE) {
         sensor->state = US100_STATE_IDLE;
         sensor->rx_index = 0;
@@ -76,7 +75,6 @@ void US100_Update(US100Sensor* sensor) {
             if (sensor->rx_index >= 2) {
                 // 检查数据有效性
                 if (sensor->rx_buffer[0] == 0xFF && sensor->rx_buffer[1] == 0xFF) {
-                    // 无效数据，不更新距离值
                     sensor->state = US100_STATE_IDLE;
                     sensor->rx_index = 0;
                     HAL_UART_Receive_IT(sensor->uart, &sensor->rx_buffer[0], 1);
@@ -87,7 +85,7 @@ void US100_Update(US100Sensor* sensor) {
                 uint16_t raw_distance = (sensor->rx_buffer[1] << 8) | sensor->rx_buffer[0];
                 
                 // 检查距离值是否在合理范围内（例如0-4000mm）
-                if (raw_distance > 4000) {
+                if (raw_distance > 40000) {
                     // 距离值超出范围，视为无效数据
                     sensor->state = US100_STATE_IDLE;
                     sensor->rx_index = 0;
@@ -106,7 +104,7 @@ void US100_Update(US100Sensor* sensor) {
     }
 }
 
-void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     for (uint8_t i = 0; i < us100_sensor_count; i++) {
         US100Sensor* s = active_sensors[i];
         

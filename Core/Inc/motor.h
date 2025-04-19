@@ -48,7 +48,7 @@ void Motor_Init(Motor_ID id,
 void Motor_SetSpeed(Motor_ID id, int16_t speed);
 int32_t Motor_GetEncoder(Motor_ID id);
 void Motor_Forward(Motor_ID id, Motor_ID id2, int16_t speed);
-void Motor_Rightward(Motor_ID id, Motor_ID id2, int16_t speed);
+void Motor_Rightward(Motor_ID id, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
 void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
 void Motor_TurnLeft90(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
 void Motor_TurnLeft90_Blocking(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);

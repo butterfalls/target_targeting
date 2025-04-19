@@ -57,24 +57,24 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define M3_PWM_Pin GPIO_PIN_5
-#define M3_PWM_GPIO_Port GPIOE
-#define M4_PWM_Pin GPIO_PIN_6
-#define M4_PWM_GPIO_Port GPIOF
-#define Servo2_Pin GPIO_PIN_8
-#define Servo2_GPIO_Port GPIOF
-#define Servo1_Pin GPIO_PIN_9
-#define Servo1_GPIO_Port GPIOF
+#define Servo_3_Pin GPIO_PIN_5
+#define Servo_3_GPIO_Port GPIOE
+#define Servo_4_Pin GPIO_PIN_6
+#define Servo_4_GPIO_Port GPIOE
+#define Servo_5_Pin GPIO_PIN_6
+#define Servo_5_GPIO_Port GPIOF
 #define M4_IN1_Pin GPIO_PIN_1
 #define M4_IN1_GPIO_Port GPIOC
 #define M4_IN2_Pin GPIO_PIN_3
 #define M4_IN2_GPIO_Port GPIOC
-#define TX_1_Pin GPIO_PIN_0
-#define TX_1_GPIO_Port GPIOA
-#define RX_1_Pin GPIO_PIN_1
-#define RX_1_GPIO_Port GPIOA
-#define M1_PWM_Pin GPIO_PIN_2
+#define M1_PWM_Pin GPIO_PIN_0
 #define M1_PWM_GPIO_Port GPIOA
+#define M2_PWM_Pin GPIO_PIN_1
+#define M2_PWM_GPIO_Port GPIOA
+#define M3_PWM_Pin GPIO_PIN_2
+#define M3_PWM_GPIO_Port GPIOA
+#define M4_PWM_Pin GPIO_PIN_3
+#define M4_PWM_GPIO_Port GPIOA
 #define M4_E1_Pin GPIO_PIN_5
 #define M4_E1_GPIO_Port GPIOA
 #define M3_E1_Pin GPIO_PIN_6
@@ -111,8 +111,14 @@ void Error_Handler(void);
 #define M2_IN2_GPIO_Port GPIOD
 #define M2_IN1_Pin GPIO_PIN_3
 #define M2_IN1_GPIO_Port GPIOG
-#define M2_PWM_Pin GPIO_PIN_6
-#define M2_PWM_GPIO_Port GPIOC
+#define Servo_1_Pin GPIO_PIN_6
+#define Servo_1_GPIO_Port GPIOC
+#define Servo_2_Pin GPIO_PIN_7
+#define Servo_2_GPIO_Port GPIOC
+#define TX_1_Pin GPIO_PIN_10
+#define TX_1_GPIO_Port GPIOC
+#define RX_1_Pin GPIO_PIN_11
+#define RX_1_GPIO_Port GPIOC
 #define Echo_2_Pin GPIO_PIN_13
 #define Echo_2_GPIO_Port GPIOG
 #define Echo_2_EXTI_IRQn EXTI15_10_IRQn

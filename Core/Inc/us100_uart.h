@@ -1,4 +1,4 @@
- #ifndef US100_UART_H
+#ifndef US100_UART_H
 #define US100_UART_H
 
 #include "stm32f4xx_hal.h"
@@ -50,5 +50,8 @@ float US100_GetDistance(US100Sensor* sensor);
 
 // 串口接收回调函数
 void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+
+// 获取所有传感器的有效距离值
+void US100_GetAllValidDistances(float* distances);
 
 #endif /* US100_UART_H */

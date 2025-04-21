@@ -6,6 +6,11 @@
 #include <math.h>
 #include <stdbool.h>
 
+// 定义圆周率
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
+
 /* Private variables ---------------------------------------------------------*/
 float target_yaw = 0.0f;
 
@@ -107,6 +112,37 @@ void Motor_Forward(Motor_ID id, Motor_ID id2, int16_t speed){
     Debug_Output("Forward", position_error, encoder_pid_output, speed1, speed2);
 }
 
+// 基于超声波数据计算垄的平行度
+float Calculate_Furrow_Parallel(float distance1, float distance2, float* yaw_target, bool* use_ultrasonic_control) {
+    // 默认不使用超声波控制
+    *use_ultrasonic_control = false;
+    
+    // 检查数据有效性
+    if (distance1 <= 0 || distance2 <= 0) {
+        return 0.0f;
+    }
+    
+    float distance_diff = distance1 - distance2;
+    
+    const float SENSOR_SPACING = 100.0f;  // 需要根据实际安装距离调整
+    
+    float angle_rad = atan2(distance_diff, SENSOR_SPACING);
+    
+    float angle_deg = angle_rad * 180.0f / M_PI;
+    
+    const float ANGLE_THRESHOLD = 1.0f;
+    
+    if (fabs(angle_deg) > ANGLE_THRESHOLD) {
+        *use_ultrasonic_control = true;
+        
+        *yaw_target = angle_deg;
+
+        *yaw_target = fmaxf(fminf(*yaw_target, 15.0f), -15.0f);
+    }
+    
+    return angle_deg;
+}
+
 void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed) {
     uint32_t current_time = HAL_GetTick();
     float dt = (current_time - prev_time) / 1000.0f;
@@ -122,7 +158,6 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     int32_t enc3 = Motor_GetEncoder(id3);
     int32_t enc4 = -Motor_GetEncoder(id4);
 
-
     // 获取当前偏航角
     float pitch, roll, yaw;
     if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) != 0) {
@@ -133,10 +168,26 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
         return;
     }
 
-    // 计算偏航角误差
-    float yaw_error = target_yaw - yaw;
-    if (yaw_error > 180) yaw_error -= 360;
-    else if (yaw_error < -180) yaw_error += 360;
+    // 获取超声波数据
+    float distances[4];
+    US100_GetAllValidDistances(distances);
+    
+    // 计算垄的平行度
+    float ultrasonic_yaw_target;
+    bool use_ultrasonic_control;
+    float parallel_ratio = Calculate_Furrow_Parallel(distances[1], distances[3], &ultrasonic_yaw_target, &use_ultrasonic_control);
+    /*如果不再使用超声波调整平行度，打开注释内容*/
+    use_ultrasonic_control = false;
+    float yaw_error;
+    if (use_ultrasonic_control) {
+        // 使用超声波计算的偏航角目标值
+        yaw_error = target_yaw - yaw + ultrasonic_yaw_target;
+    } else {
+        // 使用预设的目标偏航角
+        yaw_error = target_yaw - yaw;
+        if (yaw_error > 180) yaw_error -= 360;
+        else if (yaw_error < -180) yaw_error += 360;
+    }
 
     // 计算编码器误差 - 修正后的计算方式
     int32_t front_error = enc1 - enc2;  // 前侧轮子同步
@@ -184,6 +235,13 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     Motor_SetSpeed(id2, speed2);
     Motor_SetSpeed(id3, speed3);
     Motor_SetSpeed(id4, speed4);
+
+    // 输出调试信息，包括超声波数据和垄的平行度
+    char debug_buf[200];
+    sprintf(debug_buf, "US: %.0f, %.0f | Parallel: %.2f | UseUS: %d | YawTarget: %.2f | YawErr: %.2f\r\n",
+            distances[1], distances[3], parallel_ratio, use_ultrasonic_control, 
+            use_ultrasonic_control ? ultrasonic_yaw_target : target_yaw, yaw_error);
+    HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
 
     // 输出调试信息，包括编码器误差和PID输出
     Debug_Output_Yaw("RIGHTWARD", yaw_error, yaw_pid_output, speed1, speed2, speed3, speed4);

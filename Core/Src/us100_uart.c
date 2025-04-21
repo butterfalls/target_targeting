@@ -10,6 +10,9 @@ uint8_t us100_sensor_count = 0;  // 当前活动的传感器数量
 // 超时时间（毫秒）
 #define US100_TIMEOUT_MS 300  // 增加超时时间到300ms
 
+// 静态变量用于存储上次有效的距离值
+static float last_valid_distances[MAX_US100_SENSORS] = {0};
+
 void US100_Init(US100Sensor* sensor, UART_HandleTypeDef* uart) {
     if (us100_sensor_count >= MAX_US100_SENSORS) return;
     
@@ -128,6 +131,58 @@ float US100_GetDistance(US100Sensor* sensor) {
         return sensor->distance;
     }
     return -1.0f; // 无效数据
+}
+
+void US100_GetAllValidDistances(float* distances) {
+    // 更新所有传感器的状态
+    for (uint8_t i = 0; i < us100_sensor_count; i++) {
+        US100_Update(active_sensors[i]);
+    }
+    
+    // 获取所有传感器的距离值
+    for (uint8_t i = 0; i < us100_sensor_count; i++) {
+        float current_distance = US100_GetDistance(active_sensors[i]);
+        if (current_distance > 0) {
+            last_valid_distances[i] = current_distance;
+        }
+        distances[i] = last_valid_distances[i];
+    }
+    
+    // 检查是否所有传感器都有有效数据
+    uint8_t all_valid = 1;
+    for (uint8_t i = 0; i < us100_sensor_count; i++) {
+        if (distances[i] <= 0) {
+            all_valid = 0;
+            break;
+        }
+    }
+    
+    // 如果所有传感器都有有效数据，开始下一次测量
+    if (all_valid) {
+        for (uint8_t i = 0; i < us100_sensor_count; i++) {
+            US100_StartMeasurement(active_sensors[i]);
+        }
+    }
+    // 如果所有传感器都没有有效数据，检查是否需要重新测量
+    else {
+        static uint32_t last_measurement_time = 0;
+        static uint8_t timeout_count = 0;
+        
+        uint32_t current_time = HAL_GetTick();
+        
+        if (current_time - last_measurement_time > 300) {
+            timeout_count++;
+            
+            if (timeout_count >= 20) {
+                for (uint8_t i = 0; i < us100_sensor_count; i++) {
+                    US100_StartMeasurement(active_sensors[i]);
+                }
+                timeout_count = 0;
+            }
+            
+            last_measurement_time = current_time;
+        }
+    }
 }
 
 /*--------------------------------------------------使用实例------------------------------------------------------------*/

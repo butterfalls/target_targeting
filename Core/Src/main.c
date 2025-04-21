@@ -167,22 +167,22 @@ int main(void)
 // 初始化MPU6050 DMP
   int mpu_result;
   int retry_count = 0;
-  // do {
+  do {
       mpu_result = MPU6050_DMP_Init();
-  //     if (mpu_result != 0) {
-  //         char error_msg[100];
-  //         sprintf(error_msg, "MPU6050 DMP 初始化失败，错误码: %d，重试次数: %d\r\n", mpu_result, retry_count);
-  //         HAL_UART_Transmit(&huart1, (uint8_t*)error_msg, strlen(error_msg), 100);
+      if (mpu_result != 0) {
+          char error_msg[100];
+          sprintf(error_msg, "MPU6050 DMP 初始化失败，错误码: %d，重试次数: %d\r\n", mpu_result, retry_count);
+          HAL_UART_Transmit(&huart1, (uint8_t*)error_msg, strlen(error_msg), 100);
           
-  //         // 等待一段时间后重试
-  //         HAL_Delay(500); // 等待500ms
-  //         retry_count++;
-  //     } else {
-  //         char success_msg[100];
-  //         sprintf(success_msg, "MPU6050 初始化成功，共尝试 %d 次\r\n", retry_count + 1);
-  //         HAL_UART_Transmit(&huart1, (uint8_t*)success_msg, strlen(success_msg), 100);
-  //     }
-  // } while (mpu_result != 0);
+          // 等待一段时间后重试
+          HAL_Delay(500); // 等待500ms
+          retry_count++;
+      } else {
+          char success_msg[100];
+          sprintf(success_msg, "MPU6050 初始化成功，共尝试 %d 次\r\n", retry_count + 1);
+          HAL_UART_Transmit(&huart1, (uint8_t*)success_msg, strlen(success_msg), 100);
+      }
+  } while (mpu_result != 0);
 
   // 初始化超声波传感器
   // Ultrasonic_Init(&ultrasonic_sensors[1], Trig_1_GPIO_Port, Trig_1_Pin, Echo_1_GPIO_Port, Echo_1_Pin);  // 传感器1

@@ -166,12 +166,12 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     encoder_pid_output = fmaxf(fminf(encoder_pid_output, max_pid_output), -max_pid_output);
     
     // 前侧轮子 - 向内运动
-    float speed1 = base_speed - encoder_pid_output - yaw_pid_output;  // 左前
-    float speed2 = -(base_speed + encoder_pid_output + yaw_pid_output);  // 右前
+    float speed1 = (base_speed - encoder_pid_output - yaw_pid_output);  // 左前
+    float speed2 = (base_speed + encoder_pid_output + yaw_pid_output);  // 右前
     
     // 后侧轮子 - 向内运动
-    float speed3 = -(base_speed - encoder_pid_output - yaw_pid_output);  // 左后
-    float speed4 = base_speed + encoder_pid_output + yaw_pid_output;  // 右后
+    float speed3 = (base_speed - encoder_pid_output - yaw_pid_output);  // 左后
+    float speed4 = (base_speed + encoder_pid_output + yaw_pid_output);  // 右后
 
     // 限幅
     speed1 = fmaxf(fminf(speed1, 100.0f), -100.0f);
@@ -248,11 +248,11 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     encoder_pid_output = fmaxf(fminf(encoder_pid_output, max_pid_output), -max_pid_output);
     
     // 左侧轮子 - 正转
-    float speed1 = base_speed - encoder_pid_output - yaw_pid_output;  // 左前
-    float speed3 = base_speed - encoder_pid_output - yaw_pid_output;  // 左后
+    float speed1 = -(base_speed - encoder_pid_output - yaw_pid_output);  
+    float speed3 = (base_speed - encoder_pid_output - yaw_pid_output);  
     
     // 右侧轮子 - 反转
-    float speed2 = -(base_speed + encoder_pid_output + yaw_pid_output);  // 右前
+    float speed2 = (base_speed + encoder_pid_output + yaw_pid_output);  
     float speed4 = -(base_speed + encoder_pid_output + yaw_pid_output);  // 右后
 
     // 限幅
@@ -454,7 +454,7 @@ void straight_us100(float distance)/*需要调整参数*/
     }
     
     // 使用四轮直行控制
-    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, speed);
+    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, speed);
     
     // 输出调试信息
     char debug_buf[64];

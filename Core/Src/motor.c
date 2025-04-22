@@ -335,6 +335,7 @@ void Motor_TurnLeft90(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, in
     if (!initialized) {
         float pitch, roll, yaw;
         MPU6050_DMP_Get_Data(&pitch, &roll, &yaw);
+        OLED_ShowNum(3,5,yaw,3);
         start_yaw = yaw;
         target_yaw = start_yaw - 90.0f;
         if (target_yaw < -180.0f) target_yaw += 360.0f;
@@ -349,6 +350,7 @@ void Motor_TurnLeft90(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, in
     // 获取当前偏航角
     float pitch, roll, yaw;
     MPU6050_DMP_Get_Data(&pitch, &roll, &yaw);
+    OLED_ShowNum(3,5,yaw,3);
 
     // 计算偏航角误差
     float yaw_error = target_yaw - yaw;
@@ -396,6 +398,7 @@ void Motor_TurnLeft90(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, in
 void Motor_TurnLeft90_Blocking(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed) {
     float pitch, roll, yaw;
     MPU6050_DMP_Get_Data(&pitch, &roll, &yaw);
+    OLED_ShowNum(3,5,yaw,3);
     float start_yaw = yaw;
     float target_yaw_local = start_yaw - 90.0f;
     if (target_yaw_local < -180.0f) target_yaw_local += 360.0f;
@@ -409,6 +412,7 @@ void Motor_TurnLeft90_Blocking(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_I
         
         // 获取当前偏航角
         MPU6050_DMP_Get_Data(&pitch, &roll, &yaw);
+        OLED_ShowNum(3,5,yaw,3);
         
         // 计算偏航角误差
         float yaw_error = target_yaw_local - yaw;

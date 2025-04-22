@@ -310,7 +310,7 @@ int main(void)
 
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
-    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);
+    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);//内置启用超声波检测右侧墙的距离
 
   }
   /* USER CODE END 3 */

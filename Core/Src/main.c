@@ -263,16 +263,6 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     uint32_t current_time = HAL_GetTick();
-    
-    // 每秒更新一次OLED显示
-    if (current_time - oled_prev_time >= 10000) {
-        OLED_Clear();
-        OLED_ShowString(1, 1, "Mind Weaver");
-        OLED_ShowString(2, 1, "Dont Touch");
-        OLED_ShowString(3, 1, "breaking");
-        oled_prev_time = current_time;
-    }
-
     /*------------------------------------------------------------------------舵机执行部分--------------------------------------------------------------------*/
     // Servo_SetAngle(&servo3, 0);
     // HAL_Delay(200);
@@ -305,11 +295,17 @@ int main(void)
     float distances[4];
     US100_GetAllValidDistances(distances);
     
-    if (distances[0] > 0 && distances[1] > 0 && distances[2] > 0 && distances[3] > 0) {
-        char buf[128];
-        sprintf(buf, "US100: %.0f, %.0f, %.0f, %.0f mm\r\n", 
-                distances[0], distances[1], distances[2], distances[3]);
-        HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
+    if (distances[0] > 0 && distances[1] > 0 && distances[2] > 0 && distances[3] > 0 && current_time - oled_prev_time >= 200) {
+      OLED_Clear();
+      OLED_ShowString(1, 6, "mm");
+      OLED_ShowString(1, 14, "mm");
+      OLED_ShowString(1, 6, "mm");
+      OLED_ShowString(1, 14, "mm");
+      OLED_ShowNum(1, 1, distances[0], 5);
+      OLED_ShowNum(1, 9, distances[1], 5);
+      OLED_ShowNum(2, 1, distances[2], 5);
+      OLED_ShowNum(2, 9, distances[3], 5);
+      
     }
 
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/

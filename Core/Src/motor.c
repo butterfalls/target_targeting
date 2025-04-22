@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
+#include "OLED.h"
 
 // 定义圆周率
 #ifndef M_PI
@@ -177,11 +178,11 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     bool use_ultrasonic_control;
     float parallel_ratio = Calculate_Furrow_Parallel(distances[1], distances[3], &ultrasonic_yaw_target, &use_ultrasonic_control);
     /*如果不再使用超声波调整平行度，打开注释内容*/
-    use_ultrasonic_control = false;
+    // use_ultrasonic_control = false;
     float yaw_error;
     if (use_ultrasonic_control) {
         // 使用超声波计算的偏航角目标值
-        yaw_error = target_yaw - yaw + ultrasonic_yaw_target;
+        yaw_error = target_yaw - yaw + parallel_ratio;
     } else {
         // 使用预设的目标偏航角
         yaw_error = target_yaw - yaw;
@@ -237,14 +238,11 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     Motor_SetSpeed(id4, speed4);
 
     // 输出调试信息，包括超声波数据和垄的平行度
-    char debug_buf[200];
-    sprintf(debug_buf, "US: %.0f, %.0f | Parallel: %.2f | UseUS: %d | YawTarget: %.2f | YawErr: %.2f\r\n",
-            distances[1], distances[3], parallel_ratio, use_ultrasonic_control, 
-            use_ultrasonic_control ? ultrasonic_yaw_target : target_yaw, yaw_error);
-    HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+    OLED_ShowString(4,1,"M1");
+    OLED_ShowNum(4,3,speed1,3);
 
     // 输出调试信息，包括编码器误差和PID输出
-    Debug_Output_Yaw("RIGHTWARD", yaw_error, yaw_pid_output, speed1, speed2, speed3, speed4);
+    // Debug_Output_Yaw("RIGHTWARD", yaw_error, yaw_pid_output, speed1, speed2, speed3, speed4);
 }
 
 void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed) {

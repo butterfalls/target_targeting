@@ -155,6 +155,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
+  OLED_Init();
 
   HAL_UART_Receive_IT(&huart1, receivedata, 2);
   // 初始化UART4接收
@@ -166,17 +167,12 @@ int main(void)
   do {
       mpu_result = MPU6050_DMP_Init();
       if (mpu_result != 0) {
-          char error_msg[100];
-          sprintf(error_msg, "MPU6050 DMP 初始化失败，错误码: %d，重试次数: %d\r\n", mpu_result, retry_count);
-          HAL_UART_Transmit(&huart1, (uint8_t*)error_msg, strlen(error_msg), 100);
-          
-          // 等待一段时间后重试
-          HAL_Delay(500); // 等待500ms
+          OLED_ShowString(1,1,"INITING...");
+          OLED_ShowNum(1,11,retry_count,2);
           retry_count++;
-      } else {
-          char success_msg[100];
-          sprintf(success_msg, "MPU6050 初始化成功，共尝试 %d 次\r\n", retry_count + 1);
-          HAL_UART_Transmit(&huart1, (uint8_t*)success_msg, strlen(success_msg), 100);
+      }else{
+        OLED_Clear();
+        OLED_ShowString(1,1,"SUCCESS");
       }
   } while (mpu_result != 0);
 
@@ -226,8 +222,6 @@ int main(void)
             M4_IN2_GPIO_Port, M4_IN2_Pin,
             &htim2);
 
-  OLED_Init();
-
   Servo_Init(&servo1, &htim8, TIM_CHANNEL_1, Servo_1_GPIO_Port, Servo_1_Pin);
   Servo_Init(&servo2, &htim8, TIM_CHANNEL_2, Servo_2_GPIO_Port, Servo_2_Pin);
   Servo_Init(&servo3, &htim9, TIM_CHANNEL_1, Servo_3_GPIO_Port, Servo_3_Pin);
@@ -238,10 +232,10 @@ int main(void)
 
   /*------------------------------------MPU6050 DMP执行部分-------------------------------------*/
   if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) == 0) {
-      char mpu_buf[64];
-      sprintf(mpu_buf, "Pitch: %.2f, Roll: %.2f, Yaw: %.2f\r\n", pitch, roll, yaw);
-      HAL_UART_Transmit(&huart1, (uint8_t*)mpu_buf, strlen(mpu_buf), 100);
+      OLED_ShowString(3,1,"yaw:");
+      OLED_ShowNum(3,5,yaw,3);
   }
+
   
   // 设置目标偏航角为当前偏航角
   target_yaw = yaw;
@@ -249,10 +243,11 @@ int main(void)
   // 重置PID控制器，避免积分项累积
   PID_Reset(&pid_yaw);
   PID_Reset(&pid_encoder);
-  
-  char debug_buf[64];
-  sprintf(debug_buf, "target_yaw: %.2f\r\n", target_yaw);
-  HAL_UART_Transmit(&huart1, (uint8_t*)debug_buf, strlen(debug_buf), 100);
+  OLED_Clear_Part(1,1,5);
+  OLED_ShowString(1, 6, "mm");
+  OLED_ShowString(1, 14, "mm");
+  OLED_ShowString(2, 6, "mm");
+  OLED_ShowString(2, 14, "mm");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -295,16 +290,12 @@ int main(void)
     float distances[4];
     US100_GetAllValidDistances(distances);
     
-    if (distances[0] > 0 && distances[1] > 0 && distances[2] > 0 && distances[3] > 0 && current_time - oled_prev_time >= 200) {
-      OLED_Clear();
-      OLED_ShowString(1, 6, "mm");
-      OLED_ShowString(1, 14, "mm");
-      OLED_ShowString(1, 6, "mm");
-      OLED_ShowString(1, 14, "mm");
+    if (distances[0] > 0 && distances[1] > 0 && distances[2] > 0 && distances[3] > 0 && current_time - oled_prev_time >= 100) {
       OLED_ShowNum(1, 1, distances[0], 5);
       OLED_ShowNum(1, 9, distances[1], 5);
       OLED_ShowNum(2, 1, distances[2], 5);
       OLED_ShowNum(2, 9, distances[3], 5);
+      oled_prev_time = current_time;
       
     }
 

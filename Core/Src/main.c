@@ -33,6 +33,7 @@
 #include "us100_uart.h"
 #include <stdio.h>
 #include <string.h>
+#include "OLED.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,17 +57,12 @@
 Motor motors[MOTOR_COUNT] = {0};
 float target_speed = 50.0f;
 uint32_t prev_time = 0;
+uint32_t oled_prev_time = 0;  // 添加OLED刷新时间变量
 
 uint8_t receivedata[2];
 uint8_t message[] = "Hello World";
 uint8_t uart4_rx_buffer;
 Servo servo1, servo2 ,servo3 ,servo4 ,servo5;
-
-static float last_valid_distance1 = 0;
-static float last_valid_distance2 = 0;
-static float last_valid_distance3 = 0;
-static float last_valid_distance4 = 0;
-
 
 // 定义超声波传感器实例
 // UltrasonicSensor ultrasonic_sensors[5];  // 最多5个超声波传感器
@@ -230,6 +226,8 @@ int main(void)
             M4_IN2_GPIO_Port, M4_IN2_Pin,
             &htim2);
 
+  OLED_Init();
+
   Servo_Init(&servo1, &htim8, TIM_CHANNEL_1, Servo_1_GPIO_Port, Servo_1_Pin);
   Servo_Init(&servo2, &htim8, TIM_CHANNEL_2, Servo_2_GPIO_Port, Servo_2_Pin);
   Servo_Init(&servo3, &htim9, TIM_CHANNEL_1, Servo_3_GPIO_Port, Servo_3_Pin);
@@ -264,6 +262,16 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    uint32_t current_time = HAL_GetTick();
+    
+    // 每秒更新一次OLED显示
+    if (current_time - oled_prev_time >= 10000) {
+        OLED_Clear();
+        OLED_ShowString(1, 1, "Mind Weaver");
+        OLED_ShowString(2, 1, "Dont Touch");
+        OLED_ShowString(3, 1, "breaking");
+        oled_prev_time = current_time;
+    }
 
     /*------------------------------------------------------------------------舵机执行部分--------------------------------------------------------------------*/
     // Servo_SetAngle(&servo3, 0);

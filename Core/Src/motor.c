@@ -179,7 +179,7 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     bool use_ultrasonic_control;
     float parallel_ratio = Calculate_Furrow_Parallel(distances[1], distances[3], &ultrasonic_yaw_target, &use_ultrasonic_control);
     /*如果不再使用超声波调整平行度，打开注释内容*/
-    // use_ultrasonic_control = false;
+    use_ultrasonic_control = false;
     float yaw_error;
     if (use_ultrasonic_control) {
         // 使用超声波计算的偏航角目标值
@@ -220,11 +220,11 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     
     // 前侧轮子 - 向内运动
     float speed1 = (base_speed - encoder_pid_output - yaw_pid_output);  // 右前
-    float speed2 = (base_speed + encoder_pid_output + yaw_pid_output);  // 左后
-    
+    float speed4 = (base_speed + encoder_pid_output + yaw_pid_output); // 右后
+
     // 后侧轮子 - 向内运动
     float speed3 = (base_speed - encoder_pid_output - yaw_pid_output);  // 左前
-    float speed4 = (base_speed + encoder_pid_output + yaw_pid_output);  // 右后
+    float speed2 = (base_speed + encoder_pid_output + yaw_pid_output);  // 左后
 
     // 限幅
     speed1 = fmaxf(fminf(speed1, 100.0f), -100.0f);

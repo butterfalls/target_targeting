@@ -30,7 +30,8 @@ Core/Src/motor.o: ../Core/Src/motor.c ../Core/Inc/motor.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/pid_controller.h ../Core/Inc/usart.h \
- E:/Files/STM32_Project/Hello/APP/MPU6050/mpu6050.h
+ C:/Users/汪岂凫/Documents/GitHub/target_targeting/APP/MPU6050/mpu6050.h \
+ ../Core/Inc/OLED.h
 ../Core/Inc/motor.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -65,4 +66,5 @@ Core/Src/motor.o: ../Core/Src/motor.c ../Core/Inc/motor.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 ../Core/Inc/pid_controller.h:
 ../Core/Inc/usart.h:
-E:/Files/STM32_Project/Hello/APP/MPU6050/mpu6050.h:
+C:/Users/汪岂凫/Documents/GitHub/target_targeting/APP/MPU6050/mpu6050.h:
+../Core/Inc/OLED.h:

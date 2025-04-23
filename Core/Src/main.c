@@ -59,6 +59,12 @@ float target_speed = 50.0f;
 uint32_t prev_time = 0;
 uint32_t oled_prev_time = 0;  // 添加OLED刷新时间变量
 
+// 添加按键状态变量
+bool K0_Current_State = false;
+bool K1_Current_State = false;
+bool K0_Last_State = false;
+bool K1_Last_State = false;
+
 uint8_t receivedata[2];
 uint8_t message[] = "Hello World";
 uint8_t uart4_rx_buffer;
@@ -97,15 +103,19 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
         HAL_UART_Transmit(&huart1, message, strlen(message), 100);
         HAL_UART_Receive_IT(&huart1, receivedata, 2);
     }
-    // if (huart == &huart4) {
-    //     // 输出调试信息
-    //     char debug_msg[50];
-    //     sprintf(debug_msg, "UART4 received: 0x%02X\r\n", uart4_rx_buffer);
-    //     HAL_UART_Transmit(&huart1, (uint8_t*)debug_msg, strlen(debug_msg), 100);
-        
-    //     // 继续接收下一个字节
-    //     HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
-    // }
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+  if (htim == &htim6){
+    bool K0_Read = (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET);
+    bool K1_Read = (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1) == GPIO_PIN_RESET);
+    
+    K0_Current_State = K0_Read;
+    K1_Current_State = K1_Read;
+    
+    K0_Last_State = K0_Current_State;
+    K1_Last_State = K1_Current_State;
+  }
 }
 /* USER CODE END 0 */
 
@@ -154,6 +164,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   MX_USART6_UART_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   OLED_Init();
 
@@ -248,6 +259,9 @@ int main(void)
   OLED_ShowString(1, 14, "mm");
   OLED_ShowString(2, 6, "mm");
   OLED_ShowString(2, 14, "mm");
+
+  bool K0_STRAIGHT = true;
+  bool K1_RIGHTWARD = false;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -258,11 +272,29 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     uint32_t current_time = HAL_GetTick();
+    /*------------------------------------------------------------------------按键执行部分--------------------------------------------------------------------*/
+    if (K0_Current_State && !K0_Last_State) {
+        // K0按键被按下
+        K0_STRAIGHT = true;
+        K1_RIGHTWARD = false;
+        target_yaw = yaw;  
+        OLED_ShowString(4,1,"tar_yaw:");
+        OLED_ShowNum(4,9,target_yaw,3);
+    }
+    if (!K0_Current_State && K0_Last_State) {
+        // K0按键被释放
+        K0_STRAIGHT = false;
+        K1_RIGHTWARD = true;
+        target_yaw = yaw; 
+        OLED_ShowString(4,1,"tar_yaw:");
+        OLED_ShowNum(4,9,target_yaw,3);
+    }
+
     /*------------------------------------------------------------------------舵机执行部分--------------------------------------------------------------------*/
-    // Servo_SetAngle(&servo3, 0);
-    // HAL_Delay(200);
-    // Servo_SetAngle(&servo3, 60);
-    // HAL_Delay(200);
+    Servo_SetAngle(&servo3, 0);
+    HAL_Delay(200);
+    Servo_SetAngle(&servo3, 60);
+    HAL_Delay(200);
     
 
     /*-----------------------------------------------------------------超声波执行部分（暂不使用）-------------------------------------------------------------------------*/
@@ -301,9 +333,15 @@ int main(void)
 
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
-    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);//内置启用超声波检测右侧墙的距离
-    
-    
+    if(K0_STRAIGHT){
+      Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);
+    }
+    if(K1_RIGHTWARD){
+      Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);//内置启用超声波检测右侧墙的距离
+    }
+
+
+
   }
   /* USER CODE END 3 */
 }

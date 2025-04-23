@@ -126,6 +126,10 @@ void Error_Handler(void);
 #define Trig_2_GPIO_Port GPIOG
 #define M4_E2_Pin GPIO_PIN_3
 #define M4_E2_GPIO_Port GPIOB
+#define K1_Pin GPIO_PIN_8
+#define K1_GPIO_Port GPIOB
+#define K0_Pin GPIO_PIN_9
+#define K0_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

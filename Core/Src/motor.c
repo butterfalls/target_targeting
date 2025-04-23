@@ -168,6 +168,7 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
         Motor_SetSpeed(id4, 0);
         return;
     }
+    OLED_ShowNum(3,5,yaw,3);
 
     // 获取超声波数据
     float distances[4];
@@ -270,6 +271,7 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
         Motor_SetSpeed(id4, 0);
         return;
     }
+    OLED_ShowNum(3,5,yaw,3);
 
     // 计算偏航角误差
     float yaw_error = target_yaw - yaw;

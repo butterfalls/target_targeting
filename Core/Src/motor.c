@@ -219,11 +219,11 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     encoder_pid_output = fmaxf(fminf(encoder_pid_output, max_pid_output), -max_pid_output);
     
     // 前侧轮子 - 向内运动
-    float speed1 = (base_speed - encoder_pid_output - yaw_pid_output);  // 左前
-    float speed2 = (base_speed + encoder_pid_output + yaw_pid_output);  // 右前
+    float speed1 = (base_speed - encoder_pid_output - yaw_pid_output);  // 右前
+    float speed2 = (base_speed + encoder_pid_output + yaw_pid_output);  // 左后
     
     // 后侧轮子 - 向内运动
-    float speed3 = (base_speed - encoder_pid_output - yaw_pid_output);  // 左后
+    float speed3 = (base_speed - encoder_pid_output - yaw_pid_output);  // 左前
     float speed4 = (base_speed + encoder_pid_output + yaw_pid_output);  // 右后
 
     // 限幅

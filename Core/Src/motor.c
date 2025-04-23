@@ -238,10 +238,6 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     Motor_SetSpeed(id3, speed3);
     Motor_SetSpeed(id4, speed4);
 
-    // 输出调试信息，包括超声波数据和垄的平行度
-    OLED_ShowString(4,1,"M1");
-    OLED_ShowNum(4,3,speed1,3);
-
     // 输出调试信息，包括编码器误差和PID输出
     // Debug_Output_Yaw("RIGHTWARD", yaw_error, yaw_pid_output, speed1, speed2, speed3, speed4);
 }

@@ -234,6 +234,8 @@ int main(void)
   if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) == 0) {
       OLED_ShowString(3,1,"yaw:");
       OLED_ShowNum(3,5,yaw,3);
+      OLED_ShowString(3,9,"TAR:");
+      OLED_ShowNum(3,13,target_yaw,3);
   }
 
   
@@ -302,6 +304,9 @@ int main(void)
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);//内置启用超声波检测右侧墙的距离
+    // Update_Target_Yaw();
+    OLED_ShowNum(3,5,yaw,3);
+    OLED_ShowNum(3,13,target_yaw,3);
 
   }
   /* USER CODE END 3 */

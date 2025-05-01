@@ -14,6 +14,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 float target_yaw = 0.0f;
+float yaw = 0.0f; 
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -101,6 +102,8 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
         Motor_SetSpeed(id4, 0);
         return;
     }
+    OLED_ShowNum(3,5,yaw,3);
+    OLED_ShowNum(3,13,target_yaw,3);
     
     float yaw_error = target_yaw - yaw;
     if (yaw_error > 180) yaw_error -= 360;
@@ -121,11 +124,14 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     float yaw_pid_output = 0.0f;
     if (fabs(yaw_error) > 1.0f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output), -max_pid_output);
+        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*10), -max_pid_output*10);
     } else {
         // 误差小于1度时，重置PID控制器
         PID_Reset(&pid_yaw);
     }
+
+    // OLED_ShowNum(4,1,yaw_error,3);
+    // OLED_ShowNum(1,1,yaw_pid_output,5);
     
     // 计算前后轮组的PID输出
     float front_pid_output = PID_Calculate(&pid_front, front_error, dt);
@@ -142,8 +148,8 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     float speed2 = (base_speed + front_pid_output + position_pid_output + yaw_pid_output);   // 右后
     
     // 后侧轮子 - 向内运动
-    float speed3 = -(base_speed + rear_pid_output + position_pid_output - yaw_pid_output);   // 左后
-    float speed4 = (base_speed - rear_pid_output - position_pid_output + yaw_pid_output);    // 右前
+    float speed3 = -(base_speed + rear_pid_output + position_pid_output + yaw_pid_output);   // 左后
+    float speed4 = (base_speed - rear_pid_output - position_pid_output - yaw_pid_output);    // 右前
 
     // 限幅
     speed1 = fmaxf(fminf(speed1, 100.0f), -100.0f);
@@ -198,13 +204,13 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float base_speed = speed;
     
     // 限制PID输出的最大值，防止过度修正
-    float max_pid_output = base_speed * 0.3f;  // 降低PID输出最大值为基准速度的30%
+    float max_pid_output = base_speed * 0.4f;  // 降低PID输出最大值为基准速度的30%
     
     // 计算偏航角PID输出
     float yaw_pid_output = 0.0f;
     if (fabs(yaw_error) > 1.0f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output), -max_pid_output);
+        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*2), -max_pid_output*2);
     } else {
         // 误差小于1度时，重置PID控制器
         PID_Reset(&pid_yaw);

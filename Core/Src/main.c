@@ -299,7 +299,8 @@ int main(void)
 
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
-    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);//内置启用超声波检测右侧墙的距离
+    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);
+    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);
     // Update_Target_Yaw();
     OLED_ShowNum(3,13,target_yaw,3);
 

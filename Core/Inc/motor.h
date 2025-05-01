@@ -48,17 +48,10 @@ void Motor_Init(Motor_ID id,
 
 void Motor_SetSpeed(Motor_ID id, int16_t speed);
 int32_t Motor_GetEncoder(Motor_ID id);
-void Motor_Forward(Motor_ID id, Motor_ID id2, int16_t speed);
 void Motor_Rightward(Motor_ID id, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
 void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
-void Motor_TurnLeft90(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
-void Motor_TurnLeft90_Blocking(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
-void Debug_Output(const char* movement, int32_t error, float pid_out, float speed1, float speed2);
-void Debug_Output_Yaw(const char* movement, float yaw_error, float pid_out, float speed1, float speed2, float speed3, float speed4);
 void straight_us100(float distance);
-
-// 基于超声波数据计算垄的平行度
-float Calculate_Furrow_Parallel(float distance1, float distance2, float* yaw_target, bool* use_ultrasonic_control);
+void Update_Target_Yaw(void);
 
 #ifdef __cplusplus
 }

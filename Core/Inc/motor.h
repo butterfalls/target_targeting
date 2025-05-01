@@ -37,6 +37,7 @@ typedef enum {
 extern Motor motors[MOTOR_COUNT];
 extern float target_speed;
 extern float target_yaw;   // 目标偏航角
+extern float yaw;
 extern uint32_t prev_time;
 
 /* Exported functions prototypes ---------------------------------------------*/

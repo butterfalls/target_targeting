@@ -19,6 +19,33 @@ PIDController pid_yaw = {
     .max_integral = 50.0f  // 降低积分上限
 };
 
+PIDController pid_front = {
+    .Kp = 2.0f,
+    .Ki = 0.05f,
+    .Kd = 0.1f,
+    .integral = 0.0f,
+    .prev_error = 0.0f,
+    .max_integral = 50.0f
+};
+
+PIDController pid_rear = {
+    .Kp = 2.0f,
+    .Ki = 0.05f,
+    .Kd = 0.1f,
+    .integral = 0.0f,
+    .prev_error = 0.0f,
+    .max_integral = 50.0f
+};
+
+PIDController pid_position = {
+    .Kp = 2.0f,
+    .Ki = 0.05f,
+    .Kd = 0.1f,
+    .integral = 0.0f,
+    .prev_error = 0.0f,
+    .max_integral = 50.0f
+};
+
 /* Exported functions --------------------------------------------------------*/
 float PID_Calculate(PIDController* pid, float error, float dt) {
     // 添加时间差保护

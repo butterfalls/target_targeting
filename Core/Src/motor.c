@@ -204,13 +204,13 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float base_speed = speed;
     
     // 限制PID输出的最大值，防止过度修正
-    float max_pid_output = base_speed * 0.4f;  // 降低PID输出最大值为基准速度的30%
+    float max_pid_output = base_speed * 0.3f;  // 降低PID输出最大值为基准速度的30%
     
     // 计算偏航角PID输出
     float yaw_pid_output = 0.0f;
     if (fabs(yaw_error) > 1.0f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*2), -max_pid_output*2);
+        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*10), -max_pid_output*10);
     } else {
         // 误差小于1度时，重置PID控制器
         PID_Reset(&pid_yaw);

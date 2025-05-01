@@ -52,6 +52,7 @@ void Motor_Rightward(Motor_ID id, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
 void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
 void straight_us100(float distance);
 void Update_Target_Yaw(void);
+void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_speed, float side_distance, float target_distance);
 
 #ifdef __cplusplus
 }

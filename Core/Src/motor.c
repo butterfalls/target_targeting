@@ -251,6 +251,9 @@ void straight_us100(float distance)/*需要调整参数*/
 }
 
 void Update_Target_Yaw(void)
+/*要求：
+0和1改为右侧两个超声波，2改为前向超声波
+*/
 {
     static float prev_distances[3] = {0.0f, 0.0f, 0.0f};  // 存储上一次的超声波距离
     static bool first_measurement = true;            // 是否是第一次测量
@@ -270,18 +273,17 @@ void Update_Target_Yaw(void)
     }
     
     // 计算移动距离（使用前向超声波传感器测得值的差值）
-    float move_distance = fabsf(current_distances[2] - prev_distances[2]);
+    float move_distance = (current_distances[2] - prev_distances[2]);
     
     // 如果移动距离太小，不进行角度计算
     if (move_distance < 50.0f) {  // 5cm作为最小移动距离阈值
         return;
     }
     
-    // 计算两个超声波传感器与垄之间的角度
     for (int i = 0; i < 2; i++) {
         float delta_distance = current_distances[i] - prev_distances[i];
         if (fabsf(delta_distance) > 0.1f) {  // 避免除以接近0的值
-            angles[i] = atan2f(-delta_distance, move_distance) * 180.0f / M_PI;
+            angles[i] = atanf(delta_distance/move_distance) * 180.0f / M_PI;
             valid_angles[valid_count++] = angles[i];
         }
     }
@@ -305,7 +307,7 @@ void Update_Target_Yaw(void)
                 avg_angle /= valid_count;
                 
                 // 更新目标偏航角
-                target_yaw += avg_angle;
+                target_yaw -= avg_angle;
                 
                 // 确保目标偏航角在-180到180度之间
                 if (target_yaw > 180.0f) {
@@ -317,3 +319,45 @@ void Update_Target_Yaw(void)
         }
     }
 }
+
+void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_speed, float side_distance, float target_distance)
+{
+    // 计算距离误差
+    float distance_error = side_distance - target_distance;
+    
+    // 定义调整参数
+    const float kp = 0.5f;  // 比例系数，可以根据实际情况调整
+    const float max_adjustment = 30.0f;  // 最大速度调整量
+    
+    // 计算速度调整量
+    float speed_adjustment = kp * distance_error;
+    
+    // 限制速度调整量
+    if (speed_adjustment > max_adjustment) {
+        speed_adjustment = max_adjustment;
+    } else if (speed_adjustment < -max_adjustment) {
+        speed_adjustment = -max_adjustment;
+    }
+    
+    // 根据距离误差调整速度
+    float speed1, speed2;
+    
+    if (distance_error < 0) {  // 距离过近
+        // 靠近的一侧加速
+        speed1 = base_speed + speed_adjustment;  // 靠近的一侧
+        speed2 = base_speed;                     // 远离的一侧
+    } else {  // 距离过远
+        // 远离的一侧加速
+        speed1 = base_speed;                     // 靠近的一侧
+        speed2 = base_speed + speed_adjustment;  // 远离的一侧
+    }
+    
+    // 限幅
+    speed1 = fmaxf(fminf(speed1, 100.0f), -100.0f);
+    speed2 = fmaxf(fminf(speed2, 100.0f), -100.0f);
+    
+    // 设置电机速度
+    Motor_SetSpeed(id1, speed1);
+    Motor_SetSpeed(id2, speed2);
+}
+

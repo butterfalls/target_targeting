@@ -49,10 +49,10 @@ void Motor_Init(Motor_ID id,
 
 void Motor_SetSpeed(Motor_ID id, int16_t speed);
 int32_t Motor_GetEncoder(Motor_ID id);
-void Motor_Rightward(Motor_ID id, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
-void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed);
-void straight_us100(float distance);
-void Update_Target_Yaw(void);
+void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed, float* yaw, float* target_yaw);
+void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed, float* yaw, float* target_yaw);
+void straight_us100(float distance, float* yaw, float* target_yaw);
+void Update_Target_Yaw(float* yaw, float* target_yaw);
 void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_speed, float side_distance, float target_distance);
 
 #ifdef __cplusplus

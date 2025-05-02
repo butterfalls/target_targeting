@@ -304,174 +304,174 @@ int main(void)
 
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
-    // Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-    // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-    Update_Target_Yaw(&yaw, &target_yaw);
+    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
+    // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
+    // Update_Target_Yaw(&yaw, &target_yaw);
     OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-'); 
     OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
     OLED_ShowNum(3,14,fabsf(target_yaw),3);
     OLED_ShowNum(3,6,fabsf(yaw),3);
     
     OLED_ShowNum(4,1,path,5);  // 显示毫秒
-    switch (path)
-    {
-    case 0:
-      if (distances[1]>=70)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // switch (path)
+    // {
+    // case 0:
+    //   if (distances[1]>=70)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
     
-    case 1:
-      if (distances[3]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 1:
+    //   if (distances[3]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
     
-    case 2:
-      if (distances[0]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 2:
+    //   if (distances[0]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
       
-      if (distances[0]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    //   if (distances[0]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change -= 1;
-      path +=1;
-      break;
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 3:
-      if (distances[0]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 3:
+    //   if (distances[0]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 4:
-      if (distances[3]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 4:
+    //   if (distances[3]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
       
-      path_change += 1;
+    //   path_change += 1;
     
-      if (distances[3]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   if (distances[3]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 5:
-      if (distances[3]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 5:
+    //   if (distances[3]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 6:
-      if (distances[0]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 6:
+    //   if (distances[0]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
     
-      if (distances[0]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   if (distances[0]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 7:
-      if (distances[0]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 7:
+    //   if (distances[0]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 8:
-      if (distances[3]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 8:
+    //   if (distances[3]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
     
-      if (distances[3]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   if (distances[3]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 9:
-      if (distances[3]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 9:
+    //   if (distances[3]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 10:
-      if (distances[0]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 10:
+    //   if (distances[0]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
     
-      if (distances[0]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   if (distances[0]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 11:
-      if (distances[0]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 11:
+    //   if (distances[0]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 12:
-      if (distances[3]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 12:
+    //   if (distances[3]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
     
-      if (distances[3]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   if (distances[3]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    default:
-      break;
+    // default:
+    //   break;
 
-    }
+    // }
 
   }
 

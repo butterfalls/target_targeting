@@ -306,170 +306,170 @@ int main(void)
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
     // Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-    // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
     // Update_Target_Yaw();
     OLED_ShowNum(3,5,yaw,3);
     OLED_ShowNum(3,13,target_yaw,3);
 
-    switch (path)
-    {
-    case 0:
-      while (distances[1]>=70)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // switch (path)
+    // {
+    // case 0:
+    //   while (distances[1]>=70)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
     
-    case 1:
-      while (distances[3]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 1:
+    //   while (distances[3]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
     
-    case 2:
-      while (distances[0]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 2:
+    //   while (distances[0]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
       
-      while (distances[0]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    //   while (distances[0]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change -= 1;
-      path +=1;
-      break;
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 3:
-      while (distances[0]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 3:
+    //   while (distances[0]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 4:
-      while (distances[3]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 4:
+    //   while (distances[3]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
       
-      path_change += 1;
+    //   path_change += 1;
     
-      while (distances[3]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   while (distances[3]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 5:
-      while (distances[3]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 5:
+    //   while (distances[3]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 6:
-      while (distances[0]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 6:
+    //   while (distances[0]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
     
-      while (distances[0]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   while (distances[0]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 7:
-      while (distances[0]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 7:
+    //   while (distances[0]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 8:
-      while (distances[3]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 8:
+    //   while (distances[3]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
     
-      while (distances[3]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   while (distances[3]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 9:
-      while (distances[3]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 9:
+    //   while (distances[3]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 10:
-      while (distances[0]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 10:
+    //   while (distances[0]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
     
-      while (distances[0]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   while (distances[0]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    case 11:
-      while (distances[0]>=70)
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }
-      path +=1;
-      break;
+    // case 11:
+    //   while (distances[0]>=70)
+    //   {
+    //     Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    //   }
+    //   path +=1;
+    //   break;
 
-    case 12:
-      while (distances[3]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
+    // case 12:
+    //   while (distances[3]>=70 && path_change==0)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
 
-      path_change += 1;
+    //   path_change += 1;
     
-      while (distances[3]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
-      break;
+    //   while (distances[3]<=70 && path_change==1)
+    //   {
+    //     Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+    //   }
+    //   path_change -= 1;
+    //   path +=1;
+    //   break;
 
-    default:
-      break;
+    // default:
+    //   break;
 
-    }
+    // }
   
 
   }

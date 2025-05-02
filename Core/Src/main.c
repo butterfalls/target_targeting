@@ -58,6 +58,8 @@ Motor motors[MOTOR_COUNT] = {0};
 float target_speed = 50.0f;
 uint32_t prev_time = 0;
 uint32_t oled_prev_time = 0;  // 添加OLED刷新时间变量
+uint32_t path=0;
+uint32_t path_change=0;
 
 uint8_t receivedata[2];
 uint8_t message[] = "Hello World";
@@ -304,9 +306,170 @@ int main(void)
     // Update_Target_Yaw();
     OLED_ShowNum(3,5,yaw,3);
     OLED_ShowNum(3,13,target_yaw,3);
+    switch (path)
+    {
+    case 0:
+      while (distances[1]>=70)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+      }
+      path +=1;
+      break;
+    
+    case 1:
+      while (distances[3]>=70)
+      {
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+      path +=1;
+      break;
+    
+    case 2:
+      while (distances[0]>=70 && path_change==0)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
 
+      path_change += 1;
+      
+      while (distances[0]<=70 && path_change==1)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+
+      path_change -= 1;
+      path +=1;
+      break;
+
+    case 3:
+      while (distances[0]>=70)
+      {
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+      }
+      path +=1;
+      break;
+
+    case 4:
+      while (distances[3]>=70 && path_change==0)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+      
+      path_change += 1;
+    
+      while (distances[3]<=70 && path_change==1)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+      path_change -= 1;
+      path +=1;
+      break;
+
+    case 5:
+      while (distances[3]>=70)
+      {
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+      path +=1;
+      break;
+
+    case 6:
+      while (distances[0]>=70 && path_change==0)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+
+      path_change += 1;
+    
+      while (distances[0]<=70 && path_change==1)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+      path_change -= 1;
+      path +=1;
+      break;
+
+    case 7:
+      while (distances[0]>=70)
+      {
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+      }
+      path +=1;
+      break;
+
+    case 8:
+      while (distances[3]>=70 && path_change==0)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+
+      path_change += 1;
+    
+      while (distances[3]<=70 && path_change==1)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+      path_change -= 1;
+      path +=1;
+      break;
+
+    case 9:
+      while (distances[3]>=70)
+      {
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+      path +=1;
+      break;
+
+    case 10:
+      while (distances[0]>=70 && path_change==0)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+
+      path_change += 1;
+    
+      while (distances[0]<=70 && path_change==1)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+      path_change -= 1;
+      path +=1;
+      break;
+
+    case 11:
+      while (distances[0]>=70)
+      {
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+      }
+      path +=1;
+      break;
+
+    case 12:
+      while (distances[3]>=70 && path_change==0)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+
+      path_change += 1;
+    
+      while (distances[3]<=70 && path_change==1)
+      {
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }
+      path_change -= 1;
+      path +=1;
+      break;
+
+    default:
+      break;
+
+    }
+  
 
   }
+
+
   /* USER CODE END 3 */
 }
 

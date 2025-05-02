@@ -171,7 +171,7 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     float yaw_pid_output = 0.0f;
     if (fabs(yaw_error) > 1.0f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
+        // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
         // 误差小于1度时，重置PID控制器
         PID_Reset(&pid_yaw);
@@ -180,12 +180,12 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     // 计算前后轮组的速度PID输出
     float front_pid_output = PID_Calculate(&pid_front, front_speed_error, dt);
     float rear_pid_output = PID_Calculate(&pid_rear, rear_speed_error, dt);
-    float position_pid_output = PID_Calculate(&pid_position, position_speed_error - yaw_pid_output, dt);
+    float position_pid_output = PID_Calculate(&pid_position, position_speed_error + yaw_pid_output, dt);
     
     // 限制PID输出
-    front_pid_output = fmaxf(fminf(front_pid_output, max_pid_output*1), -max_pid_output*1);
-    rear_pid_output = fmaxf(fminf(rear_pid_output, max_pid_output*1), -max_pid_output*1);
-    position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
+    // front_pid_output = fmaxf(fminf(front_pid_output, max_pid_output*1), -max_pid_output*1);
+    // rear_pid_output = fmaxf(fminf(rear_pid_output, max_pid_output*1), -max_pid_output*1);
+    // position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
     
     // 前轮组 - 左前右前同步
     float motor_speed1 = -(base_speed - front_pid_output - position_pid_output - yaw_pid_output);  // 左前
@@ -282,7 +282,7 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float yaw_pid_output = 0.0f;
     if (fabs(yaw_error) > 1.0f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
+        // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
         // 误差小于1度时，重置PID控制器
         PID_Reset(&pid_yaw);
@@ -291,12 +291,12 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     // 计算左右轮组的速度PID输出
     float left_pid_output = PID_Calculate(&pid_front, left_speed_error, dt);
     float right_pid_output = PID_Calculate(&pid_rear, right_speed_error, dt);
-    float position_pid_output = PID_Calculate(&pid_position, position_speed_error - yaw_pid_output, dt);
+    float position_pid_output = PID_Calculate(&pid_position, position_speed_error + yaw_pid_output, dt);
     
     // 限制PID输出
-    left_pid_output = fmaxf(fminf(left_pid_output, max_pid_output*1), -max_pid_output*1);
-    right_pid_output = fmaxf(fminf(right_pid_output, max_pid_output*1), -max_pid_output*1);
-    position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
+    // left_pid_output = fmaxf(fminf(left_pid_output, max_pid_output*1), -max_pid_output*1);
+    // right_pid_output = fmaxf(fminf(right_pid_output, max_pid_output*1), -max_pid_output*1);
+    // position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
     
     // 左侧轮子 - 正转
     float motor_speed1 = -(base_speed - left_pid_output - position_pid_output - yaw_pid_output);  // 左前

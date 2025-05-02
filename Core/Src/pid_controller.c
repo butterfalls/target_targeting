@@ -11,9 +11,9 @@ PIDController pid_encoder = {
 };
 
 PIDController pid_yaw = {
-    .Kp = 1.2f,    // 比例系数
-    .Ki = 0.15f,   // 积分系数
-    .Kd = 0.291f,    // 微分系数
+    .Kp = 1.1f,    // 比例系数
+    .Ki = 0.08f,   // 积分系数
+    .Kd = 0.0f,    // 微分系数
     .integral = 0.0f,
     .prev_error = 0.0f,
     .max_integral = 50.0f  // 降低积分上限

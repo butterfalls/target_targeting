@@ -126,6 +126,11 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     float speed3 = (enc3 - prev_enc3) / dt;
     float speed4 = (enc4 - prev_enc4) / dt;
 
+    OLED_ShowNum(1,1,speed1,5);
+    OLED_ShowNum(1,9,speed2,5);
+    OLED_ShowNum(2,1,speed3,5);
+    OLED_ShowNum(2,9,speed4,5);
+
     // 更新上一次的编码器值
     prev_enc1 = enc1;
     prev_enc2 = enc2;

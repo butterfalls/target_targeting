@@ -117,8 +117,8 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     // 获取当前编码器值
     int32_t enc1 = Motor_GetEncoder(id1);
     int32_t enc2 = -Motor_GetEncoder(id2);
-    int32_t enc3 = Motor_GetEncoder(id3);
-    int32_t enc4 = -Motor_GetEncoder(id4);
+    int32_t enc3 = -Motor_GetEncoder(id3);
+    int32_t enc4 = Motor_GetEncoder(id4);
 
     // 计算编码器速度（单位时间内的变化量）
     float speed1 = (enc1 - prev_enc1) / dt;
@@ -126,10 +126,15 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     float speed3 = (enc3 - prev_enc3) / dt;
     float speed4 = (enc4 - prev_enc4) / dt;
 
-    OLED_ShowNum(1,1,speed1,5);
-    OLED_ShowNum(1,9,speed2,5);
-    OLED_ShowNum(2,1,speed3,5);
-    OLED_ShowNum(2,9,speed4,5);
+    // 显示速度，分别显示正负号和4位数字
+    // OLED_ShowChar(1,1,speed1 >= 0 ? '+' : '-');  // 左前符号
+    // OLED_ShowNum(1,2,(int16_t)fabsf(speed1),4);  // 左前数字
+    // OLED_ShowChar(1,9,speed2 >= 0 ? '+' : '-');  // 右后符号
+    // OLED_ShowNum(1,10,(int16_t)fabsf(speed2),4);  // 右后数字
+    // OLED_ShowChar(2,1,speed3 >= 0 ? '+' : '-');  // 左后符号
+    // OLED_ShowNum(2,2,(int16_t)fabsf(speed3),4);  // 左后数字
+    // OLED_ShowChar(2,9,speed4 >= 0 ? '+' : '-');  // 右前符号
+    // OLED_ShowNum(2,10,(int16_t)fabsf(speed4),4);  // 右前数字
 
     // 更新上一次的编码器值
     prev_enc1 = enc1;
@@ -153,9 +158,9 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     else if (yaw_error < -180) yaw_error += 360;
 
     // 计算速度误差
-    float front_speed_error = speed1 - speed2;  // 前侧轮子速度同步
-    float rear_speed_error = speed3 - speed4;   // 后侧轮子速度同步
-    float position_speed_error = (front_speed_error + rear_speed_error) / 2;  // 左右两侧速度同步
+    float front_speed_error = speed1 - speed4;  // 前轮组速度同步（左前-右前）
+    float rear_speed_error = speed2 - speed3;   // 后轮组速度同步（右后-左后）
+    float position_speed_error = (front_speed_error - rear_speed_error) / 2;  // 前后轮组速度同步
 
     // 速度分配 - 修正后的分配方式
     float base_speed = speed;
@@ -167,7 +172,7 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     float yaw_pid_output = 0.0f;
     if (fabs(yaw_error) > 1.0f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*10), -max_pid_output*10);
+        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
         // 误差小于1度时，重置PID控制器
         PID_Reset(&pid_yaw);
@@ -179,17 +184,17 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     float position_pid_output = PID_Calculate(&pid_position, position_speed_error - yaw_pid_output, dt);
     
     // 限制PID输出
-    front_pid_output = fmaxf(fminf(front_pid_output, max_pid_output), -max_pid_output);
-    rear_pid_output = fmaxf(fminf(rear_pid_output, max_pid_output), -max_pid_output);
-    position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output), -max_pid_output);
+    front_pid_output = fmaxf(fminf(front_pid_output, max_pid_output*1), -max_pid_output*1);
+    rear_pid_output = fmaxf(fminf(rear_pid_output, max_pid_output*1), -max_pid_output*1);
+    position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
     
-    // 前侧轮子 - 向内运动
+    // 前轮组 - 左前右前同步
     float motor_speed1 = -(base_speed - front_pid_output - position_pid_output - yaw_pid_output);  // 左前
-    float motor_speed2 = (base_speed + front_pid_output + position_pid_output + yaw_pid_output);   // 右后
+    float motor_speed4 = (base_speed + front_pid_output - position_pid_output - yaw_pid_output);   // 右前
     
-    // 后侧轮子 - 向内运动
-    float motor_speed3 = -(base_speed + rear_pid_output + position_pid_output + yaw_pid_output);   // 左后
-    float motor_speed4 = (base_speed - rear_pid_output - position_pid_output - yaw_pid_output);    // 右前
+    // 后轮组 - 左后右后同步
+    float motor_speed2 = (base_speed - rear_pid_output + position_pid_output + yaw_pid_output);   // 右后
+    float motor_speed3 = -(base_speed + rear_pid_output + position_pid_output + yaw_pid_output);  // 左后
 
     // 限幅
     motor_speed1 = fmaxf(fminf(motor_speed1, 100.0f), -100.0f);
@@ -233,6 +238,16 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float speed3 = (enc3 - prev_enc3) / dt;
     float speed4 = (enc4 - prev_enc4) / dt;
 
+    // 显示速度，分别显示正负号和4位数字
+    // OLED_ShowChar(1,1,speed1 >= 0 ? '+' : '-');  // 左前符号
+    // OLED_ShowNum(1,2,(int16_t)fabsf(speed1),4);  // 左前数字
+    // OLED_ShowChar(1,9,speed2 >= 0 ? '+' : '-');  // 右后符号
+    // OLED_ShowNum(1,10,(int16_t)fabsf(speed2),4);  // 右后数字
+    // OLED_ShowChar(2,1,speed3 >= 0 ? '+' : '-');  // 左后符号
+    // OLED_ShowNum(2,2,(int16_t)fabsf(speed3),4);  // 左后数字
+    // OLED_ShowChar(2,9,speed4 >= 0 ? '+' : '-');  // 右前符号
+    // OLED_ShowNum(2,10,(int16_t)fabsf(speed4),4);  // 右前数字
+
     // 更新上一次的编码器值
     prev_enc1 = enc1;
     prev_enc2 = enc2;
@@ -264,13 +279,13 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float base_speed = speed;
     
     // 限制PID输出的最大值，防止过度修正
-    float max_pid_output = base_speed * 0.75f;
+    float max_pid_output = base_speed * 0.3f;
     
     // 计算偏航角PID输出
     float yaw_pid_output = 0.0f;
     if (fabs(yaw_error) > 1.0f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*10), -max_pid_output*10);
+        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
         // 误差小于1度时，重置PID控制器
         PID_Reset(&pid_yaw);
@@ -282,16 +297,16 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float position_pid_output = PID_Calculate(&pid_position, position_speed_error - yaw_pid_output, dt);
     
     // 限制PID输出
-    left_pid_output = fmaxf(fminf(left_pid_output, max_pid_output), -max_pid_output);
-    right_pid_output = fmaxf(fminf(right_pid_output, max_pid_output), -max_pid_output);
-    position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output), -max_pid_output);
+    left_pid_output = fmaxf(fminf(left_pid_output, max_pid_output*1), -max_pid_output*1);
+    right_pid_output = fmaxf(fminf(right_pid_output, max_pid_output*1), -max_pid_output*1);
+    position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
     
     // 左侧轮子 - 正转
     float motor_speed1 = -(base_speed - left_pid_output - position_pid_output - yaw_pid_output);  // 左前
-    float motor_speed3 = (base_speed - left_pid_output - position_pid_output - yaw_pid_output);   // 左后
+    float motor_speed3 = (base_speed + left_pid_output - position_pid_output - yaw_pid_output);   // 左后
     
     // 右侧轮子 - 反转
-    float motor_speed2 = (base_speed + right_pid_output + position_pid_output + yaw_pid_output);  // 右前
+    float motor_speed2 = (base_speed - right_pid_output + position_pid_output + yaw_pid_output);  // 右前
     float motor_speed4 = -(base_speed + right_pid_output + position_pid_output + yaw_pid_output); // 右后
 
     // 限幅

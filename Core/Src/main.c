@@ -299,10 +299,12 @@ int main(void)
 
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
-    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);
-    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30);
+    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
     // Update_Target_Yaw();
+    OLED_ShowNum(3,5,yaw,3);
     OLED_ShowNum(3,13,target_yaw,3);
+
 
   }
   /* USER CODE END 3 */

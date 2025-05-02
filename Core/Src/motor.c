@@ -73,7 +73,7 @@ int32_t Motor_GetEncoder(Motor_ID id)
     return motors[id].encoder_total;
 }
 
-void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed) {
+void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed, float* yaw, float* target_yaw) {
     uint32_t current_time = HAL_GetTick();
     float dt = (current_time - prev_time) / 1000.0f;
 
@@ -88,24 +88,18 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     int32_t enc3 = Motor_GetEncoder(id3);
     int32_t enc4 = -Motor_GetEncoder(id4);
 
-    // OLED_ShowNum(1,1,enc1,5);
-    // OLED_ShowNum(1,9,enc2,5);
-    // OLED_ShowNum(2,1,enc3,5);
-    // OLED_ShowNum(2,9,enc4,5);
-
     // 获取当前偏航角
-    float pitch, roll, yaw;
-    if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) != 0) {
+    float pitch, roll, current_yaw;
+    if (MPU6050_DMP_Get_Data(&pitch, &roll, &current_yaw) != 0) {
         Motor_SetSpeed(id1, 0);
         Motor_SetSpeed(id2, 0);
         Motor_SetSpeed(id3, 0);
         Motor_SetSpeed(id4, 0);
         return;
     }
-    OLED_ShowNum(3,5,yaw,3);
-    OLED_ShowNum(3,13,target_yaw,3);
-    
-    float yaw_error = target_yaw - yaw;
+    *yaw = current_yaw;
+        
+    float yaw_error = *target_yaw - *yaw;
     if (yaw_error > 180) yaw_error -= 360;
     else if (yaw_error < -180) yaw_error += 360;
 
@@ -164,7 +158,7 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     Motor_SetSpeed(id4, speed4);
 }
 
-void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed) {
+void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed, float* yaw, float* target_yaw) {
     uint32_t current_time = HAL_GetTick();
     float dt = (current_time - prev_time) / 1000.0f;
     
@@ -181,17 +175,18 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     int32_t enc4 = -Motor_GetEncoder(id4);
 
     // 获取当前偏航角
-    float pitch, roll, yaw;
-    if (MPU6050_DMP_Get_Data(&pitch, &roll, &yaw) != 0) {
+    float pitch, roll, current_yaw;
+    if (MPU6050_DMP_Get_Data(&pitch, &roll, &current_yaw) != 0) {
         Motor_SetSpeed(id1, 0);
         Motor_SetSpeed(id2, 0);
         Motor_SetSpeed(id3, 0);
         Motor_SetSpeed(id4, 0);
         return;
     }
+    *yaw = current_yaw;
 
     // 计算偏航角误差
-    float yaw_error = target_yaw - yaw;
+    float yaw_error = *target_yaw - *yaw;
     if (yaw_error > 180) yaw_error -= 360;
     else if (yaw_error < -180) yaw_error += 360;
 
@@ -247,7 +242,7 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     Motor_SetSpeed(id4, speed4);
 }
 
-void straight_us100(float distance)/*需要调整参数*/
+void straight_us100(float distance, float* yaw, float* target_yaw)
 {
     float distance_forward = distance;
     
@@ -267,10 +262,10 @@ void straight_us100(float distance)/*需要调整参数*/
     } else { 
         speed = 0;
     }
-    
+    //Motor_Rightward()
 }
 
-void Update_Target_Yaw(void)
+void Update_Target_Yaw(float* yaw, float* target_yaw) 
 /*要求：
 0和1改为右侧两个超声波，2改为前向超声波
 */
@@ -290,8 +285,7 @@ void Update_Target_Yaw(void)
         prev_distances[2] = current_distances[2];//前向超声波
         first_measurement = false;
         return;
-    }
-    
+    }    
     // 计算移动距离（使用前向超声波传感器测得值的差值）
     float move_distance = (current_distances[2] - prev_distances[2]);
     
@@ -327,13 +321,13 @@ void Update_Target_Yaw(void)
                 avg_angle /= valid_count;
                 
                 // 更新目标偏航角
-                target_yaw -= avg_angle;
+                *target_yaw -= avg_angle;
                 
                 // 确保目标偏航角在-180到180度之间
-                if (target_yaw > 180.0f) {
-                    target_yaw -= 360.0f;
-                } else if (target_yaw < -180.0f) {
-                    target_yaw += 360.0f;
+                if (*target_yaw > 180.0f) {
+                    *target_yaw -= 360.0f;
+                } else if (*target_yaw < -180.0f) {
+                    *target_yaw += 360.0f;
                 }
             }
         }

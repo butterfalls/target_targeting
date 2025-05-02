@@ -60,6 +60,8 @@ uint32_t prev_time = 0;
 uint32_t oled_prev_time = 0;  // 添加OLED刷新时间变量
 uint32_t path=0;
 uint32_t path_change=0;
+float distances[4];
+
 
 uint8_t receivedata[2];
 uint8_t message[] = "Hello World";
@@ -235,10 +237,8 @@ int main(void)
   prev_time = HAL_GetTick();
 
   /*------------------------------------MPU6050 DMP执行部分-------------------------------------*/
-      OLED_ShowString(3,1,"yaw:");
-      OLED_ShowNum(3,5,yaw,3);
-      OLED_ShowString(3,9,"TAR:");
-      OLED_ShowNum(3,13,target_yaw,3);
+    OLED_ShowString(3,1,"yaw:");
+    OLED_ShowString(3,9,"TAR:");
 
   
   // 设置目标偏航角为当前偏航角
@@ -291,25 +291,27 @@ int main(void)
     // HAL_Delay(50);  // 增加延时到50ms，给传感器更多恢复时间
 
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/
-    float distances[4];
     US100_GetAllValidDistances(distances);
     
-    if (distances[0] > 0 && distances[1] > 0 && distances[2] > 0 && distances[3] > 0 && current_time - oled_prev_time >= 100) {
-      OLED_ShowNum(1, 1, distances[0], 5);
-      OLED_ShowNum(1, 9, distances[1], 5);
-      OLED_ShowNum(2, 1, distances[2], 5);
-      OLED_ShowNum(2, 9, distances[3], 5);
-      oled_prev_time = current_time;
-      
-    }
+    // if (current_time - oled_prev_time >= 1) {  // 每100ms更新一次显示
+        // 显示超声波距离，即使某些传感器没有数据也显示
+        OLED_ShowNum(1, 1, distances[0], 5);  // 左前
+        OLED_ShowNum(1, 9, distances[1], 5);  // 右前
+        OLED_ShowNum(2, 1, distances[2], 5);  // 左后
+        OLED_ShowNum(2, 9, distances[3], 5);  // 右后
+        oled_prev_time = current_time;
+    // }
 
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
-    // Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-    Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
     // Update_Target_Yaw();
-    OLED_ShowNum(3,5,yaw,3);
-    OLED_ShowNum(3,13,target_yaw,3);
+    OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-'); 
+    OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
+    OLED_ShowNum(3,14,fabsf(target_yaw),3);
+    OLED_ShowNum(3,6,fabsf(yaw),3);
+    
 
     // switch (path)
     // {

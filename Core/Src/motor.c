@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include "oled.h"
 #include "tim.h"
+#include "us100_uart.h"
 
 // 定义圆周率
 #ifndef M_PI

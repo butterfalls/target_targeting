@@ -11,12 +11,39 @@ PIDController pid_encoder = {
 };
 
 PIDController pid_yaw = {
-    .Kp = 2.0f,    // 降低比例系数
-    .Ki = 0.05f,   // 降低积分系数
-    .Kd = 0.1f,    // 降低微分系数
+    .Kp = 1.2f,    // 降低比例系数
+    .Ki = 0.15f,   // 降低积分系数
+    .Kd = 0.0f,    // 降低微分系数
     .integral = 0.0f,
     .prev_error = 0.0f,
     .max_integral = 50.0f  // 降低积分上限
+};
+
+PIDController pid_front = {
+    .Kp = 0.01f,
+    .Ki = 0.0012f,
+    .Kd = 0.00001f,
+    .integral = 0.0f,
+    .prev_error = 0.0f,
+    .max_integral = 50.0f
+};
+
+PIDController pid_rear = {
+    .Kp = 0.01f,
+    .Ki = 0.0012f,
+    .Kd = 0.00001f,
+    .integral = 0.0f,
+    .prev_error = 0.0f,
+    .max_integral = 50.0f
+};
+
+PIDController pid_position = {
+    .Kp = 0.01f,
+    .Ki = 0.0012f,
+    .Kd = 0.00001f,
+    .integral = 0.0f,
+    .prev_error = 0.0f,
+    .max_integral = 50.0f
 };
 
 /* Exported functions --------------------------------------------------------*/

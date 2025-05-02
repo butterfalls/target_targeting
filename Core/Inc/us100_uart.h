@@ -55,3 +55,5 @@ void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 void US100_GetAllValidDistances(float* distances);
 
 #endif /* US100_UART_H */
+
+/*使用时在开头init startmeasure rxcplt修改，while里只需要updateall*/

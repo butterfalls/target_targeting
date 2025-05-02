@@ -78,7 +78,7 @@ int32_t Motor_GetEncoder(Motor_ID id)
 }
 
 // 添加时间相关函数
-float Get_Time_Difference(void)
+uint32_t Get_Time_Difference(void)
 {
     uint32_t current_counter = __HAL_TIM_GET_COUNTER(&htim6);
     uint32_t diff;
@@ -90,7 +90,7 @@ float Get_Time_Difference(void)
     }
     
     prev_counter = current_counter;
-    return (float)diff ; 
+    return diff ; 
 }
 
 void Reset_Timer(void)

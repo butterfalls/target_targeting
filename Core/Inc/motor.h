@@ -57,7 +57,7 @@ void Update_Target_Yaw(float* yaw, float* target_yaw);
 void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_speed, float side_distance, float target_distance);
 
 // 添加时间相关函数
-float Get_Time_Difference(void);  // 获取时间差（秒）
+uint32_t Get_Time_Difference(void);  // 获取时间差（秒）
 void Reset_Timer(void);  // 重置计时器
 
 #ifdef __cplusplus

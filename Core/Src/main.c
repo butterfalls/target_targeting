@@ -331,7 +331,6 @@ int main(void)
     US100_GetAllValidDistances(distances);
     
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
-        // 显示超声波距离，即使某些传感器没有数据也显示
         OLED_ShowNum(1, 1, distances[0], 5);  // 左前
         OLED_ShowNum(1, 9, distances[1], 5);  // 右前
         OLED_ShowNum(2, 1, distances[2], 5);  // 左后

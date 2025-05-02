@@ -105,8 +105,6 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     uint32_t current_tick = HAL_GetTick();
     float dt = (current_tick - prev_tick) / 1000.0f;  // 转换为秒
     prev_tick = current_tick;
-    
-    OLED_ShowNum(4,1,dt*1000,5);  // 显示毫秒
 
     if (dt <= 0.001f) {
         dt = 0.001f;  // 最小时间差为1ms
@@ -216,9 +214,7 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     uint32_t current_tick = HAL_GetTick();
     float dt = (current_tick - prev_tick) / 1000.0f;  // 转换为秒
     prev_tick = current_tick;
-    
-    OLED_ShowNum(4,1,dt*1000,5);  // 显示毫秒
-    
+        
     // 添加时间差保护
     if (dt <= 0.001f) {
         dt = 0.001f;  // 最小时间差为1ms
@@ -347,9 +343,6 @@ void straight_us100(float distance, float* yaw, float* target_yaw)
 }
 
 void Update_Target_Yaw(float* yaw, float* target_yaw) 
-/*要求：
-0和1改为右侧两个超声波，2改为前向超声波
-*/
 {
     static float prev_distances[3] = {0.0f, 0.0f, 0.0f};  // 存储上一次的超声波距离
     static bool first_measurement = true;            // 是否是第一次测量
@@ -361,21 +354,21 @@ void Update_Target_Yaw(float* yaw, float* target_yaw)
     
     // 如果是第一次测量，只记录距离
     if (first_measurement) {
-        prev_distances[0] = current_distances[0];//把这两个超声波改成右侧的两个
-        prev_distances[1] = current_distances[1];
-        prev_distances[2] = current_distances[2];//前向超声波
+        prev_distances[1] = current_distances[1];//把这两个超声波改成右侧的两个
+        prev_distances[2] = current_distances[2];
+        prev_distances[0] = current_distances[0];//前向超声波
         first_measurement = false;
         return;
     }    
     // 计算移动距离（使用前向超声波传感器测得值的差值）
-    float move_distance = (current_distances[2] - prev_distances[2]);
+    float move_distance = (current_distances[0] - prev_distances[0]);
     
     // 如果移动距离太小，不进行角度计算
     if (move_distance < 50.0f) {  // 5cm作为最小移动距离阈值
         return;
     }
     
-    for (int i = 0; i < 2; i++) {
+    for (int i = 1; i < 3; i++) {
         float delta_distance = current_distances[i] - prev_distances[i];
         if (fabsf(delta_distance) > 0.1f) {  // 避免除以接近0的值
             angles[i] = atanf(delta_distance/move_distance) * 180.0f / M_PI;
@@ -384,8 +377,8 @@ void Update_Target_Yaw(float* yaw, float* target_yaw)
     }
     
     // 更新上一次的距离值
-    prev_distances[0] = current_distances[0];
     prev_distances[1] = current_distances[1];
+    prev_distances[2] = current_distances[2];
     
     // 如果有有效的角度值
     if (valid_count > 0) {

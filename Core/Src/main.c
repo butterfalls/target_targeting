@@ -162,7 +162,6 @@ int main(void)
   // 初始化UART4接收
   HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
   
-  // 启动 TIM6
   HAL_TIM_Base_Start(&htim6);
   Reset_Timer();  // 重置计时器
   
@@ -311,6 +310,10 @@ int main(void)
     // Update_Target_Yaw();
     OLED_ShowNum(3,5,yaw,3);
     OLED_ShowNum(3,13,target_yaw,3);
+
+    uint32_t time = Get_Time_Difference;
+    OLED_ShowNum(4,1,time,5);
+
     switch (path)
     {
     case 0:

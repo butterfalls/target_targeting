@@ -172,7 +172,11 @@ int main(void)
   // 初始化UART4接收
   HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
   
-// 初始化MPU6050 DMP
+  // 启动 TIM6
+  HAL_TIM_Base_Start(&htim6);
+  Reset_Timer();  // 重置计时器
+  
+  // 初始化MPU6050 DMP
   int mpu_result;
   int retry_count = 0;
   do {

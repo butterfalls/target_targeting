@@ -170,10 +170,10 @@ void US100_GetAllValidDistances(float* distances) {
         
         uint32_t current_time = HAL_GetTick();
         
-        if (current_time - last_measurement_time > 300) {
+        if (current_time - last_measurement_time > 30) {
             timeout_count++;
             
-            if (timeout_count >= 20) {
+            if (timeout_count >= 3) {
                 for (uint8_t i = 0; i < us100_sensor_count; i++) {
                     US100_StartMeasurement(active_sensors[i]);
                 }

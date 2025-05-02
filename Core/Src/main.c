@@ -189,11 +189,11 @@ int main(void)
   // Ultrasonic_Init(&ultrasonic_sensors[3], Trig_4_GPIO_Port, Trig_4_Pin, Echo_4_GPIO_Port, Echo_4_Pin);  // 传感器4
   // Ultrasonic_Init(&ultrasonic_sensors[4], Trig_5_GPIO_Port, Trig_5_Pin, Echo_5_GPIO_Port, Echo_5_Pin);  // 传感器5
 
-  // 初始化US100传感器
-  US100_Init(&us100_sensor1, &huart4);
+  // 初始化US100传感器顺时针1234
   US100_Init(&us100_sensor2, &huart5);
-  US100_Init(&us100_sensor3, &huart2);
+  US100_Init(&us100_sensor1, &huart4);
   US100_Init(&us100_sensor4, &huart3);
+  US100_Init(&us100_sensor3, &huart2);
   
   // 等待一段时间，确保传感器稳定
   HAL_Delay(50);
@@ -293,18 +293,18 @@ int main(void)
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/
     US100_GetAllValidDistances(distances);
     
-    // if (current_time - oled_prev_time >= 1) {  // 每100ms更新一次显示
+    if (current_time - oled_prev_time >= 1) {  // 每100ms更新一次显示
         // 显示超声波距离，即使某些传感器没有数据也显示
         OLED_ShowNum(1, 1, distances[0], 5);  // 左前
         OLED_ShowNum(1, 9, distances[1], 5);  // 右前
         OLED_ShowNum(2, 1, distances[2], 5);  // 左后
         OLED_ShowNum(2, 9, distances[3], 5);  // 右后
         oled_prev_time = current_time;
-    // }
+    }
 
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
-    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+    // Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
     // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
     // Update_Target_Yaw();
     OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-'); 

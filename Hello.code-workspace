@@ -6,7 +6,8 @@
     ],
     "settings": {
         "files.associations": {
-            "oled.h": "c"
+            "oled.h": "c",
+            "usart.h": "c"
         }
     },
     "extensions": {}

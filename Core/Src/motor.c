@@ -99,9 +99,13 @@ void Reset_Timer(void)
 }
 
 void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed, float* yaw, float* target_yaw) {
-    // 使用 TIM6 计算时间差
-    float dt = Get_Time_Difference();
-    OLED_ShowNum(4,1,dt,5);
+    // 使用 HAL_GetTick 计算时间差
+    static uint32_t prev_tick = 0;
+    uint32_t current_tick = HAL_GetTick();
+    float dt = (current_tick - prev_tick) / 1000.0f;  // 转换为秒
+    prev_tick = current_tick;
+    
+    OLED_ShowNum(4,1,dt*1000,5);  // 显示毫秒
 
     if (dt <= 0.001f) {
         dt = 0.001f;  // 最小时间差为1ms
@@ -196,9 +200,13 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
 }
 
 void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int16_t speed, float* yaw, float* target_yaw) {
-    // 使用 TIM6 计算时间差
-    float dt = Get_Time_Difference();
-    OLED_ShowNum(4,1,dt,5);
+    // 使用 HAL_GetTick 计算时间差
+    static uint32_t prev_tick = 0;
+    uint32_t current_tick = HAL_GetTick();
+    float dt = (current_tick - prev_tick) / 1000.0f;  // 转换为秒
+    prev_tick = current_tick;
+    
+    OLED_ShowNum(4,1,dt*1000,5);  // 显示毫秒
     
     // 添加时间差保护
     if (dt <= 0.001f) {

@@ -60,6 +60,7 @@ uint32_t prev_time = 0;
 uint32_t oled_prev_time = 0;  // 添加OLED刷新时间变量
 uint32_t path=0;
 uint32_t path_change=0;
+uint32_t time_start = 0;
 float distances[4];
 
 
@@ -109,6 +110,42 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     //     HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
     // }
 }
+
+float* meandistances( float* distances )
+{
+    static uint32_t start=0,now=0,cz=1;
+    static float sum[4]={0,0,0,0},mean[4]={0,0,0,0};
+
+    if (cz)
+    {
+      cz=0;
+      start=HAL_GetTick();
+      now=start;
+      sum[0]=distances[0];
+      sum[1]=distances[1];
+      sum[2]=distances[2];
+      sum[3]=distances[3];
+    }else if (now-start <= 100)
+    {
+      sum[0]+=distances[0];
+      sum[1]+=distances[1];
+      sum[2]+=distances[2];
+      sum[3]+=distances[3];
+      now=HAL_GetTick();
+    }else if (now-start > 100)
+    {
+      mean[0]=sum[0]/(now-start);
+      mean[1]=sum[1]/(now-start);
+      mean[2]=sum[2]/(now-start);
+      mean[3]=sum[3]/(now-start);
+
+      cz=1;
+
+      return mean;
+    }
+    
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -313,159 +350,360 @@ int main(void)
     OLED_ShowNum(3,6,fabsf(yaw),3);
     
     OLED_ShowNum(4,1,path,5);  // 显示毫秒
+
+    bool flag = true;
     switch (path)
     {
     case 0:
-      if (distances[1]>=70)
+      if (distances[1]>=70 && meandistances(distances)[1]>=70)
       {
         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+      }else if (distances[1]<=30 && meandistances(distances)[1]<=30)
+      {
+        if(flag){
+          time_start = HAL_GetTick();
+          flag = false;
+        }
+        uint32_t time = HAL_GetTick();
+        if(time - time_start >=100){
+          path +=1;
+          flag = true;
+        }
+        
       }
-      path +=1;
       break;
     
     case 1:
-      if (distances[3]>=70)
+      if (distances[3]>=70 && meandistances(distances)[3]>=70)
       {
         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }else if (distances[3]<=30 && meandistances(distances)[3]<=30)
+      {
+        if(flag){
+          time_start = HAL_GetTick();
+          flag = false;
+        }
+        uint32_t time = HAL_GetTick();
+        if(time - time_start >=100){
+          path +=1;
+          flag = true;
+        }
+        
       }
-      path +=1;
       break;
     
     case 2:
-      if (distances[0]>=70 && path_change==0)
+      if (path_change!=2)
       {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        if ((distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==1))
+        {
+          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        }else if (distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==0)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }else if (distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==1)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }
+      }else{
+        path_change = 0;
+        path +=1;
       }
-
-      path_change += 1;
-      
-      if (distances[0]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-
-      path_change -= 1;
-      path +=1;
+        
       break;
 
     case 3:
-      if (distances[0]>=70)
+      if (distances[0]>=70 && meandistances(distances)[0]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
+      {
+        if(flag){
+          time_start = HAL_GetTick();
+          flag = false;
+        }
+        uint32_t time = HAL_GetTick();
+        if(time - time_start >=100){
+          path +=1;
+          flag = true;
+        }
+        
       }
-      path +=1;
       break;
 
     case 4:
-      if (distances[3]>=70 && path_change==0)
+
+      if (path_change!=2)
       {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        if ((distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
+        {
+          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        }else if (distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==0)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }else if (distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==1)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }
+      }else{
+        path_change = 0;
+        path +=1;
       }
-      
-      path_change += 1;
-    
-      if (distances[3]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
+        
       break;
 
     case 5:
-      if (distances[3]>=70)
+      if (distances[3]>=70 && meandistances(distances)[3]>=70)
       {
         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }else if (distances[3]<=30 && meandistances(distances)[3]<=30)
+      {
+        if(flag){
+          time_start = HAL_GetTick();
+          flag = false;
+        }
+        uint32_t time = HAL_GetTick();
+        if(time - time_start >=100){
+          path +=1;
+          flag = true;
+        }
+        
       }
-      path +=1;
       break;
 
-    case 6:
-      if (distances[0]>=70 && path_change==0)
+      case 6:
+      if (path_change!=2)
       {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        if ((distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==1))
+        {
+          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        }else if (distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==0)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }else if (distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==1)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }
+      }else{
+        path_change = 0;
+        path +=1;
       }
-
-      path_change += 1;
-    
-      if (distances[0]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
+        
       break;
 
     case 7:
-      if (distances[0]>=70)
+      if (distances[0]>=70 && meandistances(distances)[0]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
+      {
+        if(flag){
+          time_start = HAL_GetTick();
+          flag = false;
+        }
+        uint32_t time = HAL_GetTick();
+        if(time - time_start >=100){
+          path +=1;
+          flag = true;
+        }
+        
       }
-      path +=1;
       break;
 
     case 8:
-      if (distances[3]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
 
-      path_change += 1;
-    
-      if (distances[3]<=70 && path_change==1)
+      if (path_change!=2)
       {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        if ((distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
+        {
+          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        }else if (distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==0)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }else if (distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==1)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }
+      }else{
+        path_change = 0;
+        path +=1;
       }
-      path_change -= 1;
-      path +=1;
+        
       break;
 
     case 9:
-      if (distances[3]>=70)
+      if (distances[3]>=70 && meandistances(distances)[3]>=70)
       {
         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }else if (distances[3]<=30 && meandistances(distances)[3]<=30)
+      {
+        if(flag){
+          time_start = HAL_GetTick();
+          flag = false;
+        }
+        uint32_t time = HAL_GetTick();
+        if(time - time_start >=100){
+          path +=1;
+          flag = true;
+        }
+        
       }
-      path +=1;
       break;
 
     case 10:
-      if (distances[0]>=70 && path_change==0)
+      if (path_change!=2)
       {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        if ((distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==1))
+        {
+          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        }else if (distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==0)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }else if (distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==1)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }
+      }else{
+        path_change = 0;
+        path +=1;
       }
-
-      path_change += 1;
-    
-      if (distances[0]<=70 && path_change==1)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
-      path_change -= 1;
-      path +=1;
+        
       break;
 
     case 11:
-      if (distances[0]>=70)
+      if (distances[0]>=70 && meandistances(distances)[0]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+      }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
+      {
+        if(flag){
+          time_start = HAL_GetTick();
+          flag = false;
+        }
+        uint32_t time = HAL_GetTick();
+        if(time - time_start >=100){
+          path +=1;
+          flag = true;
+        }
+        
       }
-      path +=1;
       break;
 
     case 12:
-      if (distances[3]>=70 && path_change==0)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }
 
-      path_change += 1;
-    
-      if (distances[3]<=70 && path_change==1)
+      if (path_change!=2)
       {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        if ((distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
+        {
+          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        }else if (distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==0)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }else if (distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==1)
+        {
+          if(flag){
+            time_start = HAL_GetTick();
+            flag = false;
+          }
+          uint32_t time = HAL_GetTick();
+          if(time - time_start >=100){
+            path_change+=1;
+            flag = true;
+          }
+        }
+      }else{
+        path_change = 0;
+        path +=1;
       }
-      path_change -= 1;
-      path +=1;
+        
       break;
 
     default:

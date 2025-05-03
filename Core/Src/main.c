@@ -355,6 +355,28 @@ int main(void)
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/
     US100_GetAllValidDistances(distances);
     
+    if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
+        OLED_ShowNum(1, 1, distances[0], 5);  // 左前
+        OLED_ShowNum(1, 9, distances[1], 5);  // 右前
+        OLED_ShowNum(2, 1, distances[2], 5);  // 左后
+        OLED_ShowNum(2, 9, distances[3], 5);  // 右后
+        oled_prev_time = current_time;
+    }
+
+    /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
+    // straight_us100(distances[0]);
+    // Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
+    // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
+    // Update_Target_Yaw(&yaw, &target_yaw);
+    // OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-'); 
+    // OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
+    // OLED_ShowNum(3,14,fabsf(target_yaw),3);
+    // OLED_ShowNum(3,6,fabsf(yaw),3);
+    
+    // OLED_ShowNum(4,1,path,2);  // 显示毫秒
+    // OLED_ShowNum(4,4,mean[0],4); 
+    // OLED_ShowNum(4,10,mean[1],4);
+
     // 电机控制逻辑
     switch (path)
     {

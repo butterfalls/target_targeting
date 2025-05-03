@@ -62,6 +62,9 @@ uint32_t path=0;
 uint32_t path_change=0;
 uint32_t time_start = 0;
 float distances[4];
+static uint32_t start=0,now=0,cz=1;
+static float sum[4]={0,0,0,0},mean[4]={0,0,0,0};
+
 
 
 uint8_t receivedata[2];
@@ -113,8 +116,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 float* meandistances( float* distances )
 {
-    static uint32_t start=0,now=0,cz=1;
-    static float sum[4]={0,0,0,0},mean[4]={0,0,0,0};
 
     if (cz)
     {
@@ -348,7 +349,9 @@ int main(void)
     OLED_ShowNum(3,14,fabsf(target_yaw),3);
     OLED_ShowNum(3,6,fabsf(yaw),3);
     
-    OLED_ShowNum(4,1,path,5);  // 显示毫秒
+    OLED_ShowNum(4,1,path,2);  // 显示毫秒
+    OLED_ShowNum(4,4,mean[0],4); 
+    OLED_ShowNum(4,10,mean[1],4);
 
     bool flag = true;
     switch (path)

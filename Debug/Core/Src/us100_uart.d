@@ -1,5 +1,4 @@
-Core/Src/ultrasonic_nonblocking.o: ../Core/Src/ultrasonic_nonblocking.c \
- ../Core/Inc/ultrasonic_nonblocking.h \
+Core/Src/us100_uart.o: ../Core/Src/us100_uart.c ../Core/Inc/us100_uart.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
@@ -31,7 +30,7 @@ Core/Src/ultrasonic_nonblocking.o: ../Core/Src/ultrasonic_nonblocking.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/usart.h ../Core/Inc/main.h
-../Core/Inc/ultrasonic_nonblocking.h:
+../Core/Inc/us100_uart.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h:

@@ -34,7 +34,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/ultrasonic_nonblocking.h ../Core/Inc/Servo.h \
  ../Core/Inc/motor.h ../Core/Inc/pid_controller.h \
  E:/Files/STM32_Project/Hello/APP/MPU6050/mpu6050.h \
- ../Core/Inc/pid_controller.h
+ ../Core/Inc/pid_controller.h ../Core/Inc/us100_uart.h ../Core/Inc/OLED.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -77,3 +77,5 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/pid_controller.h:
 E:/Files/STM32_Project/Hello/APP/MPU6050/mpu6050.h:
 ../Core/Inc/pid_controller.h:
+../Core/Inc/us100_uart.h:
+../Core/Inc/OLED.h:

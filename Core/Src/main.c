@@ -118,6 +118,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 float* meandistances(float* distances)
 {
+    static float mean[4] = {0, 0, 0, 0};  // 使用static确保返回后数据仍然有效
+
     if (cz)
     {
         cz = 0;
@@ -128,31 +130,36 @@ float* meandistances(float* distances)
         sum[1] = distances[1];
         sum[2] = distances[2];
         sum[3] = distances[3];
+        return mean;  // 初始返回0值
     }
-    else if (now - start <= 100)
+    else
     {
-        sum[0] += distances[0];
-        sum[1] += distances[1];
-        sum[2] += distances[2];
-        sum[3] += distances[3];
-        count_100ms += 1;
         now = HAL_GetTick();
-    }
-    else if (now - start > 100)
-    {
-        sum[0] += distances[0];
-        sum[1] += distances[1];
-        sum[2] += distances[2];
-        sum[3] += distances[3];
-        count_100ms += 1;
-        mean[0] = sum[0] / count_100ms;
-        mean[1] = sum[1] / count_100ms;
-        mean[2] = sum[2] / count_100ms;
-        mean[3] = sum[3] / count_100ms;
+        if (now - start <= 100)
+        {
+            sum[0] += distances[0];
+            sum[1] += distances[1];
+            sum[2] += distances[2];
+            sum[3] += distances[3];
+            count_100ms += 1;
+            return mean;  // 返回当前均值
+        }
+        else
+        {
+            sum[0] += distances[0];
+            sum[1] += distances[1];
+            sum[2] += distances[2];
+            sum[3] += distances[3];
+            count_100ms += 1;
 
-        cz = 1;
+            mean[0] = sum[0] / count_100ms;
+            mean[1] = sum[1] / count_100ms;
+            mean[2] = sum[2] / count_100ms;
+            mean[3] = sum[3] / count_100ms;
 
-        return mean;
+            cz = 1;
+            return mean;
+        }
     }
 }
 
@@ -308,6 +315,7 @@ int main(void)
   OLED_ShowString(1, 14, "mm");
   OLED_ShowString(2, 6, "mm");
   OLED_ShowString(2, 14, "mm");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -781,9 +789,7 @@ int main(void)
       }
         
       break;
-
-  }
-
+    }
   }
   /* USER CODE END 3 */
 }

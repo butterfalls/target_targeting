@@ -304,10 +304,10 @@ int main(void)
   PID_Reset(&pid_yaw);
   PID_Reset(&pid_encoder);
   OLED_Clear_Part(1,1,5);
-  // OLED_ShowString(1, 6, "mm");
-  // OLED_ShowString(1, 14, "mm");
-  // OLED_ShowString(2, 6, "mm");
-  // OLED_ShowString(2, 14, "mm");
+  OLED_ShowString(1, 6, "mm");
+  OLED_ShowString(1, 14, "mm");
+  OLED_ShowString(2, 6, "mm");
+  OLED_ShowString(2, 14, "mm");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -324,12 +324,6 @@ int main(void)
     // Servo_SetAngle(&servo3, 60);
     // HAL_Delay(200);
     
-    // 减少OLED更新频率
-    static uint32_t last_oled_update = 0;
-    if (current_time - last_oled_update >= 100) {  // 每100ms更新一次OLED
-        OLED_ShowNum(4,1,path,2);
-        last_oled_update = current_time;
-    }
 
     /*-----------------------------------------------------------------超声波执行部分（暂不使用）-------------------------------------------------------------------------*/
 
@@ -356,6 +350,7 @@ int main(void)
     US100_GetAllValidDistances(distances);
     
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
+        // 显示超声波距离，即使某些传感器没有数据也显示
         OLED_ShowNum(1, 1, distances[0], 5);  // 左前
         OLED_ShowNum(1, 9, distances[1], 5);  // 右前
         OLED_ShowNum(2, 1, distances[2], 5);  // 左后
@@ -363,43 +358,46 @@ int main(void)
         oled_prev_time = current_time;
     }
 
+    if(delay_flag) 
+    {
+      HAL_Delay(500);
+      delay_flag=false;
+    }
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
     // straight_us100(distances[0]);
     // Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
     // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
     // Update_Target_Yaw(&yaw, &target_yaw);
-    // OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-'); 
-    // OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
-    // OLED_ShowNum(3,14,fabsf(target_yaw),3);
-    // OLED_ShowNum(3,6,fabsf(yaw),3);
+    OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-'); 
+    OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
+    OLED_ShowNum(3,14,fabsf(target_yaw),3);
+    OLED_ShowNum(3,6,fabsf(yaw),3);
     
-    // OLED_ShowNum(4,1,path,2);  // 显示毫秒
-    // OLED_ShowNum(4,4,mean[0],4); 
-    // OLED_ShowNum(4,10,mean[1],4);
+    OLED_ShowNum(4,1,path,2);  // 显示毫秒
+    // OLED_ShowNum(4,4,time,4); OLED_ShowNum(4,10,time_start,4);
 
-    // 电机控制逻辑
     switch (path)
     {
     case 0:
-      if (distances[1]>=50 && meandistances(distances)[1]>=50) 
+      if (distances[1]>=70&& meandistances(distances)[1]>=70) 
       {
         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }
-      else if (distances[1]<=50 && meandistances(distances)[1]<=50)
+      }else if (distances[1]<=30&& meandistances(distances)[1]<=30 )
       {
         if(flag){
           time_start = HAL_GetTick();
           flag = false;
         }
         time = HAL_GetTick();
-        if(time - time_start >= 100){
-          path += 1;
+        if(time - time_start >=100){
+          path +=1;
           PID_Reset(&pid_yaw);        
           PID_Reset(&pid_rear);
           PID_Reset(&pid_front);
           PID_Reset(&pid_position);
           flag = true;
         }
+        
       }
       break;
     

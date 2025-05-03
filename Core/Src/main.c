@@ -59,12 +59,14 @@ float target_speed = 50.0f;
 uint32_t prev_time = 0;
 uint32_t oled_prev_time = 0;  // 添加OLED刷新时间变量
 uint32_t path=0;
-uint32_t path_change=0;
+uint32_t path_change=0,count_100ms=0;
 uint32_t time_start = 0;
-float distances[4];
+float distances[4] = {2000.0f, 2000.0f, 2000.0f, 2000.0f};
 static uint32_t start=0,now=0,cz=1;
 static float sum[4]={0,0,0,0},mean[4]={0,0,0,0};
-
+uint32_t time = 0;
+bool flag = true;
+bool delay_flag = true;
 
 
 uint8_t receivedata[2];
@@ -114,37 +116,44 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // }
 }
 
-float* meandistances( float* distances )
+float* meandistances(float* distances)
 {
-
     if (cz)
     {
-      cz=0;
-      start=HAL_GetTick();
-      now=start;
-      sum[0]=distances[0];
-      sum[1]=distances[1];
-      sum[2]=distances[2];
-      sum[3]=distances[3];
-    }else if (now-start <= 100)
-    {
-      sum[0]+=distances[0];
-      sum[1]+=distances[1];
-      sum[2]+=distances[2];
-      sum[3]+=distances[3];
-      now=HAL_GetTick();
-    }else if (now-start > 100)
-    {
-      mean[0]=sum[0]/(now-start);
-      mean[1]=sum[1]/(now-start);
-      mean[2]=sum[2]/(now-start);
-      mean[3]=sum[3]/(now-start);
-
-      cz=1;
-
-      return mean;
+        cz = 0;
+        count_100ms = 1;
+        start = HAL_GetTick();
+        now = start;
+        sum[0] = distances[0];
+        sum[1] = distances[1];
+        sum[2] = distances[2];
+        sum[3] = distances[3];
     }
-    
+    else if (now - start <= 100)
+    {
+        sum[0] += distances[0];
+        sum[1] += distances[1];
+        sum[2] += distances[2];
+        sum[3] += distances[3];
+        count_100ms += 1;
+        now = HAL_GetTick();
+    }
+    else if (now - start > 100)
+    {
+        sum[0] += distances[0];
+        sum[1] += distances[1];
+        sum[2] += distances[2];
+        sum[3] += distances[3];
+        count_100ms += 1;
+        mean[0] = sum[0] / count_100ms;
+        mean[1] = sum[1] / count_100ms;
+        mean[2] = sum[2] / count_100ms;
+        mean[3] = sum[3] / count_100ms;
+
+        cz = 1;
+
+        return mean;
+    }
 }
 
 /* USER CODE END 0 */
@@ -208,17 +217,26 @@ int main(void)
   // 初始化MPU6050 DMP
   int mpu_result;
   int retry_count = 0;
+  uint32_t init_start_time = HAL_GetTick();
+  
   do {
       mpu_result = MPU6050_DMP_Init();
       if (mpu_result != 0) {
-          OLED_ShowString(1,1,"INITING...");
-          OLED_ShowNum(1,11,retry_count,2);
           retry_count++;
-      }else{
-        OLED_Clear();
-        OLED_ShowString(1,1,"SUCCESS");
+          // 只在每10次重试时更新显示，减少OLED操作
+          if (retry_count % 10 == 0) {
+              OLED_ShowString(1,1,"INITING...");
+              OLED_ShowNum(1,11,retry_count,2);
+          }
       }
   } while (mpu_result != 0);
+  
+  OLED_Clear();
+  OLED_ShowString(1,1,"SUCCESS");
+  // 显示初始化耗时
+  uint32_t init_time = HAL_GetTick() - init_start_time;
+  OLED_ShowNum(2,1,init_time,4);
+  OLED_ShowString(2,5,"ms");
 
   // 初始化超声波传感器
   // Ultrasonic_Init(&ultrasonic_sensors[1], Trig_1_GPIO_Port, Trig_1_Pin, Echo_1_GPIO_Port, Echo_1_Pin);  // 传感器1
@@ -286,10 +304,10 @@ int main(void)
   PID_Reset(&pid_yaw);
   PID_Reset(&pid_encoder);
   OLED_Clear_Part(1,1,5);
-  OLED_ShowString(1, 6, "mm");
-  OLED_ShowString(1, 14, "mm");
-  OLED_ShowString(2, 6, "mm");
-  OLED_ShowString(2, 14, "mm");
+  // OLED_ShowString(1, 6, "mm");
+  // OLED_ShowString(1, 14, "mm");
+  // OLED_ShowString(2, 6, "mm");
+  // OLED_ShowString(2, 14, "mm");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -306,6 +324,12 @@ int main(void)
     // Servo_SetAngle(&servo3, 60);
     // HAL_Delay(200);
     
+    // 减少OLED更新频率
+    static uint32_t last_oled_update = 0;
+    if (current_time - last_oled_update >= 100) {  // 每100ms更新一次OLED
+        OLED_ShowNum(4,1,path,2);
+        last_oled_update = current_time;
+    }
 
     /*-----------------------------------------------------------------超声波执行部分（暂不使用）-------------------------------------------------------------------------*/
 
@@ -331,55 +355,37 @@ int main(void)
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/
     US100_GetAllValidDistances(distances);
     
-    if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
-        OLED_ShowNum(1, 1, distances[0], 5);  // 左前
-        OLED_ShowNum(1, 9, distances[1], 5);  // 右前
-        OLED_ShowNum(2, 1, distances[2], 5);  // 左后
-        OLED_ShowNum(2, 9, distances[3], 5);  // 右后
-        oled_prev_time = current_time;
-    }
-
-    /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
-    // straight_us100(distances[0]);
-    Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
-    // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
-    // Update_Target_Yaw(&yaw, &target_yaw);
-    OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-'); 
-    OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
-    OLED_ShowNum(3,14,fabsf(target_yaw),3);
-    OLED_ShowNum(3,6,fabsf(yaw),3);
-    
-    OLED_ShowNum(4,1,path,2);  // 显示毫秒
-    OLED_ShowNum(4,4,mean[0],4); 
-    OLED_ShowNum(4,10,mean[1],4);
-
-    bool flag = true;
+    // 电机控制逻辑
     switch (path)
     {
     case 0:
-      if (distances[1]>=70 && meandistances(distances)[1]>=70)
+      if (distances[1]>=50 && meandistances(distances)[1]>=50) 
       {
         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }else if (distances[1]<=30 && meandistances(distances)[1]<=30)
+      }
+      else if (distances[1]<=50 && meandistances(distances)[1]<=50)
       {
         if(flag){
           time_start = HAL_GetTick();
           flag = false;
         }
-        uint32_t time = HAL_GetTick();
-        if(time - time_start >=100){
-          path +=1;
+        time = HAL_GetTick();
+        if(time - time_start >= 100){
+          path += 1;
+          PID_Reset(&pid_yaw);        
+          PID_Reset(&pid_rear);
+          PID_Reset(&pid_front);
+          PID_Reset(&pid_position);
           flag = true;
         }
-        
       }
       break;
     
     case 1:
-      if (distances[3]>=70 && meandistances(distances)[3]>=70)
+      if (distances[3]>=70&& meandistances(distances)[3]>=70)
       {
         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }else if (distances[3]<=30 && meandistances(distances)[3]<=30)
+      }else if (distances[3]<=30&& meandistances(distances)[3]<=30)
       {
         if(flag){
           time_start = HAL_GetTick();
@@ -389,6 +395,10 @@ int main(void)
         if(time - time_start >=100){
           path +=1;
           flag = true;
+          PID_Reset(&pid_yaw);        
+          PID_Reset(&pid_rear);
+          PID_Reset(&pid_front);
+          PID_Reset(&pid_position);
         }
         
       }
@@ -397,10 +407,10 @@ int main(void)
     case 2:
       if (path_change!=2)
       {
-        if ((distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==1))
+        if ((distances[0]>=70&& meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70&& meandistances(distances)[0]<=70&& path_change==1))
         {
           Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==0)
+        }else if (distances[0]<=70&& meandistances(distances)[0]<=70 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -411,7 +421,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==1)
+        }else if (distances[0]>=70&& meandistances(distances)[0]>=70&& path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -426,15 +436,19 @@ int main(void)
       }else{
         path_change = 0;
         path +=1;
+        PID_Reset(&pid_yaw);        
+        PID_Reset(&pid_rear);
+        PID_Reset(&pid_front);
+        PID_Reset(&pid_position);
       }
         
       break;
 
     case 3:
-      if (distances[0]>=70 && meandistances(distances)[0]>=70)
+      if (distances[0]>=70&& meandistances(distances)[0]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+      }else if (distances[0]<=30 && meandistances(distances)[0]<=30 )
       {
         if(flag){
           time_start = HAL_GetTick();
@@ -444,6 +458,10 @@ int main(void)
         if(time - time_start >=100){
           path +=1;
           flag = true;
+          PID_Reset(&pid_yaw);        
+          PID_Reset(&pid_rear);
+          PID_Reset(&pid_front);
+          PID_Reset(&pid_position);
         }
         
       }
@@ -453,10 +471,10 @@ int main(void)
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
+        if ((distances[3]>=70 && meandistances(distances)[3]>=70  && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
         {
           Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==0)
+        }else if (distances[3]<=70&& meandistances(distances)[3]<=70&& path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -467,7 +485,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==1)
+        }else if (distances[3]>=70&& meandistances(distances)[3]>=70&& path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -482,12 +500,16 @@ int main(void)
       }else{
         path_change = 0;
         path +=1;
+        PID_Reset(&pid_yaw);        
+        PID_Reset(&pid_rear);
+        PID_Reset(&pid_front);
+        PID_Reset(&pid_position);
       }
         
       break;
 
     case 5:
-      if (distances[3]>=70 && meandistances(distances)[3]>=70)
+      if (distances[3]>=70&& meandistances(distances)[3]>=700)
       {
         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
       }else if (distances[3]<=30 && meandistances(distances)[3]<=30)
@@ -500,6 +522,10 @@ int main(void)
         if(time - time_start >=100){
           path +=1;
           flag = true;
+          PID_Reset(&pid_yaw);        
+          PID_Reset(&pid_rear);
+          PID_Reset(&pid_front);
+          PID_Reset(&pid_position);
         }
         
       }
@@ -537,6 +563,10 @@ int main(void)
       }else{
         path_change = 0;
         path +=1;
+        PID_Reset(&pid_yaw);        
+        PID_Reset(&pid_rear);
+        PID_Reset(&pid_front);
+        PID_Reset(&pid_position);
       }
         
       break;
@@ -544,7 +574,7 @@ int main(void)
     case 7:
       if (distances[0]>=70 && meandistances(distances)[0]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
       }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
       {
         if(flag){
@@ -555,6 +585,10 @@ int main(void)
         if(time - time_start >=100){
           path +=1;
           flag = true;
+          PID_Reset(&pid_yaw);        
+          PID_Reset(&pid_rear);
+          PID_Reset(&pid_front);
+          PID_Reset(&pid_position);
         }
         
       }
@@ -593,6 +627,10 @@ int main(void)
       }else{
         path_change = 0;
         path +=1;
+        PID_Reset(&pid_yaw);        
+        PID_Reset(&pid_rear);
+        PID_Reset(&pid_front);
+        PID_Reset(&pid_position);
       }
         
       break;
@@ -611,6 +649,10 @@ int main(void)
         if(time - time_start >=100){
           path +=1;
           flag = true;
+          PID_Reset(&pid_yaw);        
+          PID_Reset(&pid_rear);
+          PID_Reset(&pid_front);
+          PID_Reset(&pid_position);
         }
         
       }
@@ -648,6 +690,10 @@ int main(void)
       }else{
         path_change = 0;
         path +=1;
+        PID_Reset(&pid_yaw);        
+        PID_Reset(&pid_rear);
+        PID_Reset(&pid_front);
+        PID_Reset(&pid_position);
       }
         
       break;
@@ -655,7 +701,7 @@ int main(void)
     case 11:
       if (distances[0]>=70 && meandistances(distances)[0]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
       }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
       {
         if(flag){
@@ -666,6 +712,10 @@ int main(void)
         if(time - time_start >=100){
           path +=1;
           flag = true;
+          PID_Reset(&pid_yaw);        
+          PID_Reset(&pid_rear);
+          PID_Reset(&pid_front);
+          PID_Reset(&pid_position);
         }
         
       }
@@ -704,16 +754,17 @@ int main(void)
       }else{
         path_change = 0;
         path +=1;
+        PID_Reset(&pid_yaw);        
+        PID_Reset(&pid_rear);
+        PID_Reset(&pid_front);
+        PID_Reset(&pid_position);
       }
         
       break;
 
-
-    }
-
   }
 
-
+  }
   /* USER CODE END 3 */
 }
 

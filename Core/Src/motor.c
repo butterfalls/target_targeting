@@ -60,7 +60,7 @@ void Motor_SetSpeed(Motor_ID id, int16_t speed)
         speed = -speed;
     }
 
-    uint32_t duty = (speed * 999) / 100;
+    uint32_t duty = (speed * 9999) / 100;
     __HAL_TIM_SET_COMPARE(motors[id].pwm_tim, motors[id].pwm_channel, duty);
 }
 

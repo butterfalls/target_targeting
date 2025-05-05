@@ -389,7 +389,7 @@ int main(void)
     case 0:
       if (distances[1]>=70&& meandistances(distances)[1]>=70) 
       {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
       }else if (distances[1]<=30&& meandistances(distances)[1]<=30 )
       {
         if(flag){
@@ -412,7 +412,7 @@ int main(void)
     case 1:
       if (distances[3]>=70&& meandistances(distances)[3]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
       }else if (distances[3]<=30&& meandistances(distances)[3]<=30)
       {
         if(flag){
@@ -437,7 +437,7 @@ int main(void)
       {
         if ((distances[0]>=70&& meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70&& meandistances(distances)[0]<=70&& path_change==1))
         {
-          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
         }else if (distances[0]<=70&& meandistances(distances)[0]<=70 && path_change==0)
         {
           if(flag){
@@ -475,7 +475,7 @@ int main(void)
     case 3:
       if (distances[0]>=70&& meandistances(distances)[0]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
       }else if (distances[0]<=30 && meandistances(distances)[0]<=30 )
       {
         if(flag){
@@ -501,7 +501,7 @@ int main(void)
       {
         if ((distances[3]>=70 && meandistances(distances)[3]>=70  && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
         {
-          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
         }else if (distances[3]<=70&& meandistances(distances)[3]<=70&& path_change==0)
         {
           if(flag){
@@ -539,7 +539,7 @@ int main(void)
     case 5:
       if (distances[3]>=70&& meandistances(distances)[3]>=700)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
       }else if (distances[3]<=30 && meandistances(distances)[3]<=30)
       {
         if(flag){
@@ -564,7 +564,7 @@ int main(void)
       {
         if ((distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==1))
         {
-          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
         }else if (distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==0)
         {
           if(flag){
@@ -602,7 +602,7 @@ int main(void)
     case 7:
       if (distances[0]>=70 && meandistances(distances)[0]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
       }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
       {
         if(flag){
@@ -628,7 +628,7 @@ int main(void)
       {
         if ((distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
         {
-          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
         }else if (distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==0)
         {
           if(flag){
@@ -666,7 +666,7 @@ int main(void)
     case 9:
       if (distances[3]>=70 && meandistances(distances)[3]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
       }else if (distances[3]<=30 && meandistances(distances)[3]<=30)
       {
         if(flag){
@@ -691,7 +691,7 @@ int main(void)
       {
         if ((distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==1))
         {
-          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
         }else if (distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==0)
         {
           if(flag){
@@ -729,7 +729,7 @@ int main(void)
     case 11:
       if (distances[0]>=70 && meandistances(distances)[0]>=70)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
       }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
       {
         if(flag){
@@ -755,7 +755,7 @@ int main(void)
       {
         if ((distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
         {
-          Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
         }else if (distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==0)
         {
           if(flag){

@@ -4,11 +4,6 @@
             "path": "."
         }
     ],
-    "settings": {
-        "files.associations": {
-            "oled.h": "c",
-            "usart.h": "c"
-        }
-    },
+    "settings": {},
     "extensions": {}
 }

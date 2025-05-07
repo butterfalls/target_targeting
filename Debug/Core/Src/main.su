@@ -1,5 +1,7 @@
-../Core/Src/main.c:97:6:HAL_UART_RxCpltCallback	16	static
-../Core/Src/main.c:119:8:meandistances	16	static
-../Core/Src/main.c:172:5:main	120	static
-../Core/Src/main.c:801:6:SystemClock_Config	88	static
-../Core/Src/main.c:851:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:99:6:HAL_UART_RxCpltCallback	16	static
+../Core/Src/main.c:121:8:meandistances	16	static
+../Core/Src/main.c:168:9:smooth_speed_transition	24	static
+../Core/Src/main.c:177:6:PID_ResetAll	8	static
+../Core/Src/main.c:190:5:main	280	static
+../Core/Src/main.c:1023:6:SystemClock_Config	88	static
+../Core/Src/main.c:1073:6:Error_Handler	4	static,ignoring_inline_asm

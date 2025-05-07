@@ -62,12 +62,12 @@ uint32_t path=0;
 uint32_t path_change=0,count_100ms=0;
 uint32_t time_start = 0;
 float distances[4] = {2000.0f, 2000.0f, 2000.0f, 2000.0f};
-static uint32_t start=0,now=0,cz=1;
-static float sum[4]={0,0,0,0},mean[4]={0,0,0,0};
+float sum[4] = {0, 0, 0, 0};
+float mean[4] = {0, 0, 0, 0};
+static uint32_t start = 0, now = 0, cz = 1;
 uint32_t time = 0;
 bool flag = true;
 bool delay_flag = true;
-
 
 uint8_t receivedata[2];
 uint8_t message[] = "Hello World";
@@ -94,6 +94,8 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#define CLAMP(value, min, max) ((value) < (min) ? (min) : ((value) > (max) ? (max) : (value)))
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // 检查是否是UART5（US100传感器使用的串口）
     if (huart == &huart5||huart == &huart2||huart == &huart3||huart == &huart4) {
@@ -118,7 +120,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 float* meandistances(float* distances)
 {
-    static float mean[4] = {0, 0, 0, 0};  // 使用static确保返回后数据仍然有效
 
     if (cz)
     {
@@ -161,6 +162,23 @@ float* meandistances(float* distances)
             return mean;
         }
     }
+}
+
+#define MAX_SPEED_STEP 5  // 每次最大速度变化量
+uint8_t smooth_speed_transition(uint8_t current, uint8_t target) {
+    if(target > current) {
+        return fmin(current + MAX_SPEED_STEP, target);
+    } else if(target < current) {
+        return fmax(current - MAX_SPEED_STEP, target);
+    }
+    return current;
+}
+
+void PID_ResetAll(void) {
+  PID_Reset(&pid_yaw);
+  PID_Reset(&pid_rear);
+  PID_Reset(&pid_front);
+  PID_Reset(&pid_position);
 }
 
 /* USER CODE END 0 */
@@ -383,62 +401,120 @@ int main(void)
     
     OLED_ShowNum(4,1,path,2);  // 显示毫秒
     // OLED_ShowNum(4,4,time,4); OLED_ShowNum(4,10,time_start,4);
+    meandistances(distances);
 
     switch (path)
     {
-    case 0:
-      if (distances[1]>=70&& meandistances(distances)[1]>=70) 
-      {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }else if (distances[1]<=30&& meandistances(distances)[1]<=30 )
-      {
-        if(flag){
-          time_start = HAL_GetTick();
-          flag = false;
-        }
-        time = HAL_GetTick();
-        if(time - time_start >=100){
-          path +=1;
-          PID_Reset(&pid_yaw);        
-          PID_Reset(&pid_rear);
-          PID_Reset(&pid_front);
-          PID_Reset(&pid_position);
-          flag = true;
-        }
-        
+    case 0: {
+      // 参数定义
+      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+      const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
+      const uint8_t MIN_SPEED = 10;          // 最小速度（靠近时）
+      const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
+  
+      float current_distance = distances[1]; 
+  
+      // 速度计算逻辑
+      uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
+  
+      if (current_distance <= TARGET_DISTANCE && mean[1] <=TARGET_DISTANCE) {
+          // 区域3：到达目标距离（≤70mm）
+          motor_speed = MIN_SPEED;
+  
+          // 执行路径切换逻辑
+          if(flag) {
+              time_start = HAL_GetTick();
+              flag = false;
+          }
+          if(HAL_GetTick() - time_start >= 100) {
+              path += 1;
+              PID_ResetAll(); // 重置所有PID控制器
+              flag = true;
+          }
+      } 
+      else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE) && mean[1] <= (TARGET_DISTANCE + DECEL_RANGE)) {
+          // 区域2：减速区间（70~170mm）
+          // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
+          float distance_from_target = current_distance - TARGET_DISTANCE;
+          float ratio = 1.0f - (distance_from_target / DECEL_RANGE);
+          motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
+          motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
       }
+      else {
+          // 区域1：全速区间（>170mm）
+          motor_speed = MAX_SPEED;
+      }
+  
+      // 执行带平滑过渡的电机控制
+      static uint8_t last_speed = 0;
+      motor_speed = smooth_speed_transition(last_speed, motor_speed);
+      last_speed = motor_speed;
+  
+      Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+  
+      OLED_ShowNum(4, 4, motor_speed, 2);
       break;
+  }
     
-    case 1:
-      if (distances[3]>=70&& meandistances(distances)[3]>=70)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }else if (distances[3]<=30&& meandistances(distances)[3]<=30)
-      {
-        if(flag){
-          time_start = HAL_GetTick();
-          flag = false;
+      case 1: {
+        // 参数定义
+        const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+        const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
+        const uint8_t MIN_SPEED = 10;          // 最小速度（靠近时）
+        const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
+    
+        // 获取当前检测距离（使用第4个传感器）
+        float current_distance = distances[3]; 
+    
+        // 速度计算逻辑
+        uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
+    
+        if (current_distance <= TARGET_DISTANCE) {
+            // 区域3：到达目标距离（≤70mm）
+            motor_speed = MIN_SPEED;
+    
+            // 执行路径切换逻辑
+            if(flag) {
+                time_start = HAL_GetTick();
+                flag = false;
+            }
+            if(HAL_GetTick() - time_start >= 100) {
+                path += 1;
+                PID_ResetAll(); // 重置所有PID控制器
+                flag = true;
+            }
+        } 
+        else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
+            // 区域2：减速区间（70~170mm）
+            // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
+            float distance_from_target = current_distance - TARGET_DISTANCE;
+            float ratio = 1.0f - (distance_from_target / DECEL_RANGE);
+            motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
+            motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
         }
-        uint32_t time = HAL_GetTick();
-        if(time - time_start >=100){
-          path +=1;
-          flag = true;
-          PID_Reset(&pid_yaw);        
-          PID_Reset(&pid_rear);
-          PID_Reset(&pid_front);
-          PID_Reset(&pid_position);
+        else {
+            // 区域1：全速区间（>170mm）
+            motor_speed = MAX_SPEED;
         }
-        
-      }
-      break;
+    
+        // 执行带平滑过渡的电机控制
+        static uint8_t last_speed = 0;
+        motor_speed = smooth_speed_transition(last_speed, motor_speed);
+        last_speed = motor_speed;
+    
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+    
+        OLED_ShowNum(4, 4, motor_speed, 2);
+        break;
+    }
     
     case 2:
       if (path_change!=2)
       {
-        if ((distances[0]>=70&& meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70&& meandistances(distances)[0]<=70&& path_change==1))
+        if ((distances[0]>=70&& mean[0]>=70 && path_change==0)||(distances[0]<=70&& mean[0]<=70&& path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[0]<=70&& meandistances(distances)[0]<=70 && path_change==0)
+        }else if (distances[0]<=70&& mean[0]<=70 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -449,7 +525,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70&& meandistances(distances)[0]>=70&& path_change==1)
+        }else if (distances[0]>=70&& mean[0]>=70&& path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -472,37 +548,66 @@ int main(void)
         
       break;
 
-    case 3:
-      if (distances[0]>=70&& meandistances(distances)[0]>=70)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }else if (distances[0]<=30 && meandistances(distances)[0]<=30 )
-      {
-        if(flag){
-          time_start = HAL_GetTick();
-          flag = false;
-        }
-        uint32_t time = HAL_GetTick();
-        if(time - time_start >=100){
-          path +=1;
-          flag = true;
-          PID_Reset(&pid_yaw);        
-          PID_Reset(&pid_rear);
-          PID_Reset(&pid_front);
-          PID_Reset(&pid_position);
-        }
-        
+    case 3:{
+      // 参数定义
+      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+      const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
+      const uint8_t MIN_SPEED = -10;          // 最小速度（靠近时）
+      const uint8_t MAX_SPEED = -60;          // 最大速度（远端时）
+  
+      // 获取当前检测距离（使用第4个传感器）
+      float current_distance = distances[3]; 
+  
+      // 速度计算逻辑
+      uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
+  
+      if (current_distance <= TARGET_DISTANCE) {
+          // 区域3：到达目标距离（≤70mm）
+          motor_speed = MIN_SPEED;
+  
+          // 执行路径切换逻辑
+          if(flag) {
+              time_start = HAL_GetTick();
+              flag = false;
+          }
+          if(HAL_GetTick() - time_start >= 100) {
+              path += 1;
+              PID_ResetAll(); // 重置所有PID控制器
+              flag = true;
+          }
+      } 
+      else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
+          // 区域2：减速区间（70~170mm）
+          // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
+          float distance_from_target = current_distance - TARGET_DISTANCE;
+          float ratio = 1.0f - (distance_from_target / DECEL_RANGE);
+          motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
+          motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
       }
+      else {
+          // 区域1：全速区间（>170mm）
+          motor_speed = MAX_SPEED;
+      }
+  
+      // 执行带平滑过渡的电机控制
+      static uint8_t last_speed = 0;
+      motor_speed = smooth_speed_transition(last_speed, motor_speed);
+      last_speed = motor_speed;
+  
+      Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+  
+      OLED_ShowNum(4, 4, motor_speed, 2);
       break;
+  }
 
     case 4:
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && meandistances(distances)[3]>=70  && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
+        if ((distances[3]>=70 && mean[3]>=70  && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[3]<=70&& meandistances(distances)[3]<=70&& path_change==0)
+        }else if (distances[3]<=70&& mean[3]<=70&& path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -513,7 +618,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70&& meandistances(distances)[3]>=70&& path_change==1)
+        }else if (distances[3]>=70&& mean[3]>=70&& path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -536,36 +641,65 @@ int main(void)
         
       break;
 
-    case 5:
-      if (distances[3]>=70&& meandistances(distances)[3]>=700)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }else if (distances[3]<=30 && meandistances(distances)[3]<=30)
-      {
-        if(flag){
-          time_start = HAL_GetTick();
-          flag = false;
-        }
-        uint32_t time = HAL_GetTick();
-        if(time - time_start >=100){
-          path +=1;
-          flag = true;
-          PID_Reset(&pid_yaw);        
-          PID_Reset(&pid_rear);
-          PID_Reset(&pid_front);
-          PID_Reset(&pid_position);
-        }
-        
+    case 5:{
+      // 参数定义
+      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+      const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
+      const uint8_t MIN_SPEED = 10;          // 最小速度（靠近时）
+      const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
+  
+      // 获取当前检测距离（使用第4个传感器）
+      float current_distance = distances[3]; 
+  
+      // 速度计算逻辑
+      uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
+  
+      if (current_distance <= TARGET_DISTANCE) {
+          // 区域3：到达目标距离（≤70mm）
+          motor_speed = MIN_SPEED;
+  
+          // 执行路径切换逻辑
+          if(flag) {
+              time_start = HAL_GetTick();
+              flag = false;
+          }
+          if(HAL_GetTick() - time_start >= 100) {
+              path += 1;
+              PID_ResetAll(); // 重置所有PID控制器
+              flag = true;
+          }
+      } 
+      else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
+          // 区域2：减速区间（70~170mm）
+          // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
+          float distance_from_target = current_distance - TARGET_DISTANCE;
+          float ratio = 1.0f - (distance_from_target / DECEL_RANGE);
+          motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
+          motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
       }
+      else {
+          // 区域1：全速区间（>170mm）
+          motor_speed = MAX_SPEED;
+      }
+  
+      // 执行带平滑过渡的电机控制
+      static uint8_t last_speed = 0;
+      motor_speed = smooth_speed_transition(last_speed, motor_speed);
+      last_speed = motor_speed;
+  
+      Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+  
+      OLED_ShowNum(4, 4, motor_speed, 2);
       break;
+  }
 
       case 6:
       if (path_change!=2)
       {
-        if ((distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==1))
+        if ((distances[0]>=70 && mean[0]>=70 && path_change==0)||(distances[0]<=70 && mean[0]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==0)
+        }else if (distances[0]<=70 && mean[0]<=70 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -576,7 +710,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==1)
+        }else if (distances[0]>=70 && mean[0]>=70 && path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -599,37 +733,66 @@ int main(void)
         
       break;
 
-    case 7:
-      if (distances[0]>=70 && meandistances(distances)[0]>=70)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
-      {
-        if(flag){
-          time_start = HAL_GetTick();
-          flag = false;
+    case 7:{
+        // 参数定义
+        const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+        const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
+        const uint8_t MIN_SPEED = -10;          // 最小速度（靠近时）
+        const uint8_t MAX_SPEED = -60;          // 最大速度（远端时）
+    
+        // 获取当前检测距离（使用第4个传感器）
+        float current_distance = distances[3]; 
+    
+        // 速度计算逻辑
+        uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
+    
+        if (current_distance <= TARGET_DISTANCE) {
+            // 区域3：到达目标距离（≤70mm）
+            motor_speed = MIN_SPEED;
+    
+            // 执行路径切换逻辑
+            if(flag) {
+                time_start = HAL_GetTick();
+                flag = false;
+            }
+            if(HAL_GetTick() - time_start >= 100) {
+                path += 1;
+                PID_ResetAll(); // 重置所有PID控制器
+                flag = true;
+            }
+        } 
+        else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
+            // 区域2：减速区间（70~170mm）
+            // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
+            float distance_from_target = current_distance - TARGET_DISTANCE;
+            float ratio = 1.0f - (distance_from_target / DECEL_RANGE);
+            motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
+            motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
         }
-        uint32_t time = HAL_GetTick();
-        if(time - time_start >=100){
-          path +=1;
-          flag = true;
-          PID_Reset(&pid_yaw);        
-          PID_Reset(&pid_rear);
-          PID_Reset(&pid_front);
-          PID_Reset(&pid_position);
+        else {
+            // 区域1：全速区间（>170mm）
+            motor_speed = MAX_SPEED;
         }
-        
-      }
-      break;
+    
+        // 执行带平滑过渡的电机控制
+        static uint8_t last_speed = 0;
+        motor_speed = smooth_speed_transition(last_speed, motor_speed);
+        last_speed = motor_speed;
+    
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+    
+        OLED_ShowNum(4, 4, motor_speed, 2);
+        break;
+    }
 
     case 8:
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
+        if ((distances[3]>=70 && mean[3]>=70 && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==0)
+        }else if (distances[3]<=70 && mean[3]<=70 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -640,7 +803,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==1)
+        }else if (distances[3]>=70 && mean[3]>=70 && path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -663,36 +826,65 @@ int main(void)
         
       break;
 
-    case 9:
-      if (distances[3]>=70 && meandistances(distances)[3]>=70)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-      }else if (distances[3]<=30 && meandistances(distances)[3]<=30)
-      {
-        if(flag){
-          time_start = HAL_GetTick();
-          flag = false;
-        }
-        uint32_t time = HAL_GetTick();
-        if(time - time_start >=100){
-          path +=1;
-          flag = true;
-          PID_Reset(&pid_yaw);        
-          PID_Reset(&pid_rear);
-          PID_Reset(&pid_front);
-          PID_Reset(&pid_position);
-        }
-        
+    case 9:{
+      // 参数定义
+      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+      const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
+      const uint8_t MIN_SPEED = 10;          // 最小速度（靠近时）
+      const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
+  
+      // 获取当前检测距离（使用第4个传感器）
+      float current_distance = distances[3]; 
+  
+      // 速度计算逻辑
+      uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
+  
+      if (current_distance <= TARGET_DISTANCE) {
+          // 区域3：到达目标距离（≤70mm）
+          motor_speed = MIN_SPEED;
+  
+          // 执行路径切换逻辑
+          if(flag) {
+              time_start = HAL_GetTick();
+              flag = false;
+          }
+          if(HAL_GetTick() - time_start >= 100) {
+              path += 1;
+              PID_ResetAll(); // 重置所有PID控制器
+              flag = true;
+          }
+      } 
+      else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
+          // 区域2：减速区间（70~170mm）
+          // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
+          float distance_from_target = current_distance - TARGET_DISTANCE;
+          float ratio = 1.0f - (distance_from_target / DECEL_RANGE);
+          motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
+          motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
       }
+      else {
+          // 区域1：全速区间（>170mm）
+          motor_speed = MAX_SPEED;
+      }
+  
+      // 执行带平滑过渡的电机控制
+      static uint8_t last_speed = 0;
+      motor_speed = smooth_speed_transition(last_speed, motor_speed);
+      last_speed = motor_speed;
+  
+      Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+  
+      OLED_ShowNum(4, 4, motor_speed, 2);
       break;
+  }
 
     case 10:
       if (path_change!=2)
       {
-        if ((distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==0)||(distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==1))
+        if ((distances[0]>=70 && mean[0]>=70 && path_change==0)||(distances[0]<=70 && mean[0]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[0]<=70 && meandistances(distances)[0]<=70 && path_change==0)
+        }else if (distances[0]<=70 && mean[0]<=70 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -703,7 +895,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70 && meandistances(distances)[0]>=70 && path_change==1)
+        }else if (distances[0]>=70 && mean[0]>=70 && path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -726,37 +918,66 @@ int main(void)
         
       break;
 
-    case 11:
-      if (distances[0]>=70 && meandistances(distances)[0]>=70)
-      {
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-      }else if (distances[0]<=30 && meandistances(distances)[0]<=30)
-      {
-        if(flag){
-          time_start = HAL_GetTick();
-          flag = false;
-        }
-        uint32_t time = HAL_GetTick();
-        if(time - time_start >=100){
-          path +=1;
-          flag = true;
-          PID_Reset(&pid_yaw);        
-          PID_Reset(&pid_rear);
-          PID_Reset(&pid_front);
-          PID_Reset(&pid_position);
-        }
-        
+    case 11:{
+      // 参数定义
+      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+      const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
+      const uint8_t MIN_SPEED = -10;          // 最小速度（靠近时）
+      const uint8_t MAX_SPEED = -60;          // 最大速度（远端时）
+  
+      // 获取当前检测距离（使用第4个传感器）
+      float current_distance = distances[3]; 
+  
+      // 速度计算逻辑
+      uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
+  
+      if (current_distance <= TARGET_DISTANCE) {
+          // 区域3：到达目标距离（≤70mm）
+          motor_speed = MIN_SPEED;
+  
+          // 执行路径切换逻辑
+          if(flag) {
+              time_start = HAL_GetTick();
+              flag = false;
+          }
+          if(HAL_GetTick() - time_start >= 100) {
+              path += 1;
+              PID_ResetAll(); // 重置所有PID控制器
+              flag = true;
+          }
+      } 
+      else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
+          // 区域2：减速区间（70~170mm）
+          // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
+          float distance_from_target = current_distance - TARGET_DISTANCE;
+          float ratio = 1.0f - (distance_from_target / DECEL_RANGE);
+          motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
+          motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
       }
+      else {
+          // 区域1：全速区间（>170mm）
+          motor_speed = MAX_SPEED;
+      }
+  
+      // 执行带平滑过渡的电机控制
+      static uint8_t last_speed = 0;
+      motor_speed = smooth_speed_transition(last_speed, motor_speed);
+      last_speed = motor_speed;
+  
+      Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+  
+      OLED_ShowNum(4, 4, motor_speed, 2);
       break;
+  }
 
     case 12:
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==0)||(distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==1))
+        if ((distances[3]>=70 && mean[3]>=70 && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[3]<=70 && meandistances(distances)[3]<=70 && path_change==0)
+        }else if (distances[3]<=70 && mean[3]<=70 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -767,7 +988,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70 && meandistances(distances)[3]>=70 && path_change==1)
+        }else if (distances[3]>=70 && mean[3]>=70 && path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();

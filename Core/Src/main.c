@@ -65,6 +65,8 @@ float distances[4] = {2000.0f, 2000.0f, 2000.0f, 2000.0f};
 float sum[4] = {0, 0, 0, 0};
 float mean[4] = {0, 0, 0, 0};
 static uint32_t start = 0, now = 0, cz = 1;
+static uint32_t start_start = 0,start_now = 0;
+bool start_flag = true;
 uint32_t time = 0;
 bool flag = true;
 bool delay_flag = true;
@@ -338,6 +340,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
     /* USER CODE END WHILE */
@@ -375,6 +378,11 @@ int main(void)
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/
     US100_GetAllValidDistances(distances);
     
+    while (distances[1]==0)
+    {
+      US100_GetAllValidDistances(distances);
+    }
+
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
         // 显示超声波距离，即使某些传感器没有数据也显示
         OLED_ShowNum(1, 1, distances[0], 5);  // 左前
@@ -403,12 +411,27 @@ int main(void)
     // OLED_ShowNum(4,4,time,4); OLED_ShowNum(4,10,time_start,4);
     meandistances(distances);
 
+
+    if (start_flag)
+    {
+      start_start = HAL_GetTick();
+      start_now = HAL_GetTick();
+      while (start_now - start_start <= 2500)
+      {
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
+        start_now = HAL_GetTick();
+      }
+      start_flag = false;
+    }
+    
+
+
     switch (path)
     {
     case 0: {
       // 参数定义
-      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
-      const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
+      const float TARGET_DISTANCE = 1000.0f;   // 目标保持距离
+      const float DECEL_RANGE = 300.0f;      // 减速区间范围（80~180mm）
       const uint8_t MIN_SPEED = 10;          // 最小速度（靠近时）
       const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
   
@@ -418,19 +441,14 @@ int main(void)
       uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
   
       if (current_distance <= TARGET_DISTANCE && mean[1] <=TARGET_DISTANCE) {
-          // 区域3：到达目标距离（≤70mm）
+          // 区域3：到达目标距离（≤80mm）
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if(flag) {
-              time_start = HAL_GetTick();
-              flag = false;
-          }
-          if(HAL_GetTick() - time_start >= 100) {
-              path += 1;
-              PID_ResetAll(); // 重置所有PID控制器
-              flag = true;
-          }
+          if( mean[1] <=100 && current_distance<=100) {
+            path += 1;
+            PID_ResetAll(); // 重置所有PID控制器
+        }
       } 
       else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE) && mean[1] <= (TARGET_DISTANCE + DECEL_RANGE)) {
           // 区域2：减速区间（70~170mm）
@@ -458,9 +476,9 @@ int main(void)
     
       case 1: {
         // 参数定义
-        const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
-        const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
-        const uint8_t MIN_SPEED = 10;          // 最小速度（靠近时）
+        const float TARGET_DISTANCE = 80.0f;   // 目标保持距离
+        const float DECEL_RANGE = 100.0f;      // 减速区间范围（80~170mm）
+        const uint8_t MIN_SPEED = 4;          // 最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
     
         // 获取当前检测距离（使用第4个传感器）
@@ -470,23 +488,18 @@ int main(void)
         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
     
         if (current_distance <= TARGET_DISTANCE) {
-            // 区域3：到达目标距离（≤70mm）
+            // 区域3：到达目标距离（≤80mm）
             motor_speed = MIN_SPEED;
     
             // 执行路径切换逻辑
-            if(flag) {
-                time_start = HAL_GetTick();
-                flag = false;
-            }
-            if(HAL_GetTick() - time_start >= 100) {
+            if(current_distance<=45) {
                 path += 1;
                 PID_ResetAll(); // 重置所有PID控制器
-                flag = true;
             }
         } 
         else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
-            // 区域2：减速区间（70~170mm）
-            // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
+            // 区域2：减速区间（80~180mm）
+            // 距离越近速度越慢，线性变化：180mm->60, 80mm->10
             float distance_from_target = current_distance - TARGET_DISTANCE;
             float ratio = 1.0f - (distance_from_target / DECEL_RANGE);
             motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
@@ -513,15 +526,15 @@ int main(void)
       {
         if ((distances[0]>=70&& mean[0]>=70 && path_change==0)||(distances[0]<=70&& mean[0]<=70&& path_change==1))
         {
-          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[0]<=70&& mean[0]<=70 && path_change==0)
+          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -33, &yaw, &target_yaw);
+        }else if (distances[0]<=100&& mean[0]<=100 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
             flag = false;
           }
           uint32_t time = HAL_GetTick();
-          if(time - time_start >=100){
+          if(time - time_start >=110){
             path_change+=1;
             flag = true;
           }
@@ -532,7 +545,7 @@ int main(void)
             flag = false;
           }
           uint32_t time = HAL_GetTick();
-          if(time - time_start >=100){
+          if(time - time_start >=110){
             path_change+=1;
             flag = true;
           }
@@ -550,13 +563,13 @@ int main(void)
 
     case 3:{
       // 参数定义
-      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+      const float TARGET_DISTANCE = 80.0f;   // 目标保持距离
       const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
-      const uint8_t MIN_SPEED = -10;          // 最小速度（靠近时）
+      const uint8_t MIN_SPEED = -4;          // 最小速度（靠近时）
       const uint8_t MAX_SPEED = -60;          // 最大速度（远端时）
   
       // 获取当前检测距离（使用第4个传感器）
-      float current_distance = distances[3]; 
+      float current_distance = distances[0]; 
   
       // 速度计算逻辑
       uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
@@ -566,14 +579,9 @@ int main(void)
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if(flag) {
-              time_start = HAL_GetTick();
-              flag = false;
-          }
-          if(HAL_GetTick() - time_start >= 100) {
-              path += 1;
-              PID_ResetAll(); // 重置所有PID控制器
-              flag = true;
+          if(current_distance<=50) {
+            path += 1;
+            PID_ResetAll(); // 重置所有PID控制器
           }
       } 
       else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
@@ -594,7 +602,7 @@ int main(void)
       motor_speed = smooth_speed_transition(last_speed, motor_speed);
       last_speed = motor_speed;
   
-      Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+      Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -643,9 +651,9 @@ int main(void)
 
     case 5:{
       // 参数定义
-      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+      const float TARGET_DISTANCE = 80.0f;   // 目标保持距离
       const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
-      const uint8_t MIN_SPEED = 10;          // 最小速度（靠近时）
+      const uint8_t MIN_SPEED = 4;          // 最小速度（靠近时）
       const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
   
       // 获取当前检测距离（使用第4个传感器）
@@ -659,14 +667,9 @@ int main(void)
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if(flag) {
-              time_start = HAL_GetTick();
-              flag = false;
-          }
-          if(HAL_GetTick() - time_start >= 100) {
-              path += 1;
-              PID_ResetAll(); // 重置所有PID控制器
-              flag = true;
+          if(current_distance<=50) {
+            path += 1;
+            PID_ResetAll(); // 重置所有PID控制器
           }
       } 
       else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
@@ -735,13 +738,13 @@ int main(void)
 
     case 7:{
         // 参数定义
-        const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+        const float TARGET_DISTANCE = 80.0f;   // 目标保持距离
         const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
-        const uint8_t MIN_SPEED = -10;          // 最小速度（靠近时）
+        const uint8_t MIN_SPEED = -4;          // 最小速度（靠近时）
         const uint8_t MAX_SPEED = -60;          // 最大速度（远端时）
     
         // 获取当前检测距离（使用第4个传感器）
-        float current_distance = distances[3]; 
+        float current_distance = distances[0]; 
     
         // 速度计算逻辑
         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
@@ -751,14 +754,9 @@ int main(void)
             motor_speed = MIN_SPEED;
     
             // 执行路径切换逻辑
-            if(flag) {
-                time_start = HAL_GetTick();
-                flag = false;
-            }
-            if(HAL_GetTick() - time_start >= 100) {
-                path += 1;
-                PID_ResetAll(); // 重置所有PID控制器
-                flag = true;
+            if(current_distance<=50) {
+              path += 1;
+              PID_ResetAll(); // 重置所有PID控制器
             }
         } 
         else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
@@ -828,9 +826,9 @@ int main(void)
 
     case 9:{
       // 参数定义
-      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+      const float TARGET_DISTANCE = 80.0f;   // 目标保持距离
       const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
-      const uint8_t MIN_SPEED = 10;          // 最小速度（靠近时）
+      const uint8_t MIN_SPEED = 4;          // 最小速度（靠近时）
       const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
   
       // 获取当前检测距离（使用第4个传感器）
@@ -844,14 +842,9 @@ int main(void)
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if(flag) {
-              time_start = HAL_GetTick();
-              flag = false;
-          }
-          if(HAL_GetTick() - time_start >= 100) {
-              path += 1;
-              PID_ResetAll(); // 重置所有PID控制器
-              flag = true;
+          if(current_distance<=50) {
+            path += 1;
+            PID_ResetAll(); // 重置所有PID控制器
           }
       } 
       else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
@@ -920,13 +913,13 @@ int main(void)
 
     case 11:{
       // 参数定义
-      const float TARGET_DISTANCE = 70.0f;   // 目标保持距离
+      const float TARGET_DISTANCE = 80.0f;   // 目标保持距离
       const float DECEL_RANGE = 100.0f;      // 减速区间范围（70~170mm）
-      const uint8_t MIN_SPEED = -10;          // 最小速度（靠近时）
+      const uint8_t MIN_SPEED = -4;          // 最小速度（靠近时）
       const uint8_t MAX_SPEED = -60;          // 最大速度（远端时）
   
       // 获取当前检测距离（使用第4个传感器）
-      float current_distance = distances[3]; 
+      float current_distance = distances[0]; 
   
       // 速度计算逻辑
       uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
@@ -936,14 +929,9 @@ int main(void)
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if(flag) {
-              time_start = HAL_GetTick();
-              flag = false;
-          }
-          if(HAL_GetTick() - time_start >= 100) {
-              path += 1;
-              PID_ResetAll(); // 重置所有PID控制器
-              flag = true;
+          if(current_distance<=50) {
+            path += 1;
+            PID_ResetAll(); // 重置所有PID控制器
           }
       } 
       else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {

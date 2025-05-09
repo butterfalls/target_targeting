@@ -341,6 +341,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+  start_start = HAL_GetTick();
+
   while (1)
   {
     /* USER CODE END WHILE */
@@ -414,16 +416,18 @@ int main(void)
 
     if (start_flag)
     {
-      start_start = HAL_GetTick();
       start_now = HAL_GetTick();
-      while (start_now - start_start <= 2500)
+      if (start_now - start_start <= 5000)
       {
         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
         start_now = HAL_GetTick();
+        continue;
+      }else{
+        start_flag = false;
       }
-      start_flag = false;
     }
     
+
 
 
     switch (path)
@@ -524,7 +528,7 @@ int main(void)
     case 2:
       if (path_change!=2)
       {
-        if ((distances[0]>=70&& mean[0]>=70 && path_change==0)||(distances[0]<=70&& mean[0]<=70&& path_change==1))
+        if ((distances[0]>=100&& mean[0]>=100 && path_change==0)||(distances[0]<=100 && mean[0]<=100 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -33, &yaw, &target_yaw);
         }else if (distances[0]<=100&& mean[0]<=100 && path_change==0)
@@ -538,7 +542,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70&& mean[0]>=70&& path_change==1)
+        }else if (distances[0]>=100&& mean[0]>=100&& path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -612,10 +616,10 @@ int main(void)
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && mean[3]>=70  && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
+        if ((distances[3]>=100 && mean[3]>=100  && path_change==0)||(distances[3]<=100 && mean[3]<=100 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[3]<=70&& mean[3]<=70&& path_change==0)
+        }else if (distances[3]<=100 && mean[3]<=100 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -626,7 +630,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70&& mean[3]>=70&& path_change==1)
+        }else if (distances[3]>=100 && mean[3]>=100 && path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -699,10 +703,10 @@ int main(void)
       case 6:
       if (path_change!=2)
       {
-        if ((distances[0]>=70 && mean[0]>=70 && path_change==0)||(distances[0]<=70 && mean[0]<=70 && path_change==1))
+        if ((distances[0]>=100 && mean[0]>=100 && path_change==0)||(distances[0]<=100 && mean[0]<=100 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[0]<=70 && mean[0]<=70 && path_change==0)
+        }else if (distances[0]<=100 && mean[0]<=100 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -713,7 +717,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70 && mean[0]>=70 && path_change==1)
+        }else if (distances[0]>=100 && mean[0]>=100 && path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -756,7 +760,7 @@ int main(void)
             // 执行路径切换逻辑
             if(current_distance<=50) {
               path += 1;
-              PID_ResetAll(); // 重置所有PID控制器
+              PID_ResetAll·(); // 重置所有PID控制器
             }
         } 
         else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
@@ -787,10 +791,10 @@ int main(void)
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && mean[3]>=70 && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
+        if ((distances[3]>=100 && mean[3]>=100 && path_change==0)||(distances[3]<=100 && mean[3]<=100 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[3]<=70 && mean[3]<=70 && path_change==0)
+        }else if (distances[3]<=100 && mean[3]<=100 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -801,7 +805,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70 && mean[3]>=70 && path_change==1)
+        }else if (distances[3]>=100 && mean[3]>=100 && path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -874,10 +878,10 @@ int main(void)
     case 10:
       if (path_change!=2)
       {
-        if ((distances[0]>=70 && mean[0]>=70 && path_change==0)||(distances[0]<=70 && mean[0]<=70 && path_change==1))
+        if ((distances[0]>=100 && mean[0]>=100 && path_change==0)||(distances[0]<=100 && mean[0]<=100 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[0]<=70 && mean[0]<=70 && path_change==0)
+        }else if (distances[0]<=100 && mean[0]<=100 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -888,7 +892,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70 && mean[0]>=70 && path_change==1)
+        }else if (distances[0]>=100 && mean[0]>=100 && path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -962,10 +966,10 @@ int main(void)
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && mean[3]>=70 && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
+        if ((distances[3]>=100 && mean[3]>=100 && path_change==0)||(distances[3]<=100 && mean[3]<=100 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-        }else if (distances[3]<=70 && mean[3]<=70 && path_change==0)
+        }else if (distances[3]<=100 && mean[3]<=100 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -976,7 +980,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70 && mean[3]>=70 && path_change==1)
+        }else if (distances[3]>=100 && mean[3]>=100 && path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();

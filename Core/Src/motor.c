@@ -494,7 +494,7 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
         // Apply new compare values to front motors
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
-    } else {
+    } else if(distance > threshold + 20.0f){
         // Get current compare values for back motors
         uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
         uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);

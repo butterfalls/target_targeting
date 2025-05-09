@@ -341,6 +341,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+  start_start = HAL_GetTick();
+
   while (1)
   {
     /* USER CODE END WHILE */
@@ -414,14 +416,15 @@ int main(void)
 
     if (start_flag)
     {
-      start_start = HAL_GetTick();
       start_now = HAL_GetTick();
-      while (start_now - start_start <= 2500)
+      if (start_now - start_start <= 5000)
       {
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
-        start_now = HAL_GetTick();
+          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
+          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, distances[0], 30.0f);
+      }else{
+    	  start_flag = false;
       }
-      start_flag = false;
+      continue;
     }
     
 
@@ -495,7 +498,7 @@ int main(void)
             motor_speed = MIN_SPEED;
     
             // 执行路径切换逻辑
-            if(current_distance<=45) {
+            if(current_distance<=32) {
                 path += 1;
                 PID_ResetAll(); // 重置所有PID控制器
             }

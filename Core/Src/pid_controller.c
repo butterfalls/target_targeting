@@ -46,6 +46,33 @@ PIDController pid_position = {
     .max_integral = 50.0f
 };
 
+PIDController pid_left_distance = {
+    .Kp = 0.2f,    // 比例系数
+    .Ki = 0.01f,   // 积分系数
+    .Kd = 0.0f,    // 微分系数
+    .integral = 0.0f,
+    .prev_error = 0.0f,
+    .max_integral = 30.0f
+};
+
+PIDController pid_right_distance = {
+    .Kp = 0.2f,    // 比例系数
+    .Ki = 0.01f,   // 积分系数
+    .Kd = 0.0f,    // 微分系数
+    .integral = 0.0f,
+    .prev_error = 0.0f,
+    .max_integral = 30.0f
+};
+
+PIDController pid_frontback_distance = {
+    .Kp = 0.2f,    // 比例系数
+    .Ki = 0.01f,   // 积分系数
+    .Kd = 0.0f,    // 微分系数
+    .integral = 0.0f,
+    .prev_error = 0.0f,
+    .max_integral = 30.0f
+};
+
 /* Exported functions --------------------------------------------------------*/
 float PID_Calculate(PIDController* pid, float error, float dt) {
     // 添加时间差保护

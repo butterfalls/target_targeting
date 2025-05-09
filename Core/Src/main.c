@@ -420,14 +420,12 @@ int main(void)
       if (start_now - start_start <= 5000)
       {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
-          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, distances[0], 30.0f);
+          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 30.0f);
       }else{
     	  start_flag = false;
       }
       continue;
     }
-    
-
 
     switch (path)
     {

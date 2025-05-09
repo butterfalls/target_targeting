@@ -171,7 +171,7 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     float yaw_pid_output = 0.0f;
     if (fabs(yaw_error) > 0.1f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-        // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
+        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
         // 误差小于1度时，重置PID控制器
         // PID_Reset(&pid_yaw);
@@ -183,9 +183,9 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     float position_pid_output = PID_Calculate(&pid_position, position_speed_error + yaw_pid_output, dt);
     
     // 限制PID输出
-    // front_pid_output = fmaxf(fminf(front_pid_output, max_pid_output*1), -max_pid_output*1);
-    // rear_pid_output = fmaxf(fminf(rear_pid_output, max_pid_output*1), -max_pid_output*1);
-    // position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
+    front_pid_output = fmaxf(fminf(front_pid_output, max_pid_output*1), -max_pid_output*1);
+    rear_pid_output = fmaxf(fminf(rear_pid_output, max_pid_output*1), -max_pid_output*1);
+    position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
     
     // 前轮组 - 左前右前同步
     float motor_speed1 = -(base_speed - front_pid_output - position_pid_output - yaw_pid_output);  // 左前
@@ -282,7 +282,7 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float yaw_pid_output = 0.0f;
     if (fabs(yaw_error) > 0.1f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
-        // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
+        yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
         // 误差小于1度时，重置PID控制器
         PID_Reset(&pid_yaw);
@@ -294,9 +294,9 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float position_pid_output = PID_Calculate(&pid_position, position_speed_error + yaw_pid_output, dt);
     
     // 限制PID输出
-    // left_pid_output = fmaxf(fminf(left_pid_output, max_pid_output*1), -max_pid_output*1);
-    // right_pid_output = fmaxf(fminf(right_pid_output, max_pid_output*1), -max_pid_output*1);
-    // position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
+    left_pid_output = fmaxf(fminf(left_pid_output, max_pid_output*1), -max_pid_output*1);
+    right_pid_output = fmaxf(fminf(right_pid_output, max_pid_output*1), -max_pid_output*1);
+    position_pid_output = fmaxf(fminf(position_pid_output, max_pid_output*1), -max_pid_output*1);
     
     // 左侧轮子 - 正转
     float motor_speed1 = -(base_speed - left_pid_output - position_pid_output - yaw_pid_output);  // 左前
@@ -450,88 +450,128 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
 }
 
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float distance, float threshold) {
+    static uint32_t prev_tick = 0;
+    uint32_t current_tick = HAL_GetTick();
+    float dt = (current_tick - prev_tick) / 1000.0f;  // 转换为秒
+    prev_tick = current_tick;
+    
+    if (dt <= 0.001f) {
+        dt = 0.001f;  // 最小时间差为1ms
+    }
+
     if (distance < threshold) {
-        // Get current compare values for left motors
+        // 计算距离误差
+        float error = threshold - distance;
+        // 使用PID计算调整量
+        float adjustment = PID_Calculate(&pid_left_distance, error, dt);
+        
+        // 获取当前速度
         uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
         uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
         
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment1 = compare1 * 0.1f;
-        uint32_t adjustment3 = compare3 * 0.1f;
-        
-        // Apply new compare values
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
+        // 应用PID调整
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment);
     } else if (distance > threshold + 20.0f) {
-        // Get current compare values for right motors (opposite side)
+        // 计算距离误差
+        float error = distance - (threshold + 20.0f);
+        // 使用PID计算调整量
+        float adjustment = PID_Calculate(&pid_left_distance, error, dt);
+        
+        // 获取当前速度
         uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
         uint32_t compare4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
         
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment2 = compare2 * 0.1f;
-        uint32_t adjustment4 = compare4 * 0.1f;
-        
-        // Apply new compare values to right motors
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
+        // 应用PID调整
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment);
+    } else {
+        // 在阈值范围内，重置PID控制器
+        PID_Reset(&pid_left_distance);
     }
 }
 
 void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, Motor_ID id3, float distance, float threshold) {
+    static uint32_t prev_tick = 0;
+    uint32_t current_tick = HAL_GetTick();
+    float dt = (current_tick - prev_tick) / 1000.0f;  // 转换为秒
+    prev_tick = current_tick;
+    
+    if (dt <= 0.001f) {
+        dt = 0.001f;  // 最小时间差为1ms
+    }
+
     if (distance < threshold) {
-        // Get current compare values for right motors
+        // 计算距离误差
+        float error = threshold - distance;
+        // 使用PID计算调整量
+        float adjustment = PID_Calculate(&pid_right_distance, error, dt);
+        
+        // 获取当前速度
         uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
         uint32_t compare4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
         
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment2 = compare2 * 0.1f;
-        uint32_t adjustment4 = compare4 * 0.1f;
-        
-        // Apply new compare values
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
+        // 应用PID调整
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment);
     } else if (distance > threshold + 20.0f) {
-        // Get current compare values for left motors (opposite side)
+        // 计算距离误差
+        float error = distance - (threshold + 20.0f);
+        // 使用PID计算调整量
+        float adjustment = PID_Calculate(&pid_right_distance, error, dt);
+        
+        // 获取当前速度
         uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
         uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
         
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment1 = compare1 * 0.1f;
-        uint32_t adjustment3 = compare3 * 0.1f;
-        
-        // Apply new compare values to left motors
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
+        // 应用PID调整
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment);
+    } else {
+        // 在阈值范围内，重置PID控制器
+        PID_Reset(&pid_right_distance);
     }
 }
 
 void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id2, Motor_ID id3, float distance, float threshold) {
+    static uint32_t prev_tick = 0;
+    uint32_t current_tick = HAL_GetTick();
+    float dt = (current_tick - prev_tick) / 1000.0f;  // 转换为秒
+    prev_tick = current_tick;
+    
+    if (dt <= 0.001f) {
+        dt = 0.001f;  // 最小时间差为1ms
+    }
+
     if (distance < threshold) {
-        // Get current compare values for front motors
+        // 计算距离误差
+        float error = threshold - distance;
+        // 使用PID计算调整量
+        float adjustment = PID_Calculate(&pid_frontback_distance, error, dt);
+        
+        // 获取当前速度
         uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
         uint32_t compare4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
         
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment1 = compare1 * 0.1f;
-        uint32_t adjustment4 = compare4 * 0.1f;
-        
-        // Apply new compare values to front motors
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
-
+        // 应用PID调整
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment);
     } else if (distance > threshold + 20.0f) {
+        // 计算距离误差
+        float error = distance - (threshold + 20.0f);
+        // 使用PID计算调整量
+        float adjustment = PID_Calculate(&pid_frontback_distance, error, dt);
         
-        // Get current compare values for back motors
+        // 获取当前速度
         uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
         uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
         
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment2 = compare2 * 0.1f;
-        uint32_t adjustment3 = compare3 * 0.1f;
-        
-        // Apply new compare values to back motors
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
+        // 应用PID调整
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment);
+    } else {
+        // 在阈值范围内，重置PID控制器
+        PID_Reset(&pid_frontback_distance);
     }
 }
 

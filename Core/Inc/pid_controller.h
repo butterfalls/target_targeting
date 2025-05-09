@@ -25,6 +25,9 @@ extern PIDController pid_yaw;      // 偏航角PID控制器
 extern PIDController pid_front;    // 前轮组同步PID控制器
 extern PIDController pid_rear;     // 后轮组同步PID控制器
 extern PIDController pid_position; // 左右轮组同步PID控制器
+extern PIDController pid_left_distance;   // 左侧距离PID控制器
+extern PIDController pid_right_distance;  // 右侧距离PID控制器
+extern PIDController pid_frontback_distance; // 前后距离PID控制器
 
 /* Exported functions prototypes ---------------------------------------------*/
 float PID_Calculate(PIDController* pid, float error, float dt);

@@ -169,12 +169,12 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     
     // 计算偏航角PID输出
     float yaw_pid_output = 0.0f;
-    if (fabs(yaw_error) > 1.0f) {
+    if (fabs(yaw_error) > 0.1f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
         // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
         // 误差小于1度时，重置PID控制器
-        PID_Reset(&pid_yaw);
+        // PID_Reset(&pid_yaw);
     }
     
     // 计算前后轮组的速度PID输出
@@ -280,7 +280,7 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     
     // 计算偏航角PID输出
     float yaw_pid_output = 0.0f;
-    if (fabs(yaw_error) > 1.0f) {
+    if (fabs(yaw_error) > 0.1f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
         // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
@@ -447,5 +447,65 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
     // 设置电机速度
     Motor_SetSpeed(id1, speed1);
     Motor_SetSpeed(id2, speed2);
+}
+
+void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, float distance, float threshold) {
+    if (distance < threshold) {
+        // Get current compare values for left motors
+        uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
+        uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
+        
+        // Calculate adjustment (increase by 10% of current value)
+        uint32_t adjustment1 = compare1 * 0.1f;
+        uint32_t adjustment3 = compare3 * 0.1f;
+        
+        // Apply new compare values
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
+    }
+}
+
+void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, float distance, float threshold) {
+    if (distance < threshold) {
+        // Get current compare values for right motors
+        uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
+        uint32_t compare4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+        
+        // Calculate adjustment (increase by 10% of current value)
+        uint32_t adjustment2 = compare2 * 0.1f;
+        uint32_t adjustment4 = compare4 * 0.1f;
+        
+        // Apply new compare values
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
+    }
+}
+
+void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id2, Motor_ID id3, float distance, float threshold) {
+    if (distance < threshold) {
+        // Get current compare values for front motors
+        uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
+        uint32_t compare4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+        
+        // Calculate adjustment (increase by 10% of current value)
+        uint32_t adjustment1 = compare1 * 0.1f;
+        uint32_t adjustment4 = compare4 * 0.1f;
+        
+        // Apply new compare values to front motors
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
+    } else {
+        // Get current compare values for back motors
+        uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
+        uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
+        
+        // Calculate adjustment (increase by 10% of current value)
+        uint32_t adjustment2 = compare2 * 0.1f;
+        uint32_t adjustment3 = compare3 * 0.1f;
+        
+        // Apply new compare values to back motors
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
+    }
 }
 

@@ -60,6 +60,11 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
 uint32_t Get_Time_Difference(void);  // 获取时间差（秒）
 void Reset_Timer(void);  // 重置计时器
 
+// 新增的电机调整函数
+void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, float distance, float threshold);
+void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, float distance, float threshold);
+void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id2, Motor_ID id3, float distance, float threshold);
+
 #ifdef __cplusplus
 }
 #endif

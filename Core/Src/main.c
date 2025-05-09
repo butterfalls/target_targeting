@@ -469,6 +469,9 @@ int main(void)
       last_speed = motor_speed;
   
       Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+      
+      // 使用左侧电机调整
+      Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, distances[0], 30.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -516,6 +519,10 @@ int main(void)
         last_speed = motor_speed;
     
         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+        
+        // 使用前后电机调整
+        float avg_distance = (distances[1] + distances[2]) / 2.0f;
+        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;
@@ -527,6 +534,8 @@ int main(void)
         if ((distances[0]>=70&& mean[0]>=70 && path_change==0)||(distances[0]<=70&& mean[0]<=70&& path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -33, &yaw, &target_yaw);
+          // 使用右侧电机调整
+          Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, distances[3], 30.0f);
         }else if (distances[0]<=100&& mean[0]<=100 && path_change==0)
         {
           if(flag){
@@ -603,6 +612,10 @@ int main(void)
       last_speed = motor_speed;
   
       Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
+      
+      // 使用前后电机调整
+      float avg_distance = (distances[1] + distances[2]) / 2.0f;
+      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -615,6 +628,8 @@ int main(void)
         if ((distances[3]>=70 && mean[3]>=70  && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          // 使用左侧电机调整
+          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, distances[0], 30.0f);
         }else if (distances[3]<=70&& mean[3]<=70&& path_change==0)
         {
           if(flag){
@@ -691,6 +706,10 @@ int main(void)
       last_speed = motor_speed;
   
       Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+      
+      // 使用前后电机调整
+      float avg_distance = (distances[1] + distances[2]) / 2.0f;
+      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -702,6 +721,8 @@ int main(void)
         if ((distances[0]>=70 && mean[0]>=70 && path_change==0)||(distances[0]<=70 && mean[0]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          // 使用右侧电机调整
+          Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, distances[3], 30.0f);
         }else if (distances[0]<=70 && mean[0]<=70 && path_change==0)
         {
           if(flag){
@@ -778,6 +799,10 @@ int main(void)
         last_speed = motor_speed;
     
         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+        
+        // 使用前后电机调整
+        float avg_distance = (distances[1] + distances[2]) / 2.0f;
+        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;
@@ -790,6 +815,8 @@ int main(void)
         if ((distances[3]>=70 && mean[3]>=70 && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          // 使用左侧电机调整
+          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, distances[0], 30.0f);
         }else if (distances[3]<=70 && mean[3]<=70 && path_change==0)
         {
           if(flag){
@@ -866,6 +893,10 @@ int main(void)
       last_speed = motor_speed;
   
       Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+      
+      // 使用前后电机调整
+      float avg_distance = (distances[1] + distances[2]) / 2.0f;
+      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -877,6 +908,8 @@ int main(void)
         if ((distances[0]>=70 && mean[0]>=70 && path_change==0)||(distances[0]<=70 && mean[0]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          // 使用右侧电机调整
+          Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, distances[3], 30.0f);
         }else if (distances[0]<=70 && mean[0]<=70 && path_change==0)
         {
           if(flag){
@@ -953,6 +986,10 @@ int main(void)
       last_speed = motor_speed;
   
       Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+      
+      // 使用前后电机调整
+      float avg_distance = (distances[1] + distances[2]) / 2.0f;
+      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -965,6 +1002,8 @@ int main(void)
         if ((distances[3]>=70 && mean[3]>=70 && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+          // 使用左侧电机调整
+          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, distances[0], 30.0f);
         }else if (distances[3]<=70 && mean[3]<=70 && path_change==0)
         {
           if(flag){

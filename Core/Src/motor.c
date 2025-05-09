@@ -449,7 +449,7 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
     Motor_SetSpeed(id2, speed2);
 }
 
-void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, float distance, float threshold) {
+void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float distance, float threshold) {
     if (distance < threshold) {
         // Get current compare values for left motors
         uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
@@ -462,10 +462,22 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, float distance, 
         // Apply new compare values
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
         __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
+    } else if (distance > threshold + 20.0f) {
+        // Get current compare values for right motors (opposite side)
+        uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
+        uint32_t compare4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+        
+        // Calculate adjustment (increase by 10% of current value)
+        uint32_t adjustment2 = compare2 * 0.1f;
+        uint32_t adjustment4 = compare4 * 0.1f;
+        
+        // Apply new compare values to right motors
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
     }
 }
 
-void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, float distance, float threshold) {
+void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, Motor_ID id3, float distance, float threshold) {
     if (distance < threshold) {
         // Get current compare values for right motors
         uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
@@ -478,6 +490,18 @@ void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, float distance,
         // Apply new compare values
         __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
+    } else if (distance > threshold + 20.0f) {
+        // Get current compare values for left motors (opposite side)
+        uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
+        uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
+        
+        // Calculate adjustment (increase by 10% of current value)
+        uint32_t adjustment1 = compare1 * 0.1f;
+        uint32_t adjustment3 = compare3 * 0.1f;
+        
+        // Apply new compare values to left motors
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
     }
 }
 
@@ -494,7 +518,9 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
         // Apply new compare values to front motors
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
-    } else if(distance > threshold + 20.0f){
+
+    } else if (distance > threshold + 20.0f) {
+        
         // Get current compare values for back motors
         uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
         uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);

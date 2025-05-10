@@ -38,9 +38,9 @@ PIDController pid_rear = {
 };
 
 PIDController pid_position = {
-    .Kp = 0.01f,
-    .Ki = 0.0012f,
-    .Kd = 0.00001f,
+    .Kp = 0.0005f,
+    .Ki = 0.000073f,
+    .Kd = 0.00001f, 
     .integral = 0.0f,
     .prev_error = 0.0f,
     .max_integral = 50.0f

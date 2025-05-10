@@ -183,6 +183,7 @@ void PID_ResetAll(void) {
   PID_Reset(&pid_position);
 }
 
+
 /* USER CODE END 0 */
 
 /**
@@ -386,11 +387,20 @@ int main(void)
     }
 
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
-        // 显示超声波距离，即使某些传感器没有数据也显示
-        OLED_ShowNum(1, 1, distances[0], 5);  // 左前
-        OLED_ShowNum(1, 9, distances[1], 5);  // 右前
-        OLED_ShowNum(2, 1, distances[2], 5);  // 左后
-        OLED_ShowNum(2, 9, distances[3], 5);  // 右后
+        // 显示原始距离和滤波后的距离
+        OLED_ShowString(1, 1, "Raw:");
+        OLED_ShowString(1, 9, "Filt:");
+        OLED_ShowString(2, 1, "Raw:");
+        OLED_ShowString(2, 9, "Filt:");
+        
+        // 显示第一个传感器的原始值和滤波值
+        OLED_ShowNum(1, 5, raw_distances[0], 4);
+        OLED_ShowNum(1, 13, distances[0], 4);
+        
+        // 显示第二个传感器的原始值和滤波值
+        OLED_ShowNum(2, 5, raw_distances[1], 4);
+        OLED_ShowNum(2, 13, distances[1], 4);
+        
         oled_prev_time = current_time;
     }
 

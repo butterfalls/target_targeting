@@ -2,16 +2,76 @@
 #include "usart.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 // 全局传感器数组
-static US100Sensor* active_sensors[MAX_US100_SENSORS] = {0};
+US100Sensor* active_sensors[MAX_US100_SENSORS] = {0};
 uint8_t us100_sensor_count = 0;  // 当前活动的传感器数量
+float raw_distances[4] = {2000.0f, 2000.0f, 2000.0f, 2000.0f};  // 添加原始距离数组
 
 // 超时时间（毫秒）
 #define US100_TIMEOUT_MS 300  // 增加超时时间到300ms
 
 // 静态变量用于存储上次有效的距离值
-static float last_valid_distances[MAX_US100_SENSORS] = {0};
+float last_valid_distances[MAX_US100_SENSORS] = {0};
+
+// 卡尔曼滤波器实现
+void KalmanFilter_Init(KalmanFilter* kf, float Q, float R, float dt) {
+    kf->x = 0.0f;      // 初始状态估计值
+    kf->P = 1.0f;      // 初始估计误差协方差
+    kf->Q = Q;         // 过程噪声协方差
+    kf->R = R;         // 测量噪声协方差
+    kf->dt = dt;       // 时间步长
+}
+
+float KalmanFilter_Update(KalmanFilter* kf, float measurement) {
+    // 预测步骤
+    float x_pred = kf->x;                    // 状态预测
+    float P_pred = kf->P + kf->Q * kf->dt;   // 误差协方差预测
+
+    // 更新步骤
+    kf->K = P_pred / (P_pred + kf->R);       // 计算卡尔曼增益
+    kf->x = x_pred + kf->K * (measurement - x_pred);  // 更新状态估计
+    kf->P = (1.0f - kf->K) * P_pred;         // 更新误差协方差
+
+    return kf->x;
+}
+
+// 滑动窗口滤波器实现
+void SlidingWindowFilter_Init(SlidingWindowFilter* swf, int size) {
+    swf->size = size;
+    swf->index = 0;
+    swf->sum = 0.0f;
+    swf->buffer = (float*)malloc(size * sizeof(float));
+    if (swf->buffer != NULL) {
+        memset(swf->buffer, 0, size * sizeof(float));
+    }
+}
+
+float SlidingWindowFilter_Update(SlidingWindowFilter* swf, float new_value) {
+    if (swf->buffer == NULL) return new_value;
+
+    // 减去最旧的值
+    swf->sum -= swf->buffer[swf->index];
+    
+    // 添加新值
+    swf->buffer[swf->index] = new_value;
+    swf->sum += new_value;
+    
+    // 更新索引
+    swf->index = (swf->index + 1) % swf->size;
+    
+    // 返回平均值
+    return swf->sum / swf->size;
+}
+
+void SlidingWindowFilter_Reset(SlidingWindowFilter* swf) {
+    if (swf->buffer != NULL) {
+        memset(swf->buffer, 0, swf->size * sizeof(float));
+        swf->sum = 0.0f;
+        swf->index = 0;
+    }
+}
 
 void US100_Init(US100Sensor* sensor, UART_HandleTypeDef* uart) {
     if (us100_sensor_count >= MAX_US100_SENSORS) return;
@@ -24,6 +84,12 @@ void US100_Init(US100Sensor* sensor, UART_HandleTypeDef* uart) {
     sensor->data_ready = 0;
     sensor->distance = 0.0f;
     sensor->rx_index = 0;
+    
+    // 初始化卡尔曼滤波器
+    KalmanFilter_Init(&sensor->kalman, 0.1f, 1.0f, 0.01f);  // Q=0.1, R=1.0, dt=0.01
+    
+    // 初始化滑动窗口滤波器
+    SlidingWindowFilter_Init(&sensor->sliding, 5);  // 5点滑动窗口
     
     // 添加到活动传感器数组
     active_sensors[us100_sensor_count++] = sensor;
@@ -128,7 +194,15 @@ void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 float US100_GetDistance(US100Sensor* sensor) {
     if (sensor->data_ready) {
         sensor->data_ready = 0;
-        return sensor->distance;
+        float raw_distance = sensor->distance;
+        
+        // 应用卡尔曼滤波
+        float kalman_filtered = KalmanFilter_Update(&sensor->kalman, raw_distance);
+        
+        // 应用滑动窗口滤波
+        float final_filtered = SlidingWindowFilter_Update(&sensor->sliding, kalman_filtered);
+        
+        return final_filtered;
     }
     return -1.0f; // 无效数据
 }
@@ -143,6 +217,7 @@ void US100_GetAllValidDistances(float* distances) {
     for (uint8_t i = 0; i < us100_sensor_count; i++) {
         float current_distance = US100_GetDistance(active_sensors[i]);
         if (current_distance > 0) {
+            raw_distances[i] = active_sensors[i]->distance;
             last_valid_distances[i] = current_distance;
         }
         distances[i] = last_valid_distances[i];

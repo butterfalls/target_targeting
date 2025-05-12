@@ -11,7 +11,7 @@ PIDController pid_encoder = {
 };
 
 PIDController pid_yaw = {
-    .Kp = 1.1f,    // 比例系数
+    .Kp = 1.1f,   // 比例系数
     .Ki = 0.08f,   // 积分系数
     .Kd = 0.0f,    // 微分系数
     .integral = 0.0f,
@@ -38,9 +38,9 @@ PIDController pid_rear = {
 };
 
 PIDController pid_position = {
-    .Kp = 0.0005f,
-    .Ki = 0.000073f,
-    .Kd = 0.00001f, 
+    .Kp = 0.0f,
+    .Ki = 0.0f,
+    .Kd = 0.0f, 
     .integral = 0.0f,
     .prev_error = 0.0f,
     .max_integral = 50.0f

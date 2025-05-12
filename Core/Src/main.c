@@ -388,18 +388,18 @@ int main(void)
 
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
         // 显示原始距离和滤波后的距离
-        OLED_ShowString(1, 1, "Raw:");
-        OLED_ShowString(1, 9, "Filt:");
-        OLED_ShowString(2, 1, "Raw:");
-        OLED_ShowString(2, 9, "Filt:");
+        OLED_ShowString(1, 1, "Flt:");
+        OLED_ShowString(1, 9, "Flt:");
+        OLED_ShowString(2, 1, "Flt:");
+        OLED_ShowString(2, 9, "Flt:");
         
         // 显示第一个传感器的原始值和滤波值
-        OLED_ShowNum(1, 5, raw_distances[0], 4);
-        OLED_ShowNum(1, 13, distances[0], 4);
+        OLED_ShowNum(1, 5, distances[0], 4);
+        OLED_ShowNum(1, 13, distances[1], 4);
         
         // 显示第二个传感器的原始值和滤波值
-        OLED_ShowNum(2, 5, raw_distances[1], 4);
-        OLED_ShowNum(2, 13, distances[1], 4);
+        OLED_ShowNum(2, 5, distances[2], 4);
+        OLED_ShowNum(2, 13, distances[3], 4);
         
         oled_prev_time = current_time;
     }
@@ -421,7 +421,7 @@ int main(void)
     
     OLED_ShowNum(4,1,path,2);  // 显示毫秒
     // OLED_ShowNum(4,4,time,4); OLED_ShowNum(4,10,time_start,4);
-    meandistances(distances);
+    // meandistances(distances);
 
 
     if (start_flag)
@@ -430,7 +430,7 @@ int main(void)
       if (start_now - start_start <= 5000)
       {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
-          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 30.0f);
+          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
       }else{
     	  start_flag = false;
       }
@@ -444,7 +444,7 @@ int main(void)
     case 0: {
       // 参数定义
       const float TARGET_DISTANCE = 1000.0f;   // 目标保持距离
-      const float DECEL_RANGE = 300.0f;      // 减速区间范围（80~180mm）
+      const float DECEL_RANGE = 500.0f;      // 减速区间范围（80~180mm）
       const uint8_t MIN_SPEED = 10;          // 最小速度（靠近时）
       const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
   
@@ -453,17 +453,17 @@ int main(void)
       // 速度计算逻辑
       uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
   
-      if (current_distance <= TARGET_DISTANCE && mean[1] <=TARGET_DISTANCE) {
+      if (current_distance <= TARGET_DISTANCE /* && mean[1] <=TARGET_DISTANCE */) {
           // 区域3：到达目标距离（≤80mm）
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if( mean[1] <=100 && current_distance<=100) {
+          if( /* mean[1] <=100 && */ current_distance<=100) {
             path += 1;
             PID_ResetAll(); // 重置所有PID控制器
         }
       } 
-      else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE) && mean[1] <= (TARGET_DISTANCE + DECEL_RANGE)) {
+      else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE) /* && mean[1] <= (TARGET_DISTANCE + DECEL_RANGE) */) {
           // 区域2：减速区间（70~170mm）
           // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
           float distance_from_target = current_distance - TARGET_DISTANCE;
@@ -484,7 +484,7 @@ int main(void)
       Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
       
       // 使用左侧电机调整
-      Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 30.0f);
+      Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -493,7 +493,7 @@ int main(void)
       case 1: {
         // 参数定义
         const float TARGET_DISTANCE = 80.0f;   // 目标保持距离
-        const float DECEL_RANGE = 100.0f;      // 减速区间范围（80~170mm）
+        const float DECEL_RANGE = 1000.0f;      // 减速区间范围（80~170mm）
         const uint8_t MIN_SPEED = 4;          // 最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 最大速度（远端时）
     
@@ -508,7 +508,7 @@ int main(void)
             motor_speed = MIN_SPEED;
     
             // 执行路径切换逻辑
-            if(current_distance<=32) {
+            if(current_distance<=TARGET_DISTANCE) {
                 path += 1;
                 PID_ResetAll(); // 重置所有PID控制器
             }
@@ -535,7 +535,7 @@ int main(void)
         
         // 使用前后电机调整
         float avg_distance = (distances[1] + distances[2]) / 2.0f;
-        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
+        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;
@@ -544,12 +544,12 @@ int main(void)
     case 2:
       if (path_change!=2)
       {
-        if ((distances[0]>=70&& mean[0]>=70 && path_change==0)||(distances[0]<=70&& mean[0]<=70&& path_change==1))
+        if ((raw_distances[0]>=70&& /* mean[0]>=70 && */ path_change==0)||(raw_distances[0]<=70&& /* mean[0]<=70&& */ path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -33, &yaw, &target_yaw);
           // 使用右侧电机调整
-          Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 30.0f);
-        }else if (distances[0]<=100&& mean[0]<=100 && path_change==0)
+          Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 40.0f);
+        }else if (raw_distances[0]<=100&& /* mean[0]<=100 && */ path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -560,7 +560,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70&& mean[0]>=70&& path_change==1)
+        }else if (raw_distances[0]>=70&& /* mean[0]>=70&& */ path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -601,7 +601,7 @@ int main(void)
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if(current_distance<=50) {
+          if(current_distance<=TARGET_DISTANCE) {
             path += 1;
             PID_ResetAll(); // 重置所有PID控制器
           }
@@ -628,7 +628,7 @@ int main(void)
       
       // 使用前后电机调整
       float avg_distance = (distances[1] + distances[2]) / 2.0f;
-      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
+      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -638,12 +638,12 @@ int main(void)
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && mean[3]>=70  && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
+        if ((raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==0)||(raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
           // 使用左侧电机调整
-          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 30.0f);
-        }else if (distances[3]<=70&& mean[3]<=70&& path_change==0)
+          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
+        }else if (raw_distances[3]<=70&& /* mean[3]<=70&& */ path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -654,7 +654,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70&& mean[3]>=70&& path_change==1)
+        }else if (raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -695,7 +695,7 @@ int main(void)
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if(current_distance<=50) {
+          if(current_distance<=TARGET_DISTANCE) {
             path += 1;
             PID_ResetAll(); // 重置所有PID控制器
           }
@@ -722,7 +722,7 @@ int main(void)
       
       // 使用前后电机调整
       float avg_distance = (distances[1] + distances[2]) / 2.0f;
-      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
+      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -731,12 +731,12 @@ int main(void)
       case 6:
       if (path_change!=2)
       {
-        if ((distances[0]>=70 && mean[0]>=70 && path_change==0)||(distances[0]<=70 && mean[0]<=70 && path_change==1))
+        if ((raw_distances[0]>=70 && /* mean[0]>=70 && */ path_change==0)||(raw_distances[0]<=70 && mean[0]<=70 && path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
           // 使用右侧电机调整
-          Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 30.0f);
-        }else if (distances[0]<=70 && mean[0]<=70 && path_change==0)
+          Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 40.0f);
+        }else if (raw_distances[0]<=70 && mean[0]<=70 && path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -747,7 +747,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70 && mean[0]>=70 && path_change==1)
+        }else if (raw_distances[0]>=70 && /* mean[0]>=70 && */ path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -788,7 +788,7 @@ int main(void)
             motor_speed = MIN_SPEED;
     
             // 执行路径切换逻辑
-            if(current_distance<=50) {
+            if(current_distance<=TARGET_DISTANCE) {
               path += 1;
               PID_ResetAll(); // 重置所有PID控制器
             }
@@ -815,7 +815,7 @@ int main(void)
         
         // 使用前后电机调整
         float avg_distance = (distances[1] + distances[2]) / 2.0f;
-        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
+        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;
@@ -825,12 +825,12 @@ int main(void)
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && mean[3]>=70 && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
+        if ((raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==0)||(raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
           // 使用左侧电机调整
-          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 30.0f);
-        }else if (distances[3]<=70 && mean[3]<=70 && path_change==0)
+          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
+        }else if (raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -841,7 +841,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70 && mean[3]>=70 && path_change==1)
+        }else if (raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -882,7 +882,7 @@ int main(void)
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if(current_distance<=50) {
+          if(current_distance<=TARGET_DISTANCE) {
             path += 1;
             PID_ResetAll(); // 重置所有PID控制器
           }
@@ -909,7 +909,7 @@ int main(void)
       
       // 使用前后电机调整
       float avg_distance = (distances[1] + distances[2]) / 2.0f;
-      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
+      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -918,12 +918,12 @@ int main(void)
     case 10:
       if (path_change!=2)
       {
-        if ((distances[0]>=70 && mean[0]>=70 && path_change==0)||(distances[0]<=70 && mean[0]<=70 && path_change==1))
+        if ((raw_distances[0]>=70 && /* mean[0]>=70 && */ path_change==0)||(raw_distances[0]<=70 && /* mean[0]<=70 && */ path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
           // 使用右侧电机调整
-          Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 30.0f);
-        }else if (distances[0]<=70 && mean[0]<=70 && path_change==0)
+          Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 40.0f);
+        }else if (raw_distances[0]<=70 && /* mean[0]<=70 && */ path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -934,7 +934,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[0]>=70 && mean[0]>=70 && path_change==1)
+        }else if (raw_distances[0]>=70 && /* mean[0]>=70 && */ path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -975,7 +975,7 @@ int main(void)
           motor_speed = MIN_SPEED;
   
           // 执行路径切换逻辑
-          if(current_distance<=50) {
+          if(current_distance<=TARGET_DISTANCE) {
             path += 1;
             PID_ResetAll(); // 重置所有PID控制器
           }
@@ -1002,7 +1002,7 @@ int main(void)
       
       // 使用前后电机调整
       float avg_distance = (distances[1] + distances[2]) / 2.0f;
-      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 30.0f);
+      Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
   
       OLED_ShowNum(4, 4, motor_speed, 2);
       break;
@@ -1012,12 +1012,12 @@ int main(void)
 
       if (path_change!=2)
       {
-        if ((distances[3]>=70 && mean[3]>=70 && path_change==0)||(distances[3]<=70 && mean[3]<=70 && path_change==1))
+        if ((raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==0)||(raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==1))
         {
           Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
           // 使用左侧电机调整
-          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 30.0f);
-        }else if (distances[3]<=70 && mean[3]<=70 && path_change==0)
+          Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
+        }else if (raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==0)
         {
           if(flag){
             time_start = HAL_GetTick();
@@ -1028,7 +1028,7 @@ int main(void)
             path_change+=1;
             flag = true;
           }
-        }else if (distances[3]>=70 && mean[3]>=70 && path_change==1)
+        }else if (raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==1)
         {
           if(flag){
             time_start = HAL_GetTick();

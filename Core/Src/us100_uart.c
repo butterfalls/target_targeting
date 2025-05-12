@@ -86,7 +86,7 @@ void US100_Init(US100Sensor* sensor, UART_HandleTypeDef* uart) {
     sensor->rx_index = 0;
     
     // 初始化卡尔曼滤波器
-    KalmanFilter_Init(&sensor->kalman, 0.1f, 1.0f, 0.01f);  // Q=0.1, R=1.0, dt=0.01
+    KalmanFilter_Init(&sensor->kalman, 0.89f, 0.14f, 0.01f);  // Q=0.1, R=1.0, dt=0.01
     
     // 初始化滑动窗口滤波器
     SlidingWindowFilter_Init(&sensor->sliding, 5);  // 5点滑动窗口
@@ -154,7 +154,7 @@ void US100_Update(US100Sensor* sensor) {
                 uint16_t raw_distance = (sensor->rx_buffer[1] << 8) | sensor->rx_buffer[0];
                 
                 // 检查距离值是否在合理范围内（例如0-4000mm）
-                if (raw_distance > 40000) {
+                if (raw_distance > 8000) {
                     // 距离值超出范围，视为无效数据
                     sensor->state = US100_STATE_IDLE;
                     sensor->rx_index = 0;
@@ -245,10 +245,10 @@ void US100_GetAllValidDistances(float* distances) {
         
         uint32_t current_time = HAL_GetTick();
         
-        if (current_time - last_measurement_time > 30) {
+        if (current_time - last_measurement_time > 5) {
             timeout_count++;
             
-            if (timeout_count >= 3) {
+            if (timeout_count >= 1) {
                 for (uint8_t i = 0; i < us100_sensor_count; i++) {
                     US100_StartMeasurement(active_sensors[i]);
                 }

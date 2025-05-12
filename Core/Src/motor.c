@@ -169,7 +169,7 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     
     // 计算偏航角PID输出
     float yaw_pid_output = 0.0f;
-    if (fabs(yaw_error) > 0.1f) {
+    if (fabs(yaw_error) > 2.0f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
         // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
@@ -280,7 +280,7 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     
     // 计算偏航角PID输出
     float yaw_pid_output = 0.0f;
-    if (fabs(yaw_error) > 0.1f) {
+    if (fabs(yaw_error) > 2.0f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
         // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
@@ -450,88 +450,122 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
 }
 
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float distance, float threshold) {
-    if (distance < threshold) {
-        // Get current compare values for left motors
-        uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
-        uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
-        
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment1 = compare1 * 0.1f;
-        uint32_t adjustment3 = compare3 * 0.1f;
-        
-        // Apply new compare values
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
-    } else if (distance > threshold + 20.0f) {
-        // Get current compare values for right motors (opposite side)
-        uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
-        uint32_t compare4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
-        
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment2 = compare2 * 0.1f;
-        uint32_t adjustment4 = compare4 * 0.1f;
-        
-        // Apply new compare values to right motors
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
+    // 计算距离误差
+    float distance_error = distance - threshold;
+    
+    // 定义调整参数
+    const float kp = 0.5f;  // 比例系数
+    const float max_adjustment = 1000.0f;  // 最大速度调整量
+    
+    // 计算速度调整量
+    float speed_adjustment = kp * distance_error;
+    
+    // 限制速度调整量
+    if (speed_adjustment > max_adjustment) {
+        speed_adjustment = max_adjustment;
+    } else if (speed_adjustment < -max_adjustment) {
+        speed_adjustment = -max_adjustment;
+    }
+    
+    // 获取当前电机速度
+    uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
+    uint32_t current_speed2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
+    uint32_t current_speed3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
+    uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+    
+    // 根据距离误差调整速度
+    if (distance_error < 0) {  // 距离过近
+        // 左侧电机减速，右侧电机加速
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3);
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4);
+    } else {  // 距离过远
+        // 左侧电机加速，右侧电机减速
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3);
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4);
     }
 }
 
 void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, Motor_ID id3, float distance, float threshold) {
-    if (distance < threshold) {
-        // Get current compare values for right motors
-        uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
-        uint32_t compare4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
-        
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment2 = compare2 * 0.1f;
-        uint32_t adjustment4 = compare4 * 0.1f;
-        
-        // Apply new compare values
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
-    } else if (distance > threshold + 20.0f) {
-        // Get current compare values for left motors (opposite side)
-        uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
-        uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
-        
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment1 = compare1 * 0.1f;
-        uint32_t adjustment3 = compare3 * 0.1f;
-        
-        // Apply new compare values to left motors
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
+    // 计算距离误差
+    float distance_error = distance - threshold;
+    
+    // 定义调整参数
+    const float kp = 0.5f;  // 比例系数
+    const float max_adjustment = 1000.0f;  // 最大速度调整量
+    
+    // 计算速度调整量
+    float speed_adjustment = kp * distance_error;
+    
+    // 限制速度调整量
+    if (speed_adjustment > max_adjustment) {
+        speed_adjustment = max_adjustment;
+    } else if (speed_adjustment < -max_adjustment) {
+        speed_adjustment = -max_adjustment;
+    }
+    
+    // 获取当前电机速度
+    uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
+    uint32_t current_speed2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
+    uint32_t current_speed3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
+    uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+    
+    // 根据距离误差调整速度
+    if (distance_error < 0) {  // 距离过近
+        // 右侧电机减速，左侧电机加速
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4);
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3);
+    } else {  // 距离过远
+        // 右侧电机加速，左侧电机减速
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4);
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3);
     }
 }
 
 void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id2, Motor_ID id3, float distance, float threshold) {
-    if (distance < threshold) {
-        // Get current compare values for front motors
-        uint32_t compare1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
-        uint32_t compare4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
-        
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment1 = compare1 * 0.1f;
-        uint32_t adjustment4 = compare4 * 0.1f;
-        
-        // Apply new compare values to front motors
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, compare1 + adjustment1);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, compare4 + adjustment4);
-
-    } else if (distance > threshold + 20.0f) {
-        
-        // Get current compare values for back motors
-        uint32_t compare2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
-        uint32_t compare3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
-        
-        // Calculate adjustment (increase by 10% of current value)
-        uint32_t adjustment2 = compare2 * 0.1f;
-        uint32_t adjustment3 = compare3 * 0.1f;
-        
-        // Apply new compare values to back motors
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, compare2 + adjustment2);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, compare3 + adjustment3);
+    // 计算距离误差
+    float distance_error = distance - threshold;
+    
+    // 定义调整参数
+    const float kp = 0.5f;  // 比例系数
+    const float max_adjustment = 1000.0f;  // 最大速度调整量
+    
+    // 计算速度调整量
+    float speed_adjustment = kp * distance_error;
+    
+    // 限制速度调整量
+    if (speed_adjustment > max_adjustment) {
+        speed_adjustment = max_adjustment;
+    } else if (speed_adjustment < -max_adjustment) {
+        speed_adjustment = -max_adjustment;
+    }
+    
+    // 获取当前电机速度
+    uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
+    uint32_t current_speed2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
+    uint32_t current_speed3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
+    uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+    
+    // 根据距离误差调整速度
+    if (distance_error < 0) {  // 距离过近
+        // 前轮电机减速，后轮电机加速
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4);
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3);
+    } else {  // 距离过远
+        // 前轮电机加速，后轮电机减速
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4);
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3);
     }
 }
 

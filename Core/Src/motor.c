@@ -494,7 +494,7 @@ void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, M
     float distance_error = distance - threshold;
     
     // 定义调整参数
-    const float kp = 0.5f;  // 比例系数
+    const float kp = 0.016f;  // 比例系数
     const float max_adjustment = 1000.0f;  // 最大速度调整量
     
     // 计算速度调整量
@@ -534,7 +534,7 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
     float distance_error = distance - threshold;
     
     // 定义调整参数
-    const float kp = 0.5f;  // 比例系数
+    const float kp = 0.016f;  // 比例系数
     const float max_adjustment = 1000.0f;  // 最大速度调整量
     
     // 计算速度调整量

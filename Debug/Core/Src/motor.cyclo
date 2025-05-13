@@ -7,7 +7,7 @@
 ../Core/Src/motor.c:211:6:Motor_Straight	6
 ../Core/Src/motor.c:322:6:straight_us100	5
 ../Core/Src/motor.c:345:6:Update_Target_Yaw	12
-../Core/Src/motor.c:411:6:Adjust_Speed_By_Side_Distance	4
-../Core/Src/motor.c:452:6:Adjust_Left_Motors_By_Distance	27
-../Core/Src/motor.c:480:6:Adjust_Right_Motors_By_Distance	27
-../Core/Src/motor.c:508:6:Adjust_Motors_By_FrontBack_Distance	27
+../Core/Src/motor.c:411:6:Adjust_Speed_By_Side_Distance	3
+../Core/Src/motor.c:455:6:Adjust_Left_Motors_By_Distance	38
+../Core/Src/motor.c:495:6:Adjust_Right_Motors_By_Distance	38
+../Core/Src/motor.c:535:6:Adjust_Motors_By_FrontBack_Distance	38

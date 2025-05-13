@@ -449,8 +449,8 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
     Motor_SetSpeed(id2, speed2);
 }
 
-#define magnification 0.5
-#define magnification_close 10
+#define magnification 0.9
+#define magnification_close 0.9
 
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float distance, float threshold) {
     // 计算距离误差

@@ -384,6 +384,7 @@ int main(void)
     while (distances[1]==0)
     {
       US100_GetAllValidDistances(distances);
+      OLED_ShowNum(1, 13, fabs(distances[1]), 4);
     }
 
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
@@ -395,7 +396,7 @@ int main(void)
         
         // 显示第一个传感器的原始值和滤波值
         OLED_ShowNum(1, 5, distances[0], 4);
-        OLED_ShowNum(1, 13, distances[1], 4);
+        OLED_ShowNum(1, 13, fabs(distances[1]), 4);
         
         // 显示第二个传感器的原始值和滤波值
         OLED_ShowNum(2, 5, distances[2], 4);
@@ -426,9 +427,9 @@ int main(void)
     switch (path) {
       case 0: {
         // 参数定义
-        const float TARGET_DISTANCE = 45.0f;   // 调试，这个变量用于检测最终的目标距离
-        const float DECEL_RANGE = 500.0f;      // 调试，这个变量用于设置减速区间范围
-        const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+        const float TARGET_DISTANCE = 60.0f;   // 调试，这个变量用于检测最终的目标距离
+        const float DECEL_RANGE = 400.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint8_t MIN_SPEED = 15;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
     
         float current_distance = distances[1]; 
@@ -436,7 +437,7 @@ int main(void)
         // 速度计算逻辑
         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
     
-        if (current_distance <= TARGET_DISTANCE && current_distance != -1) {
+        if (current_distance <= TARGET_DISTANCE && current_distance != 0) {
             // 区域3：到达目标距离（≤80mm）
             motor_speed = MIN_SPEED;
     
@@ -474,9 +475,9 @@ int main(void)
       }
       case 1: {
         // 参数定义
-        const float TARGET_DISTANCE = 45.0f;   // 调试，这个变量用于检测最终的目标距离
-        const float DECEL_RANGE = 500.0f;      // 调试，这个变量用于设置减速区间范围
-        const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+        const float TARGET_DISTANCE = 60.0f;   // 调试，这个变量用于检测最终的目标距离
+        const float DECEL_RANGE = 400.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint8_t MIN_SPEED = 15;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
     
         // 获取当前检测距离（使用第4个传感器）
@@ -522,16 +523,16 @@ int main(void)
         break;
       }
       case 2: {
-        const uint32_t DELAY_ENTER = 1000; //调试
+        const uint32_t DELAY_ENTER = 400; //调试
 
         if (path_change!=2)
         {
-          if ((raw_distances[0]>=70&& /* mean[0]>=70 && */ path_change==0)||(raw_distances[0]<=70&& /* mean[0]<=70&& */ path_change==1))
+          if ((distances[0]>=70&& /* mean[0]>=70 && */ path_change==0)||(distances[0]<=70&& /* mean[0]<=70&& */ path_change==1))
           {
             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -33, &yaw, &target_yaw);
             // 使用右侧电机调整
             Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 40.0f);
-          }else if (raw_distances[0]<=100&& /* mean[0]<=100 && */ path_change==0)
+          }else if (distances[0]<=100&& /* mean[0]<=100 && */ path_change==0)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -542,7 +543,7 @@ int main(void)
               path_change+=1;
               flag = true;
             }
-          }else if (raw_distances[0]>=100&& /* mean[0]>=70&& */ path_change==1)
+          }else if (distances[0]>=100&& /* mean[0]>=70&& */ path_change==1)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -569,9 +570,9 @@ int main(void)
 
       case 3: {
         // 参数定义
-        const float TARGET_DISTANCE = 45.0f;   // 调试，这个变量用于检测最终的目标距离
-        const float DECEL_RANGE = 500.0f;      // 调试，这个变量用于设置减速区间范围
-        const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+        const float TARGET_DISTANCE = 60.0f;   // 调试，这个变量用于检测最终的目标距离
+        const float DECEL_RANGE = 400.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint8_t MIN_SPEED = 15;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
     
         // 获取当前检测距离（使用第4个传感器）
@@ -618,16 +619,16 @@ int main(void)
       }
 
       case 4: {
-        const uint32_t DELAY_ENTER = 1000; //调试
+        const uint32_t DELAY_ENTER = 400; //调试
 
         if (path_change!=2)
         {
-          if ((raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==0)||(raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==1))
+          if ((distances[3]>=70 && /* mean[3]>=70 && */ path_change==0)||(distances[3]<=70 && /* mean[3]<=70 && */ path_change==1))
           {
             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
             // 使用左侧电机调整
             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
-          }else if (raw_distances[3]<=70&& /* mean[3]<=70&& */ path_change==0)
+          }else if (distances[3]<=70&& /* mean[3]<=70&& */ path_change==0)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -638,7 +639,7 @@ int main(void)
               path_change+=1;
               flag = true;
             }
-          }else if (raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==1)
+          }else if (distances[3]>=70 && /* mean[3]>=70 && */ path_change==1)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -664,9 +665,9 @@ int main(void)
 
       case 5: {
         // 参数定义
-        const float TARGET_DISTANCE = 45.0f;   // 调试，这个变量用于检测最终的目标距离
-        const float DECEL_RANGE = 500.0f;      // 调试，这个变量用于设置减速区间范围
-        const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+        const float TARGET_DISTANCE = 60.0f;   // 调试，这个变量用于检测最终的目标距离
+        const float DECEL_RANGE = 400.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint8_t MIN_SPEED = 15;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
     
         // 获取当前检测距离（使用第4个传感器）
@@ -713,16 +714,16 @@ int main(void)
       }
 
       case 6: {
-        const uint32_t DELAY_ENTER = 1000; //调试
+        const uint32_t DELAY_ENTER = 400; //调试
 
         if (path_change!=2)
         {
-          if ((raw_distances[0]>=70 && /* mean[0]>=70 && */ path_change==0)||(raw_distances[0]<=70 && mean[0]<=70 && path_change==1))
+          if ((distances[0]>=70 && /* mean[0]>=70 && */ path_change==0)||(distances[0]<=70 && mean[0]<=70 && path_change==1))
           {
             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
             // 使用右侧电机调整
             Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 40.0f);
-          }else if (raw_distances[0]<=70 && mean[0]<=70 && path_change==0)
+          }else if (distances[0]<=70 && mean[0]<=70 && path_change==0)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -733,7 +734,7 @@ int main(void)
               path_change+=1;
               flag = true;
             }
-          }else if (raw_distances[0]>=70 && /* mean[0]>=70 && */ path_change==1)
+          }else if (distances[0]>=70 && /* mean[0]>=70 && */ path_change==1)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -759,9 +760,9 @@ int main(void)
 
       case 7: {
         // 参数定义
-        const float TARGET_DISTANCE = 45.0f;   // 调试，这个变量用于检测最终的目标距离
-        const float DECEL_RANGE = 500.0f;      // 调试，这个变量用于设置减速区间范围
-        const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+        const float TARGET_DISTANCE = 60.0f;   // 调试，这个变量用于检测最终的目标距离
+        const float DECEL_RANGE = 400.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint8_t MIN_SPEED = 15;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 50;          // 调试，这个变量用于设置离目标较远时的速度
     
         // 获取当前检测距离（使用第4个传感器）
@@ -808,16 +809,16 @@ int main(void)
       }
 
       case 8: {
-        const uint32_t DELAY_ENTER = 1000; //调试
+        const uint32_t DELAY_ENTER = 400; //调试
 
         if (path_change!=2)
         {
-          if ((raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==0)||(raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==1))
+          if ((distances[3]>=70 && /* mean[3]>=70 && */ path_change==0)||(distances[3]<=70 && /* mean[3]<=70 && */ path_change==1))
           {
             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
             // 使用左侧电机调整
             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
-          }else if (raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==0)
+          }else if (distances[3]<=70 && /* mean[3]<=70 && */ path_change==0)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -828,7 +829,7 @@ int main(void)
               path_change+=1;
               flag = true;
             }
-          }else if (raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==1)
+          }else if (distances[3]>=70 && /* mean[3]>=70 && */ path_change==1)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -854,8 +855,8 @@ int main(void)
 
       case 9: {
         // 参数定义
-        const float TARGET_DISTANCE = 45.0f;   // 调试，这个变量用于检测最终的目标距离
-        const float DECEL_RANGE = 500.0f;      // 调试，这个变量用于设置减速区间范围
+        const float TARGET_DISTANCE = 60.0f;   // 调试，这个变量用于检测最终的目标距离
+        const float DECEL_RANGE = 400.0f;      // 调试，这个变量用于设置减速区间范围
         const uint8_t MIN_SPEED = 15;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 50;          // 调试，这个变量用于设置离目标较远时的速度
     
@@ -903,16 +904,16 @@ int main(void)
       }
 
       case 10: {
-        const uint32_t DELAY_ENTER = 1000; //调试
+        const uint32_t DELAY_ENTER = 400; //调试
 
         if (path_change!=2)
         {
-          if ((raw_distances[0]>=70 && /* mean[0]>=70 && */ path_change==0)||(raw_distances[0]<=70 && /* mean[0]<=70 && */ path_change==1))
+          if ((distances[0]>=70 && /* mean[0]>=70 && */ path_change==0)||(distances[0]<=70 && /* mean[0]<=70 && */ path_change==1))
           {
             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
             // 使用右侧电机调整
             Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 40.0f);
-          }else if (raw_distances[0]<=70 && /* mean[0]<=70 && */ path_change==0)
+          }else if (distances[0]<=70 && /* mean[0]<=70 && */ path_change==0)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -923,7 +924,7 @@ int main(void)
               path_change+=1;
               flag = true;
             }
-          }else if (raw_distances[0]>=70 && /* mean[0]>=70 && */ path_change==1)
+          }else if (distances[0]>=70 && /* mean[0]>=70 && */ path_change==1)
           {
             if(flag){
               time_start = HAL_GetTick();
@@ -949,8 +950,8 @@ int main(void)
 
       case 11: {
         // 参数定义
-        const float TARGET_DISTANCE = 45.0f;   // 调试，这个变量用于检测最终的目标距离
-        const float DECEL_RANGE = 500.0f;      // 调试，这个变量用于设置减速区间范围
+        const float TARGET_DISTANCE = 60.0f;   // 调试，这个变量用于检测最终的目标距离
+        const float DECEL_RANGE = 400.0f;      // 调试，这个变量用于设置减速区间范围
         const uint8_t MIN_SPEED = 15;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 50;          // 调试，这个变量用于设置离目标较远时的速度
     
@@ -998,27 +999,27 @@ int main(void)
       }
 
       case 12: {
-        const uint32_t DELAY_ENTER = 1000; //调试，这个delay是用于超声波检测到突变后的继续前进时间
+        const uint32_t DELAY_ENTER = 400; //调试，这个delay是用于超声波检测到突变后的继续前进时间
 
         if (path_change!=2)
         {
-          if ((raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==0)||(raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==1))
+          if ((distances[3]>=70 && /* mean[3]>=70 && */ path_change==0)||(distances[3]<=70 && /* mean[3]<=70 && */ path_change==1))
           {
             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
             // 使用左侧电机调整
             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
-          }else if (raw_distances[3]<=70 && /* mean[3]<=70 && */ path_change==0)
+          }else if (distances[3]<=70 && /* mean[3]<=70 && */ path_change==0)
           {
             if(flag){
               time_start = HAL_GetTick();
               flag = false;
             }
             uint32_t time = HAL_GetTick();
-            if(time - time_start >=100){
+            if(time - time_start >=50){
               path_change+=1;
               flag = true;
             }
-          }else if (raw_distances[3]>=70 && /* mean[3]>=70 && */ path_change==1)
+          }else if (distances[3]>=70 && /* mean[3]>=70 && */ path_change==1)
           {
             if(flag){
               time_start = HAL_GetTick();

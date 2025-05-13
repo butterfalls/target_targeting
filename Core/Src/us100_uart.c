@@ -86,10 +86,10 @@ void US100_Init(US100Sensor* sensor, UART_HandleTypeDef* uart) {
     sensor->rx_index = 0;
     
     // 初始化卡尔曼滤波器
-    KalmanFilter_Init(&sensor->kalman, 0.89f, 0.14f, 0.01f);  // Q=0.1, R=1.0, dt=0.01
+    KalmanFilter_Init(&sensor->kalman, 0.993f, 0.011f, 0.005f);  // Q=0.1, R=1.0, dt=0.01
     
     // 初始化滑动窗口滤波器
-    SlidingWindowFilter_Init(&sensor->sliding, 5);  // 5点滑动窗口
+    SlidingWindowFilter_Init(&sensor->sliding, 4);  // 5点滑动窗口
     
     // 添加到活动传感器数组
     active_sensors[us100_sensor_count++] = sensor;

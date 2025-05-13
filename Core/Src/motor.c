@@ -420,11 +420,11 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
     // 计算速度调整量
     float speed_adjustment = kp * distance_error;
     
-    // 限制速度调整量
-    if (speed_adjustment > max_adjustment) {
-        speed_adjustment = max_adjustment;
-    } else if (speed_adjustment < -max_adjustment) {
-        speed_adjustment = -max_adjustment;
+    // 限制速度调整量，保持正负号
+    if (speed_adjustment > 0) {
+        speed_adjustment = fminf(speed_adjustment, max_adjustment);
+    } else {
+        speed_adjustment = fmaxf(speed_adjustment, -max_adjustment);
     }
     
     // 根据距离误差调整速度
@@ -449,7 +449,8 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
     Motor_SetSpeed(id2, speed2);
 }
 
-#define magnification 0.2
+#define magnification 0.5
+#define magnification_close 10
 
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float distance, float threshold) {
     // 计算距离误差
@@ -459,15 +460,11 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Mo
     const float kp = 0.001f;  // 比例系数
     const float max_adjustment = 0.3f;  // 最大速度调整量
     
-    // 计算速度调整量
-    float speed_adjustment = kp * distance_error;
+    // 计算速度调整量（取绝对值）
+    float speed_adjustment = fabsf(kp * distance_error);
     
     // 限制速度调整量
-    if (speed_adjustment > max_adjustment) {
-        speed_adjustment = max_adjustment;
-    } else if (speed_adjustment < -max_adjustment) {
-        speed_adjustment = -max_adjustment;
-    }
+    speed_adjustment = fminf(speed_adjustment, max_adjustment);
     
     // 获取当前电机速度
     uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
@@ -476,18 +473,22 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Mo
     uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
     
     // 根据距离误差调整速度
-    if (distance_error > 0) {  // 距离过近
+    if (distance_error > 0) {  // 距离过远
         // 左侧电机减速，右侧电机加速
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3);
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4);
-    } else {  // 距离过远
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification);
+        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
+        OLED_ShowNum(4, 12, current_speed4, 4);
+    } else {  // 距离过近
         // 左侧电机加速，右侧电机减速
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification_close);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification_close);
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification_close);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification_close);
+        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
+        OLED_ShowNum(4, 12, current_speed4, 4);
     }
 }
 
@@ -499,15 +500,11 @@ void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, M
     const float kp = 0.001f;  // 比例系数
     const float max_adjustment = 0.3f;  // 最大速度调整量
     
-    // 计算速度调整量
-    float speed_adjustment = kp * distance_error;
+    // 计算速度调整量（取绝对值）
+    float speed_adjustment = fabsf(kp * distance_error);
     
     // 限制速度调整量
-    if (speed_adjustment > max_adjustment) {
-        speed_adjustment = max_adjustment;
-    } else if (speed_adjustment < -max_adjustment) {
-        speed_adjustment = -max_adjustment;
-    }
+    speed_adjustment = fminf(speed_adjustment, max_adjustment);
     
     // 获取当前电机速度
     uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
@@ -516,18 +513,22 @@ void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, M
     uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
     
     // 根据距离误差调整速度
-    if (distance_error > 0) {  // 距离过近
+    if (distance_error > 0) {  // 距离过远
         // 右侧电机减速，左侧电机加速
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4);
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3);
-    } else {  // 距离过远
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification);
+        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
+        OLED_ShowNum(4, 12, current_speed4, 4);
+    } else {  // 距离过近
         // 右侧电机加速，左侧电机减速
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification_close);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification_close);
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1 * magnification_close);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification_close);
+        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
+        OLED_ShowNum(4, 12, current_speed4, 4);
     }
 }
 
@@ -539,15 +540,11 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
     const float kp = 0.001f;  // 比例系数
     const float max_adjustment = 0.3f;  // 最大速度调整量
     
-    // 计算速度调整量
-    float speed_adjustment = kp * distance_error;
+    // 计算速度调整量（取绝对值）
+    float speed_adjustment = fabsf(kp * distance_error);
     
     // 限制速度调整量
-    if (speed_adjustment > max_adjustment) {
-        speed_adjustment = max_adjustment;
-    } else if (speed_adjustment < -max_adjustment) {
-        speed_adjustment = -max_adjustment;
-    }
+    speed_adjustment = fminf(speed_adjustment, max_adjustment);
     
     // 获取当前电机速度
     uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
@@ -556,18 +553,22 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
     uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
     
     // 根据距离误差调整速度
-    if (distance_error > 0) {  // 距离过近
+    if (distance_error > 0) {  // 距离过远
         // 前轮电机减速，后轮电机加速
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4);
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3);
-    } else {  // 距离过远
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification);
+        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
+        OLED_ShowNum(4, 12, current_speed4, 4);
+    } else {  // 距离过近
         // 前轮电机加速，后轮电机减速
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification);
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification_close);
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification_close);
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification_close);
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification_close);
+        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
+        OLED_ShowNum(4, 12, current_speed4, 4);
     }
 }
 

@@ -144,10 +144,10 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     // 获取当前偏航角
     float pitch, roll, current_yaw;
     if (MPU6050_DMP_Get_Data(&pitch, &roll, &current_yaw) != 0) {
-        Motor_SetSpeed(id1, 0);
-        Motor_SetSpeed(id2, 0);
-        Motor_SetSpeed(id3, 0);
-        Motor_SetSpeed(id4, 0);
+        // Motor_SetSpeed(id1, 0);
+        // Motor_SetSpeed(id2, 0);
+        // Motor_SetSpeed(id3, 0);
+        // Motor_SetSpeed(id4, 0);
         return;
     }
     *yaw = current_yaw;
@@ -254,10 +254,10 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     // 获取当前偏航角
     float pitch, roll, current_yaw;
     if (MPU6050_DMP_Get_Data(&pitch, &roll, &current_yaw) != 0) {
-        Motor_SetSpeed(id1, 0);
-        Motor_SetSpeed(id2, 0);
-        Motor_SetSpeed(id3, 0);
-        Motor_SetSpeed(id4, 0);
+        // Motor_SetSpeed(id1, 0);
+        // Motor_SetSpeed(id2, 0);
+        // Motor_SetSpeed(id3, 0);
+        // Motor_SetSpeed(id4, 0);
         return;
     }
     *yaw = current_yaw;
@@ -479,16 +479,16 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Mo
         __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification);
         __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification);
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification);
-        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
-        OLED_ShowNum(4, 12, current_speed4, 4);
+        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
+        // OLED_ShowNum(4, 12, current_speed4, 4);
     } else {  // 距离过近
         // 左侧电机加速，右侧电机减速
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification_close);
         __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification_close);
         __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification_close);
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification_close);
-        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
-        OLED_ShowNum(4, 12, current_speed4, 4);
+        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
+        // OLED_ShowNum(4, 12, current_speed4, 4);
     }
 }
 
@@ -519,16 +519,16 @@ void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, M
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification);
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification);
         __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification);
-        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
-        OLED_ShowNum(4, 12, current_speed4, 4);
+        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
+        // OLED_ShowNum(4, 12, current_speed4, 4);
     } else {  // 距离过近
         // 右侧电机加速，左侧电机减速
         __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification_close);
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification_close);
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1 * magnification_close);
         __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification_close);
-        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
-        OLED_ShowNum(4, 12, current_speed4, 4);
+        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
+        // OLED_ShowNum(4, 12, current_speed4, 4);
     }
 }
 
@@ -559,16 +559,16 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification);
         __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification);
         __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification);
-        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
-        OLED_ShowNum(4, 12, current_speed4, 4);
+        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
+        // OLED_ShowNum(4, 12, current_speed4, 4);
     } else {  // 距离过近
         // 前轮电机加速，后轮电机减速
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification_close);
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification_close);
         __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification_close);
         __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification_close);
-        OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
-        OLED_ShowNum(4, 12, current_speed4, 4);
+        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
+        // OLED_ShowNum(4, 12, current_speed4, 4);
     }
 }
 

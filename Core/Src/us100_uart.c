@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "OLED.h"
 
 // 全局传感器数组
 US100Sensor* active_sensors[MAX_US100_SENSORS] = {0};
@@ -154,7 +155,7 @@ void US100_Update(US100Sensor* sensor) {
                 uint16_t raw_distance = (sensor->rx_buffer[1] << 8) | sensor->rx_buffer[0];
                 
                 // 检查距离值是否在合理范围内（例如0-4000mm）
-                if (raw_distance > 8000) {
+                if (raw_distance > 65535) {
                     // 距离值超出范围，视为无效数据
                     sensor->state = US100_STATE_IDLE;
                     sensor->rx_index = 0;
@@ -185,8 +186,13 @@ void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
             } else {
                 HAL_UART_Receive_IT(huart, &s->rx_buffer[s->rx_index], 1);
             }
-            
+                        //debug
+            // if (i == 1){
+            //     OLED_ShowNum(4,7,HAL_GetTick(),5);
+            // }
+
             break;
+
         }
     }
 }
@@ -245,10 +251,10 @@ void US100_GetAllValidDistances(float* distances) {
         
         uint32_t current_time = HAL_GetTick();
         
-        if (current_time - last_measurement_time > 5) {
+        if (current_time - last_measurement_time > 100) {
             timeout_count++;
             
-            if (timeout_count >= 1) {
+            if (timeout_count >= 4) {
                 for (uint8_t i = 0; i < us100_sensor_count; i++) {
                     US100_StartMeasurement(active_sensors[i]);
                 }

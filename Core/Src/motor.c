@@ -450,7 +450,7 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
 }
 
 #define magnification 0.9
-#define magnification_close 0.9
+#define magnification_close 0.8
 
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float distance, float threshold) {
     // 计算距离误差
@@ -559,8 +559,8 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification);
         __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification);
         __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification);
-        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
-        // OLED_ShowNum(4, 12, current_speed4, 4);
+        // OLED_ShowNum(4, 7, current_speed1 - speed_adjustment * current_speed1 * magnification, 4);
+        // OLED_ShowNum(4, 12, current_speed4 - speed_adjustment * current_speed4 * magnification, 4);
     } else {  // 距离过近
         // 前轮电机加速，后轮电机减速
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification_close);

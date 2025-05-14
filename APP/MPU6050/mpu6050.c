@@ -142,7 +142,7 @@ int MPU6050_DMP_Get_Data(float *Pitch,float *Roll,float *Yaw)
 	short gyro[3]; 
 	short accel[3]; 
 	long quat[4];
-  unsigned long timestamp;
+  	unsigned long timestamp;
 	short sensors;
 	unsigned char more;
 	if(dmp_read_fifo(gyro,accel,quat,&timestamp,&sensors,&more))
@@ -157,7 +157,8 @@ int MPU6050_DMP_Get_Data(float *Pitch,float *Roll,float *Yaw)
 		q3=quat[3] / q30;
 		
 		*Pitch = asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3; 	
-		*Roll = atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3; // roll
+		// *Roll = atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3; // roll
+		*Roll = gyro[2]/16.4;
 		*Yaw   = atan2(2*(q1*q2 + q0*q3),q0*q0+q1*q1-q2*q2-q3*q3) * 57.3;	//yaw
 	}
 	return 0;

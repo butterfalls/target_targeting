@@ -238,7 +238,7 @@ void US100_GetAllValidDistances(float* distances) {
             US100_StartMeasurement(active_sensors[i]);
         }
     }
-    // 如果所有传感器都没有有效数据，检查是否需要重新测量
+    // 如果有传感器都没有有效数据，检查是否需要重新测量
     else {
         static uint32_t last_measurement_time = 0;
         static uint8_t timeout_count = 0;

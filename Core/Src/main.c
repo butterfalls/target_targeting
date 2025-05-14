@@ -429,10 +429,13 @@ int main(void)
         // 参数定义
         const float TARGET_DISTANCE = 230.0f;   // 调试，这个变量用于检测最终的目标距离
         const float DECEL_RANGE = 150.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint16_t ADJUST_DISTANCE = 500;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
         const uint8_t MIN_SPEED = 10;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 80;          // 调试，这个变量用于设置离目标较远时的速度
+        const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
         float current_distance = distances[1]; 
+        const uint32_t time_enterpath = HAL_GetTick();
     
         // 速度计算逻辑
         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
@@ -468,7 +471,9 @@ int main(void)
         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
         
         // 使用左侧电机调整
-        Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
+        if(HAL_GetTick() - time_enterpath >= DELAY_ADJUST && raw_distances[1] >= ADJUST_DISTANCE ){
+            Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 40.0f);
+        }
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;
@@ -572,11 +577,14 @@ int main(void)
         // 参数定义
         const float TARGET_DISTANCE = 90.0f;   // 调试，这个变量用于检测最终的目标距离
         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint16_t ADJUST_DISTANCE = 500;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
         const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
+        const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
         // 获取当前检测距离（使用第4个传感器）
         float current_distance = distances[0]; 
+        const uint32_t time_enterpath = HAL_GetTick();
     
         // 速度计算逻辑
         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
@@ -612,7 +620,9 @@ int main(void)
         
         // 使用前后电机调整
         float avg_distance = (distances[1] + distances[2]) / 2.0f;
-        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 38.0f);
+        if(HAL_GetTick() - time_enterpath >= DELAY_ADJUST && raw_distances[0] >= ADJUST_DISTANCE ){
+            Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 38.0f);
+        }
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;
@@ -667,11 +677,14 @@ int main(void)
         // 参数定义
         const float TARGET_DISTANCE = 90.0f;   // 调试，这个变量用于检测最终的目标距离
         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint16_t ADJUST_DISTANCE = 500;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
         const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 80;          // 调试，这个变量用于设置离目标较远时的速度
+        const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
         // 获取当前检测距离（使用第4个传感器）
         float current_distance = distances[3]; 
+        const uint32_t time_enterpath = HAL_GetTick();
     
         // 速度计算逻辑
         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
@@ -707,7 +720,9 @@ int main(void)
         
         // 使用前后电机调整
         float avg_distance = (distances[1] + distances[2]) / 2.0f;
-        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
+        if(HAL_GetTick() - time_enterpath >= DELAY_ADJUST && raw_distances[3] >= ADJUST_DISTANCE ){
+            Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
+        }
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;
@@ -762,11 +777,14 @@ int main(void)
         // 参数定义
         const float TARGET_DISTANCE = 90.0f;   // 调试，这个变量用于检测最终的目标距离
         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint16_t ADJUST_DISTANCE = 500;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
         const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
+        const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
         // 获取当前检测距离（使用第4个传感器）
         float current_distance = distances[0]; 
+        const uint32_t time_enterpath = HAL_GetTick();
     
         // 速度计算逻辑
         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
@@ -802,7 +820,9 @@ int main(void)
         
         // 使用前后电机调整
         float avg_distance = (distances[1] + distances[2]) / 2.0f;
-        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
+        if(HAL_GetTick() - time_enterpath >= DELAY_ADJUST && raw_distances[0] >= ADJUST_DISTANCE ){
+            Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
+        }
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;
@@ -857,11 +877,14 @@ int main(void)
         // 参数定义
         const float TARGET_DISTANCE = 90.0f;   // 调试，这个变量用于检测最终的目标距离
         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint16_t ADJUST_DISTANCE = 500;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
         const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
+        const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
         // 获取当前检测距离（使用第4个传感器）
         float current_distance = distances[3]; 
+        const uint32_t time_enterpath = HAL_GetTick();
     
         // 速度计算逻辑
         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
@@ -897,7 +920,9 @@ int main(void)
         
         // 使用前后电机调整
         float avg_distance = (distances[1] + distances[2]) / 2.0f;
-        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
+        if(HAL_GetTick() - time_enterpath >= DELAY_ADJUST && raw_distances[3] >= ADJUST_DISTANCE ){
+            Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
+        }
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;
@@ -952,11 +977,14 @@ int main(void)
         // 参数定义
         const float TARGET_DISTANCE = 90.0f;   // 调试，这个变量用于检测最终的目标距离
         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
+        const uint16_t ADJUST_DISTANCE = 500;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
         const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
+        const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
         // 获取当前检测距离（使用第4个传感器）
         float current_distance = distances[0]; 
+        const uint32_t time_enterpath = HAL_GetTick();
     
         // 速度计算逻辑
         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
@@ -992,7 +1020,9 @@ int main(void)
         
         // 使用前后电机调整
         float avg_distance = (distances[1] + distances[2]) / 2.0f;
-        Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
+        if(HAL_GetTick() - time_enterpath >= DELAY_ADJUST && raw_distances[0] >= ADJUST_DISTANCE ){
+            Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 40.0f);
+        }
     
         OLED_ShowNum(4, 4, motor_speed, 2);
         break;

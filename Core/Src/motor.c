@@ -169,7 +169,7 @@ void Motor_Rightward(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int
     
     // 计算偏航角PID输出
     float yaw_pid_output = 0.0f;
-    if (fabs(yaw_error) > 2.0f) {
+    if (fabs(yaw_error) > 0.5f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
         // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
@@ -280,7 +280,7 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     
     // 计算偏航角PID输出
     float yaw_pid_output = 0.0f;
-    if (fabs(yaw_error) > 2.0f) {
+    if (fabs(yaw_error) > 0.5f) {
         yaw_pid_output = PID_Calculate(&pid_yaw, yaw_error, dt);
         // yaw_pid_output = fmaxf(fminf(yaw_pid_output, max_pid_output*1), -max_pid_output*1);
     } else {
@@ -303,8 +303,8 @@ void Motor_Straight(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, int1
     float motor_speed3 = (base_speed + left_pid_output - position_pid_output - yaw_pid_output);   // 左后
     
     // 右侧轮子 - 反转
-    float motor_speed2 = (base_speed - right_pid_output + position_pid_output + yaw_pid_output);  // 右前
-    float motor_speed4 = -(base_speed + right_pid_output + position_pid_output + yaw_pid_output); // 右后
+    float motor_speed2 = (base_speed - right_pid_output + position_pid_output + yaw_pid_output);  // 右后
+    float motor_speed4 = -(base_speed + right_pid_output + position_pid_output + yaw_pid_output); // 右前
 
     // 限幅
     motor_speed1 = fmaxf(fminf(motor_speed1, 100.0f), -100.0f);
@@ -453,122 +453,147 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
 #define magnification_close 0.8
 
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float distance, float threshold) {
-    // 计算距离误差
-    float distance_error = distance - threshold;
+    static int prev_state = 0;  // 0: 未定义, 1: 小于等于31, 2: 大于等于61
+    int current_state = 0;
     
-    // 定义调整参数
-    const float kp = 0.001f;  // 比例系数
-    const float max_adjustment = 0.3f;  // 最大速度调整量
+    if(distance <= 31) {
+        current_state = 1;
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 20, &yaw, &target_yaw);
+    } else if(distance >= 61) {
+        current_state = 2;
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -20, &yaw, &target_yaw);
+    }
     
-    // 计算速度调整量（取绝对值）
-    float speed_adjustment = fabsf(kp * distance_error);
-    
-    // 限制速度调整量
-    speed_adjustment = fminf(speed_adjustment, max_adjustment);
-    
-    // 获取当前电机速度
-    uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
-    uint32_t current_speed2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
-    uint32_t current_speed3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
-    uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
-    
-    // 根据距离误差调整速度
-    if (distance_error > 0) {  // 距离过远
-        // 左侧电机减速，右侧电机加速
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification);
-        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
-        // OLED_ShowNum(4, 12, current_speed4, 4);
-    } else {  // 距离过近
-        // 左侧电机加速，右侧电机减速
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification_close);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification_close);
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification_close);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification_close);
-        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
-        // OLED_ShowNum(4, 12, current_speed4, 4);
+    // 只在状态改变时调整target_yaw
+    if(current_state != prev_state) {
+        if(current_state == 1) {
+            target_yaw += 0.3f;
+        } else if(current_state == 2) {
+            target_yaw -= 0.3f;
+        }
+        prev_state = current_state;
     }
 }
 
 void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, Motor_ID id3, float distance, float threshold) {
-    // 计算距离误差
-    float distance_error = distance - threshold;
+    static int prev_state = 0;  // 0: 未定义, 1: 小于等于31, 2: 大于等于61
+    int current_state = 0;
     
-    // 定义调整参数
-    const float kp = 0.001f;  // 比例系数
-    const float max_adjustment = 0.3f;  // 最大速度调整量
+    if(distance <= 31) {
+        current_state = 1;
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -20, &yaw, &target_yaw);
+    } else if(distance >= 61) {
+        current_state = 2;
+        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 20, &yaw, &target_yaw);
+    }
     
-    // 计算速度调整量（取绝对值）
-    float speed_adjustment = fabsf(kp * distance_error);
-    
-    // 限制速度调整量
-    speed_adjustment = fminf(speed_adjustment, max_adjustment);
-    
-    // 获取当前电机速度
-    uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
-    uint32_t current_speed2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
-    uint32_t current_speed3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
-    uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
-    
-    // 根据距离误差调整速度
-    if (distance_error > 0) {  // 距离过远
-        // 右侧电机减速，左侧电机加速
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification);
-        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification, 4);
-        // OLED_ShowNum(4, 12, current_speed4, 4);
-    } else {  // 距离过近
-        // 右侧电机加速，左侧电机减速
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification_close);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification_close);
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1 * magnification_close);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification_close);
-        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
-        // OLED_ShowNum(4, 12, current_speed4, 4);
+    // 只在状态改变时调整target_yaw
+    if(current_state != prev_state) {
+        if(current_state == 1) {
+            target_yaw -= 0.3f;
+        } else if(current_state == 2) {
+            target_yaw += 0.3f;
+        }
+        prev_state = current_state;
     }
 }
 
 void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id2, Motor_ID id3, float distance, float threshold) {
-    // 计算距离误差
-    float distance_error = distance - threshold;
+    static int prev_state = 0;  // 0: 未定义, 1: 小于等于34, 2: 大于等于77
+    int current_state = 0;
     
-    // 定义调整参数
-    const float kp = 0.001f;  // 比例系数
-    const float max_adjustment = 0.3f;  // 最大速度调整量
+    if(distance <= 34) {
+        current_state = 1;
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -12, &yaw, &target_yaw);
+    } else if(distance >= 77) {
+        current_state = 2;
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 12, &yaw, &target_yaw);
+    }
     
-    // 计算速度调整量（取绝对值）
-    float speed_adjustment = fabsf(kp * distance_error);
+    // 只在状态改变时调整target_yaw
+    if(current_state != prev_state) {
+        if(current_state == 1) {
+            target_yaw -= 0.3f;
+        } else if(current_state == 2) {
+            target_yaw += 0.3f;
+        }
+        prev_state = current_state;
+    }
+}
+
+void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, bool clockwise) {
+    static const float ROTATION_SPEED = 40.0f;  // 旋转速度
+    static const float ANGLE_TOLERANCE = 1.0f;  // 角度容差
+    float start_yaw = yaw;  // 记录起始角度
+    float target_angle = start_yaw + (clockwise ? 90.0f : -90.0f);  // 计算目标角度
     
-    // 限制速度调整量
-    speed_adjustment = fminf(speed_adjustment, max_adjustment);
+    // 标准化目标角度到-180到180度范围
+    if (target_angle > 180.0f) {
+        target_angle -= 360.0f;
+    } else if (target_angle < -180.0f) {
+        target_angle += 360.0f;
+    }
     
-    // 获取当前电机速度
-    uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
-    uint32_t current_speed2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
-    uint32_t current_speed3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
-    uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+    // 设置目标偏航角
+    target_yaw = target_angle;
     
-    // 根据距离误差调整速度
-    if (distance_error > 0) {  // 距离过远
-        // 前轮电机减速，后轮电机加速
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjustment * current_speed1 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjustment * current_speed4 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjustment * current_speed2 * magnification);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjustment * current_speed3 * magnification);
-        // OLED_ShowNum(4, 7, current_speed1 - speed_adjustment * current_speed1 * magnification, 4);
-        // OLED_ShowNum(4, 12, current_speed4 - speed_adjustment * current_speed4 * magnification, 4);
-    } else {  // 距离过近
-        // 前轮电机加速，后轮电机减速
-        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjustment * current_speed1 * magnification_close);
-        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjustment * current_speed4 * magnification_close);
-        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjustment * current_speed2 * magnification_close);
-        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjustment * current_speed3 * magnification_close);
-        // OLED_ShowNum(4, 7, speed_adjustment * current_speed4 * magnification_close, 4);
-        // OLED_ShowNum(4, 12, current_speed4, 4);
+    // 重置PID控制器
+    PID_Reset(&pid_yaw);
+    PID_Reset(&pid_front);
+    PID_Reset(&pid_rear);
+    PID_Reset(&pid_position);
+
+    
+    // 开始旋转
+    while (1) {
+        // 获取当前偏航角
+        float pitch, roll, current_yaw;
+        if (MPU6050_DMP_Get_Data(&pitch, &roll, &current_yaw) != 0) {
+            continue;  // 如果获取数据失败，继续尝试
+        }
+
+    OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-'); 
+    OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
+    OLED_ShowNum(3,14,fabsf(target_yaw),3);
+    OLED_ShowNum(3,6,fabsf(yaw),3);
+
+        
+        // 计算角度误差
+        float angle_error = target_angle - current_yaw;
+        if (angle_error > 180.0f) angle_error -= 360.0f;
+        else if (angle_error < -180.0f) angle_error += 360.0f;
+        
+        // 如果达到目标角度（考虑容差），停止旋转
+        if (fabsf(angle_error) <= ANGLE_TOLERANCE) {
+            // 停止所有电机
+            Motor_SetSpeed(id1, 0);  // 左前
+            Motor_SetSpeed(id2, 0);  // 右后
+            Motor_SetSpeed(id3, 0);  // 左后
+            Motor_SetSpeed(id4, 0);  // 右前
+            break;
+        }
+        
+        // 根据旋转方向设置电机速度
+        if (clockwise) {
+            // 顺时针旋转：
+            // 左前(id1)和右后(id2)正转
+            // 左后(id3)和右前(id4)反转
+            Motor_SetSpeed(id1, ROTATION_SPEED);   // 左前
+            Motor_SetSpeed(id2, ROTATION_SPEED);   // 右后
+            Motor_SetSpeed(id3, -ROTATION_SPEED);  // 左后
+            Motor_SetSpeed(id4, -ROTATION_SPEED);  // 右前
+        } else {
+            // 逆时针旋转：
+            // 左前(id1)和右后(id2)反转
+            // 左后(id3)和右前(id4)正转
+            Motor_SetSpeed(id1, -ROTATION_SPEED);  // 左前
+            Motor_SetSpeed(id2, -ROTATION_SPEED);  // 右后
+            Motor_SetSpeed(id3, ROTATION_SPEED);   // 左后
+            Motor_SetSpeed(id4, ROTATION_SPEED);   // 右前
+        }
+        
+        // 短暂延时，避免过于频繁的更新
+        HAL_Delay(10);
     }
 }
 

@@ -11,7 +11,7 @@ uint8_t us100_sensor_count = 0;  // 当前活动的传感器数量
 float raw_distances[4] = {2000.0f, 2000.0f, 2000.0f, 2000.0f};  // 添加原始距离数组
 
 // 超时时间（毫秒）
-#define US100_TIMEOUT_MS 300  // 增加超时时间到300ms
+#define US100_TIMEOUT_MS 100  // 增加超时时间到300ms
 
 // 静态变量用于存储上次有效的距离值
 float last_valid_distances[MAX_US100_SENSORS] = {0};
@@ -87,7 +87,7 @@ void US100_Init(US100Sensor* sensor, UART_HandleTypeDef* uart) {
     sensor->rx_index = 0;
     
     // 初始化卡尔曼滤波器
-    KalmanFilter_Init(&sensor->kalman, 0.91f, 0.1f, 0.005f);  // Q=0.1, R=1.0, dt=0.01
+    KalmanFilter_Init(&sensor->kalman, 0.999f, 0.001f, 0.001f);  // Q=0.1, R=0.1, dt=0.001
     
     // 初始化滑动窗口滤波器
     SlidingWindowFilter_Init(&sensor->sliding, 3);  // 5点滑动窗口
@@ -233,7 +233,8 @@ void US100_GetAllValidDistances(float* distances) {
         float current_distance = US100_GetDistance(active_sensors[i]);
         if (current_distance > 0) {
             raw_distances[i] = active_sensors[i]->distance;
-            last_valid_distances[i] = current_distance;
+            // 使用0.6的原始距离和0.4的滤波距离
+            last_valid_distances[i] = 0.33f * raw_distances[i] + 0.67f * current_distance;
         }
         distances[i] = last_valid_distances[i];
     }

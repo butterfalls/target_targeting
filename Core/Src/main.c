@@ -73,10 +73,16 @@ bool delay_flag = true;
 
 // 添加各个case的进入时间记录
 static uint32_t time_enterpath_case0 = 0;
+static uint32_t time_enterpath_case1 = 0;
+static uint32_t time_enterpath_case2 = 0;
 static uint32_t time_enterpath_case3 = 0;
+static uint32_t time_enterpath_case4 = 0;
 static uint32_t time_enterpath_case5 = 0;
+static uint32_t time_enterpath_case6 = 0;
 static uint32_t time_enterpath_case7 = 0;
+static uint32_t time_enterpath_case8 = 0;
 static uint32_t time_enterpath_case9 = 0;
+static uint32_t time_enterpath_case10 = 0;
 static uint32_t time_enterpath_case11 = 0;
 
 uint8_t receivedata[2];
@@ -194,8 +200,8 @@ void PID_ResetAll(void) {
 
 void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, bool clockwise) {
   float ROTATION_SPEED;  // 旋转速度
-  static const float ROTATION_SPEED_max = 50.0f;
-  static const float ANGLE_TOLERANCE = 4.0f;  // 角度容差
+  static const float ROTATION_SPEED_max = 20.0f;
+  static const float ANGLE_TOLERANCE = 5.0f;  // 角度容差
   // MPU6050_DMP_Get_Data(&pitchstart , &rollopen , &yaw);
   float const start_yaw = target_yaw;  // 记录起始角度
   float target_angle = start_yaw + (clockwise ? -90.0f : 90.0f);  // 计算目标角度
@@ -237,7 +243,17 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
       float angle_error = target_angle - current_yaw;
       float voltage=angle_error*1.12-roll*0.3;
 
-      ROTATION_SPEED = fmin(voltage , ROTATION_SPEED_max);
+      // 根据电压的正负分别限制速度，且要求绝对值大于12
+      if (fabsf(voltage) > 12.0f) {
+          if (voltage >= 0) {
+              ROTATION_SPEED = fmin(voltage, ROTATION_SPEED_max);
+          } else {
+              ROTATION_SPEED = fmax(voltage, -ROTATION_SPEED_max);
+          }
+      } else {
+          // 如果电压绝对值小于等于12，保持原符号但设为12
+          ROTATION_SPEED = (voltage >= 0) ? 15.0f : -15.0f;
+      }
       // 如果达到目标角度（考虑容差），停止旋转
       
       // 根据旋转方向设置电机速度
@@ -485,11 +501,11 @@ int main(void)
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/
     US100_GetAllValidDistances(distances);
     
-    // while (distances[1]==0)
-    // {
-    //   US100_GetAllValidDistances(distances);
-    //   OLED_ShowNum(1, 13, fabs(distances[1]), 4);
-    // }
+    //  while (distances[1]==0)
+    //  {
+    //    US100_GetAllValidDistances(distances);
+    //    OLED_ShowNum(1, 13, fabs(distances[1]), 4);
+    //  }
 
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
         // 显示原始距离和滤波后的距离
@@ -526,6 +542,8 @@ int main(void)
 
     OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-');
     OLED_ShowNum(3,6,fabsf(yaw),3);
+    OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
+    OLED_ShowNum(3,14,fabsf(target_yaw),3);
     
     //OLED_ShowNum(4,1,path,2);  // 显示毫秒
     // OLED_ShowNum(4,4,time,4); OLED_ShowNum(4,10,time_start,4);
@@ -550,11 +568,11 @@ int main(void)
      switch (path) {
        case 0: {
          // 参数定义
-         const float TARGET_DISTANCE = 120.0f;   // 调试，这个变量用于检测最终的目标距离
-         const float DECEL_RANGE = 600.0f;      // 调试，这个变量用于设置减速区间范围
+         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float DECEL_RANGE = 730.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
-         const uint8_t MIN_SPEED = 18;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 54;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MIN_SPEED = 10;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+         const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[1];
@@ -565,7 +583,7 @@ int main(void)
          // 速度计算逻辑
          uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
     
-         if (current_distance <= TARGET_DISTANCE && current_distance != 0) {
+         if (current_distance <= TARGET_DISTANCE && current_distance != 0 && (HAL_GetTick() - time_enterpath_case0 >= 3000)) {
              // 区域3：到达目标距离（≤80mm）
              motor_speed = MIN_SPEED;
              Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
@@ -594,8 +612,8 @@ int main(void)
          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
         
          // 使用左侧电机调整
-         if(HAL_GetTick() - time_enterpath_case0 >= DELAY_ADJUST && raw_distances[1] >= ADJUST_DISTANCE ){
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 50.0f);
+         if(HAL_GetTick() - time_enterpath_case0 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, raw_distances[0], 50.0f);
          }
          OLED_ShowNum(4, 1, path, 2);
          OLED_ShowNum(4, 4, motor_speed, 2);
@@ -604,146 +622,30 @@ int main(void)
        }
        case 1: {
          // 参数定义
-         const float TARGET_DISTANCE = 130.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
-         const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 54;          // 调试，这个变量用于设置离目标较远时的速度
-         const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
-    
-         // 获取当前检测距离（使用第4个传感器）
-         float current_distance = distances[1];
-    
-         // 速度计算逻辑
-         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
-    
-         if (current_distance <= TARGET_DISTANCE) {
-             // 区域3：到达目标距离（≤80mm）
-             motor_speed = MIN_SPEED;
-    
-             // 添加延迟判定
-             static uint32_t reach_target_time = 0;
-             if (reach_target_time == 0) {
-                 reach_target_time = HAL_GetTick();
-             }
-             
-             // 执行路径切换逻辑
-             if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 3000)) {
-                 Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
-                 path += 1;
-                 PID_ResetAll(); // 重置所有PID控制器
-                 reach_target_time = 0; // 重置时间戳
-             }
-         }
-         else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
-             // 区域2：减速区间（80~180mm）
-             float distance_from_target = current_distance - TARGET_DISTANCE;
-             float ratio = (distance_from_target / DECEL_RANGE);
-             motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
-             motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
-         }
-         else {
-             // 区域1：全速区间（>170mm）
-             motor_speed = MAX_SPEED;
-         }
-    
-         // 执行带平滑过渡的电机控制
-         static uint8_t last_speed = 0;
-         motor_speed = smooth_speed_transition(last_speed, motor_speed);
-         last_speed = motor_speed;
-    
-         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
-        
-         // 使用前后电机调整
-         float avg_distance = distances[0];
-         if(HAL_GetTick() - time_enterpath_case0 >= DELAY_ADJUST ){
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 82.0f);
-         }
-         OLED_ShowNum(4, 1, path, 2);
-         OLED_ShowNum(4, 4, motor_speed, 2);
-         break;
-       }
-       case 2: {
-         const uint32_t DELAY_ENTER = 200; //调试
-
-         if (path_change!=2)
-         {
-           if ((distances[0]>=150&& /* mean[0]>=70 && */ path_change==0)||(distances[0]<=150&& /* mean[0]<=70&& */ path_change==1))
-           {
-             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -33, &yaw, &target_yaw);
-             // 使用右侧电机调整
-             Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[2], 50.0f);
-           }else if (distances[0]<=204 && /* mean[0]<=70 && */ path_change==0)
-           {
-             if(flag){
-               time_start = HAL_GetTick();
-               flag = false;
-             }
-             uint32_t time = HAL_GetTick();
-             if(time - time_start >=100){
-               path_change+=1;
-               flag = true;
-             }
-           }else if (distances[0]>=100&& /* mean[0]>=70&& */ path_change==1)
-           {
-             if(flag){
-               time_start = HAL_GetTick();
-               flag = false;
-             }
-             uint32_t time = HAL_GetTick();
-             if(time - time_start >= DELAY_ENTER ){
-               path_change+=1;
-               flag = true;
-             }
-           }
-         }else{
-           // 添加延迟判定
-           static uint32_t reach_target_time = 0;
-           if (reach_target_time == 0) {
-               reach_target_time = HAL_GetTick();
-           }
-           
-           if (HAL_GetTick() - reach_target_time >= 3000) {
-               Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
-               path_change = 0;
-               flag = true;
-               path +=1;
-               PID_Reset(&pid_yaw);
-               PID_Reset(&pid_rear);
-               PID_Reset(&pid_front);
-               PID_Reset(&pid_position);
-               reach_target_time = 0; // 重置时间戳
-           }
-         }
-         OLED_ShowNum(4, 1, path, 2);
-         break;
-       }
-
-       case 3: {
-         // 参数定义
-         const float TARGET_DISTANCE = 90.0f;   // 调试，这个变量用于检测最终的目标距离
-         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
-         const uint8_t MIN_SPEED = -20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = -54;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+         const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
-         float current_distance = distances[3];
-         if(time_enterpath_case3 == 0) {
-             time_enterpath_case3 = HAL_GetTick();
+         float current_distance = distances[1];
+         if(time_enterpath_case1 == 0) {
+             time_enterpath_case1 = HAL_GetTick();
          }
     
          // 速度计算逻辑
          uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
     
-         if (current_distance <= TARGET_DISTANCE) {
-             // 区域3：到达目标距离（≤70mm）
-             motor_speed = MIN_SPEED;
+         // 添加延迟判定
+         static uint32_t reach_target_time = 0;
+         if (reach_target_time == 0) {
+             reach_target_time = HAL_GetTick();
+         }
     
-             // 添加延迟判定
-             static uint32_t reach_target_time = 0;
-             if (reach_target_time == 0) {
-                 reach_target_time = HAL_GetTick();
-             }
+         if (current_distance <= TARGET_DISTANCE) {
+             // 区域3：到达目标距离（≤130mm）
+             motor_speed = MIN_SPEED;
              
              // 执行路径切换逻辑
              if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 3000)) {
@@ -754,14 +656,14 @@ int main(void)
              }
          }
          else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
-             // 区域2：减速区间（70~170mm）
+             // 区域2：减速区间（130~830mm）
              float distance_from_target = current_distance - TARGET_DISTANCE;
              float ratio = (distance_from_target / DECEL_RANGE);
              motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
              motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
          }
          else {
-             // 区域1：全速区间（>170mm）
+             // 区域1：全速区间（>830mm）
              motor_speed = MAX_SPEED;
          }
     
@@ -774,25 +676,25 @@ int main(void)
         
          // 使用前后电机调整
          float avg_distance = distances[0];
-         if(HAL_GetTick() - time_enterpath_case3 >= DELAY_ADJUST && raw_distances[0] >= ADJUST_DISTANCE ){
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 82.0f);
+         if(HAL_GetTick() - time_enterpath_case1 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
          }
-         OLED_ShowNum(4, 1, path, 2);
+    
          OLED_ShowNum(4, 4, motor_speed, 2);
+         OLED_ShowNum(4, 1, path, 2);
          break;
        }
-
-       case 4: {
+       case 2: {
          const uint32_t DELAY_ENTER = 200; //调试
 
          if (path_change!=2)
          {
-           if ((distances[2]>=150 && /* mean[3]>=70 && */ path_change==0)||(distances[2]<=150 && /* mean[3]<=70 && */ path_change==1))
+           if ((distances[0]>=150 && path_change==0)||(distances[0]<=150 && path_change==1))
            {
-             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
-             // 使用左侧电机调整
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 50.0f);
-           }else if (distances[2]<=204 && /* mean[3]<=70&& */ path_change==0)
+             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -33, &yaw, &target_yaw);
+             // 使用右侧电机调整
+             Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, raw_distances[2], 50.0f);
+           }else if (distances[0]<=256 && path_change==0)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -803,7 +705,7 @@ int main(void)
                path_change+=1;
                flag = true;
              }
-           }else if (distances[2]>=150 && /* mean[3]>=70 && */ path_change==1)
+           }else if (distances[0]>=100 && path_change==1)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -816,22 +718,122 @@ int main(void)
              }
            }
          }else{
-           // 添加延迟判定
-           static uint32_t reach_target_time = 0;
-           if (reach_target_time == 0) {
-               reach_target_time = HAL_GetTick();
+           // 直接执行旋转和路径切换
+           Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
+           path_change = 0;
+           flag = true;
+           path +=1;
+           PID_ResetAll();
+         }
+         OLED_ShowNum(4, 1, path, 2);
+         break;
+       }
+
+       case 3: {
+         // 参数定义
+         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
+         const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
+         const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+         const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
+    
+         float current_distance = distances[3];
+         if(time_enterpath_case3 == 0) {
+             time_enterpath_case3 = HAL_GetTick();
+         }
+    
+         // 速度计算逻辑
+         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
+    
+         // 添加延迟判定
+         static uint32_t reach_target_time = 0;
+         if (reach_target_time == 0) {
+             reach_target_time = HAL_GetTick();
+         }
+    
+         if (current_distance <= TARGET_DISTANCE) {
+             // 区域3：到达目标距离（≤130mm）
+             motor_speed = MIN_SPEED;
+             
+             // 执行路径切换逻辑
+             if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 1000)) {
+                Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
+                 path += 1;
+                 PID_ResetAll(); // 重置所有PID控制器
+                 reach_target_time = 0; // 重置时间戳
+             }
+         }
+         else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
+             // 区域2：减速区间（130~830mm）
+             float distance_from_target = current_distance - TARGET_DISTANCE;
+             float ratio = (distance_from_target / DECEL_RANGE);
+             motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
+             motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
+         }
+         else {
+             // 区域1：全速区间（>830mm）
+             motor_speed = MAX_SPEED;
+         }
+    
+         // 执行带平滑过渡的电机控制
+         static uint8_t last_speed = 0;
+         motor_speed = smooth_speed_transition(last_speed, motor_speed);
+         last_speed = motor_speed;
+    
+         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
+        
+         // 使用前后电机调整
+         float avg_distance = distances[0];
+         if(HAL_GetTick() - time_enterpath_case3 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
+         }
+    
+         OLED_ShowNum(4, 4, motor_speed, 2);
+         OLED_ShowNum(4, 1, path, 2);
+         break;
+       }
+
+       case 4: {
+         const uint32_t DELAY_ENTER = 200; //调试
+
+         if (path_change!=2)
+         {
+           if ((distances[2]>=150 && path_change==0)||(distances[2]<=150 && path_change==1))
+           {
+             Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+             // 使用左侧电机调整
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, raw_distances[0], 50.0f);
+           }else if (distances[2]<=256 && path_change==0)
+           {
+             if(flag){
+               time_start = HAL_GetTick();
+               flag = false;
+             }
+             uint32_t time = HAL_GetTick();
+             if(time - time_start >=100){
+               path_change+=1;
+               flag = true;
+             }
+           }else if (distances[2]>=150 && path_change==1)
+           {
+             if(flag){
+               time_start = HAL_GetTick();
+               flag = false;
+             }
+             uint32_t time = HAL_GetTick();
+             if(time - time_start >= DELAY_ENTER ){
+               path_change+=1;
+               flag = true;
+             }
            }
-           
-           if (HAL_GetTick() - reach_target_time >= 3000) {
-               path_change = 0;
-               path +=1;
-               Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
-               PID_Reset(&pid_yaw);
-               PID_Reset(&pid_rear);
-               PID_Reset(&pid_front);
-               PID_Reset(&pid_position);
-               reach_target_time = 0; // 重置时间戳
-           }
+         }else{
+           // 直接执行旋转和路径切换
+           Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
+           path_change = 0;
+           flag = true;
+           path +=1;
+           PID_ResetAll();
          }
          OLED_ShowNum(4, 1, path, 2);
          break;
@@ -839,14 +841,14 @@ int main(void)
 
        case 5: {
          // 参数定义
-         const float TARGET_DISTANCE = 111.0f;   // 调试，这个变量用于检测最终的目标距离
-         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
+         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 54;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
-         float current_distance = distances[3];
+         float current_distance = distances[1];
          if(time_enterpath_case5 == 0) {
              time_enterpath_case5 = HAL_GetTick();
          }
@@ -854,32 +856,33 @@ int main(void)
          // 速度计算逻辑
          uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
     
-         if (current_distance <= TARGET_DISTANCE) {
-             // 区域3：到达目标距离（≤70mm）
-             motor_speed = MIN_SPEED;
+         // 添加延迟判定
+         static uint32_t reach_target_time = 0;
+         if (reach_target_time == 0) {
+             reach_target_time = HAL_GetTick();
+         }
     
-             // 添加延迟判定
-             static uint32_t reach_target_time = 0;
-             if (reach_target_time == 0) {
-                 reach_target_time = HAL_GetTick();
-             }
+         if (current_distance <= TARGET_DISTANCE) {
+             // 区域3：到达目标距离（≤130mm）
+             motor_speed = MIN_SPEED;
              
              // 执行路径切换逻辑
-             if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 3000)) {
+             if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 1000)) {
+                Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
                  path += 1;
                  PID_ResetAll(); // 重置所有PID控制器
                  reach_target_time = 0; // 重置时间戳
              }
          }
          else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
-             // 区域2：减速区间（70~170mm）
+             // 区域2：减速区间（130~830mm）
              float distance_from_target = current_distance - TARGET_DISTANCE;
              float ratio = (distance_from_target / DECEL_RANGE);
              motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
              motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
          }
          else {
-             // 区域1：全速区间（>170mm）
+             // 区域1：全速区间（>830mm）
              motor_speed = MAX_SPEED;
          }
     
@@ -891,12 +894,13 @@ int main(void)
          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
         
          // 使用前后电机调整
-         float avg_distance = fmin(distances[1] , distances[2]);
-         if(HAL_GetTick() - time_enterpath_case5 >= DELAY_ADJUST && raw_distances[3] >= ADJUST_DISTANCE ){
-             Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 82.0f);
+         float avg_distance = distances[0];
+         if(HAL_GetTick() - time_enterpath_case5 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
          }
     
          OLED_ShowNum(4, 4, motor_speed, 2);
+         OLED_ShowNum(4, 1, path, 2);
          break;
        }
 
@@ -905,12 +909,12 @@ int main(void)
 
          if (path_change!=2)
          {
-           if ((distances[0]>=150 && /* mean[0]>=70 && */ path_change==0)||(distances[0]<=150 && /*mean[0]<=150 && */path_change==1))
+           if ((distances[0]>=150 && path_change==0)||(distances[0]<=150 && path_change==1))
            {
              Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
              // 使用右侧电机调整
-             Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 50.0f);
-           }else if (distances[0]<=204 /*&& mean[0]<=70*/ && path_change==0)
+             Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, raw_distances[2], 50.0f);
+           }else if (distances[0]<=256 && path_change==0)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -921,7 +925,7 @@ int main(void)
                path_change+=1;
                flag = true;
              }
-           }else if (distances[0]>=150 && /* mean[0]>=70 && */ path_change==1)
+           }else if (distances[0]>=150 && path_change==1)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -934,21 +938,12 @@ int main(void)
              }
            }
          }else{
-           // 添加延迟判定
-           static uint32_t reach_target_time = 0;
-           if (reach_target_time == 0) {
-               reach_target_time = HAL_GetTick();
-           }
-           
-           if (HAL_GetTick() - reach_target_time >= 3000) {
-               path_change = 0;
-               path +=1;
-               PID_Reset(&pid_yaw);
-               PID_Reset(&pid_rear);
-               PID_Reset(&pid_front);
-               PID_Reset(&pid_position);
-               reach_target_time = 0; // 重置时间戳
-           }
+           // 直接执行旋转和路径切换
+           Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
+           path_change = 0;
+           flag = true;
+           path +=1;
+           PID_ResetAll();
          }
          OLED_ShowNum(4, 1, path, 2);
          break;
@@ -956,14 +951,14 @@ int main(void)
 
        case 7: {
          // 参数定义
-         const float TARGET_DISTANCE = 90.0f;   // 调试，这个变量用于检测最终的目标距离
-         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
+         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
-         const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 54;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+         const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
-         float current_distance = distances[0];
+         float current_distance = distances[3];
          if(time_enterpath_case7 == 0) {
              time_enterpath_case7 = HAL_GetTick();
          }
@@ -971,32 +966,33 @@ int main(void)
          // 速度计算逻辑
          uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
     
-         if (current_distance <= TARGET_DISTANCE) {
-             // 区域3：到达目标距离（≤70mm）
-             motor_speed = MIN_SPEED;
+         // 添加延迟判定
+         static uint32_t reach_target_time = 0;
+         if (reach_target_time == 0) {
+             reach_target_time = HAL_GetTick();
+         }
     
-             // 添加延迟判定
-             static uint32_t reach_target_time = 0;
-             if (reach_target_time == 0) {
-                 reach_target_time = HAL_GetTick();
-             }
+         if (current_distance <= TARGET_DISTANCE) {
+             // 区域3：到达目标距离（≤130mm）
+             motor_speed = MIN_SPEED;
              
              // 执行路径切换逻辑
              if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 3000)) {
+                Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
                  path += 1;
                  PID_ResetAll(); // 重置所有PID控制器
                  reach_target_time = 0; // 重置时间戳
              }
          }
          else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
-             // 区域2：减速区间（70~170mm）
+             // 区域2：减速区间（130~830mm）
              float distance_from_target = current_distance - TARGET_DISTANCE;
              float ratio = (distance_from_target / DECEL_RANGE);
              motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
              motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
          }
          else {
-             // 区域1：全速区间（>170mm）
+             // 区域1：全速区间（>830mm）
              motor_speed = MAX_SPEED;
          }
     
@@ -1005,15 +1001,16 @@ int main(void)
          motor_speed = smooth_speed_transition(last_speed, motor_speed);
          last_speed = motor_speed;
     
-         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
+         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
         
          // 使用前后电机调整
-         float avg_distance = fmin(distances[1] , distances[2]);
-         if(HAL_GetTick() - time_enterpath_case7 >= DELAY_ADJUST && raw_distances[0] >= ADJUST_DISTANCE ){
-             Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 82.0f);
+         float avg_distance = distances[0];
+         if(HAL_GetTick() - time_enterpath_case7 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
          }
     
          OLED_ShowNum(4, 4, motor_speed, 2);
+         OLED_ShowNum(4, 1, path, 2);
          break;
        }
 
@@ -1022,12 +1019,12 @@ int main(void)
 
          if (path_change!=2)
          {
-           if ((distances[3]>=150 && /* mean[3]>=70 && */ path_change==0)||(distances[3]<=150 && /* mean[3]<=70 && */ path_change==1))
+           if ((distances[2]>=150 && path_change==0)||(distances[2]<=150 && path_change==1))
            {
              Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
              // 使用左侧电机调整
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 50.0f);
-           }else if (distances[3]<=204 && /* mean[3]<=70 && */ path_change==0)
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, raw_distances[0], 50.0f);
+           }else if (distances[2]<=256 && path_change==0)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -1038,7 +1035,7 @@ int main(void)
                path_change+=1;
                flag = true;
              }
-           }else if (distances[3]>=150 && /* mean[3]>=70 && */ path_change==1)
+           }else if (distances[2]>=150 && path_change==1)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -1051,21 +1048,12 @@ int main(void)
              }
            }
          }else{
-           // 添加延迟判定
-           static uint32_t reach_target_time = 0;
-           if (reach_target_time == 0) {
-               reach_target_time = HAL_GetTick();
-           }
-           
-           if (HAL_GetTick() - reach_target_time >= 3000) {
-               path_change = 0;
-               path +=1;
-               PID_Reset(&pid_yaw);
-               PID_Reset(&pid_rear);
-               PID_Reset(&pid_front);
-               PID_Reset(&pid_position);
-               reach_target_time = 0; // 重置时间戳
-           }
+           // 直接执行旋转和路径切换
+           Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
+           path_change = 0;
+           flag = true;
+           path +=1;
+           PID_ResetAll();
          }
          OLED_ShowNum(4, 1, path, 2);
          break;
@@ -1073,14 +1061,14 @@ int main(void)
 
        case 9: {
          // 参数定义
-         const float TARGET_DISTANCE = 111.0f;   // 调试，这个变量用于检测最终的目标距离
-         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
+         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
-         const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 54;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+         const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
-         float current_distance = distances[3];
+         float current_distance = distances[1];
          if(time_enterpath_case9 == 0) {
              time_enterpath_case9 = HAL_GetTick();
          }
@@ -1088,32 +1076,33 @@ int main(void)
          // 速度计算逻辑
          uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
     
-         if (current_distance <= TARGET_DISTANCE) {
-             // 区域3：到达目标距离（≤70mm）
-             motor_speed = MIN_SPEED;
+         // 添加延迟判定
+         static uint32_t reach_target_time = 0;
+         if (reach_target_time == 0) {
+             reach_target_time = HAL_GetTick();
+         }
     
-             // 添加延迟判定
-             static uint32_t reach_target_time = 0;
-             if (reach_target_time == 0) {
-                 reach_target_time = HAL_GetTick();
-             }
+         if (current_distance <= TARGET_DISTANCE) {
+             // 区域3：到达目标距离（≤130mm）
+             motor_speed = MIN_SPEED;
              
              // 执行路径切换逻辑
              if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 3000)) {
+                Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
                  path += 1;
                  PID_ResetAll(); // 重置所有PID控制器
                  reach_target_time = 0; // 重置时间戳
              }
          }
          else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
-             // 区域2：减速区间（70~170mm）
+             // 区域2：减速区间（130~830mm）
              float distance_from_target = current_distance - TARGET_DISTANCE;
              float ratio = (distance_from_target / DECEL_RANGE);
              motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
              motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
          }
          else {
-             // 区域1：全速区间（>170mm）
+             // 区域1：全速区间（>830mm）
              motor_speed = MAX_SPEED;
          }
     
@@ -1122,15 +1111,16 @@ int main(void)
          motor_speed = smooth_speed_transition(last_speed, motor_speed);
          last_speed = motor_speed;
     
-         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
+         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
         
          // 使用前后电机调整
-         float avg_distance = fmin(distances[1] , distances[2]);
-         if(HAL_GetTick() - time_enterpath_case9 >= DELAY_ADJUST && raw_distances[3] >= ADJUST_DISTANCE ){
-             Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 82.0f);
+         float avg_distance = distances[0];
+         if(HAL_GetTick() - time_enterpath_case9 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
          }
     
          OLED_ShowNum(4, 4, motor_speed, 2);
+         OLED_ShowNum(4, 1, path, 2);
          break;
        }
 
@@ -1139,12 +1129,12 @@ int main(void)
 
          if (path_change!=2)
          {
-           if ((distances[0]>=150 && /* mean[0]>=70 && */ path_change==0)||(distances[0]<=150 && /* mean[0]<=70 && */ path_change==1))
+           if ((distances[0]>=150 && path_change==0)||(distances[0]<=150 && path_change==1))
            {
              Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
              // 使用右侧电机调整
-             Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, distances[3], 50.0f);
-           }else if (distances[0]<=204 && /* mean[0]<=70 && */ path_change==0)
+             Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, raw_distances[2], 50.0f);
+           }else if (distances[0]<=256 && path_change==0)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -1155,7 +1145,7 @@ int main(void)
                path_change+=1;
                flag = true;
              }
-           }else if (distances[0]>=150 && /* mean[0]>=70 && */ path_change==1)
+           }else if (distances[0]>=150 && path_change==1)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -1168,21 +1158,12 @@ int main(void)
              }
            }
          }else{
-           // 添加延迟判定
-           static uint32_t reach_target_time = 0;
-           if (reach_target_time == 0) {
-               reach_target_time = HAL_GetTick();
-           }
-           
-           if (HAL_GetTick() - reach_target_time >= 3000) {
-               path_change = 0;
-               path +=1;
-               PID_Reset(&pid_yaw);
-               PID_Reset(&pid_rear);
-               PID_Reset(&pid_front);
-               PID_Reset(&pid_position);
-               reach_target_time = 0; // 重置时间戳
-           }
+           // 直接执行旋转和路径切换
+           Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
+           path_change = 0;
+           flag = true;
+           path +=1;
+           PID_ResetAll();
          }
          OLED_ShowNum(4, 1, path, 2);
          break;
@@ -1190,14 +1171,14 @@ int main(void)
 
        case 11: {
          // 参数定义
-         const float TARGET_DISTANCE = 111.0f;   // 调试，这个变量用于检测最终的目标距离
-         const float DECEL_RANGE = 800.0f;      // 调试，这个变量用于设置减速区间范围
+         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
-         const uint8_t MIN_SPEED = 20;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 54;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
+         const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
-         float current_distance = distances[0];
+         float current_distance = distances[3];
          if(time_enterpath_case11 == 0) {
              time_enterpath_case11 = HAL_GetTick();
          }
@@ -1205,32 +1186,33 @@ int main(void)
          // 速度计算逻辑
          uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
     
-         if (current_distance <= TARGET_DISTANCE) {
-             // 区域3：到达目标距离（≤70mm）
-             motor_speed = MIN_SPEED;
+         // 添加延迟判定
+         static uint32_t reach_target_time = 0;
+         if (reach_target_time == 0) {
+             reach_target_time = HAL_GetTick();
+         }
     
-             // 添加延迟判定
-             static uint32_t reach_target_time = 0;
-             if (reach_target_time == 0) {
-                 reach_target_time = HAL_GetTick();
-             }
+         if (current_distance <= TARGET_DISTANCE) {
+             // 区域3：到达目标距离（≤130mm）
+             motor_speed = MIN_SPEED;
              
              // 执行路径切换逻辑
              if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 3000)) {
+                Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
                  path += 1;
                  PID_ResetAll(); // 重置所有PID控制器
                  reach_target_time = 0; // 重置时间戳
              }
          }
          else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE)) {
-             // 区域2：减速区间（70~170mm）
+             // 区域2：减速区间（130~830mm）
              float distance_from_target = current_distance - TARGET_DISTANCE;
              float ratio = (distance_from_target / DECEL_RANGE);
              motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
              motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
          }
          else {
-             // 区域1：全速区间（>170mm）
+             // 区域1：全速区间（>830mm）
              motor_speed = MAX_SPEED;
          }
     
@@ -1239,29 +1221,30 @@ int main(void)
          motor_speed = smooth_speed_transition(last_speed, motor_speed);
          last_speed = motor_speed;
     
-         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
+         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
         
          // 使用前后电机调整
-         float avg_distance = fmin(distances[1] , distances[2]);
-         if(HAL_GetTick() - time_enterpath_case11 >= DELAY_ADJUST && raw_distances[0] >= ADJUST_DISTANCE ){
-             Adjust_Motors_By_FrontBack_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, avg_distance, 82.0f);
+         float avg_distance = distances[0];
+         if(HAL_GetTick() - time_enterpath_case11 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
          }
     
          OLED_ShowNum(4, 4, motor_speed, 2);
+         OLED_ShowNum(4, 1, path, 2);
          break;
        }
 
        case 12: {
-         const uint32_t DELAY_ENTER = 200; //调试，这个delay是用于超声波检测到突变后的继续前进时间
+         const uint32_t DELAY_ENTER = 200; //调试
 
          if (path_change!=2)
          {
-           if ((distances[3]>=150 && /* mean[3]>=70 && */ path_change==0)||(distances[3]<=150 && /* mean[3]<=70 && */ path_change==1))
+           if ((distances[2]>=150 && path_change==0)||(distances[2]<=150 && path_change==1))
            {
              Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
              // 使用左侧电机调整
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, distances[0], 50.0f);
-           }else if (distances[3]<=204 && /* mean[3]<=70 && */ path_change==0)
+             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, raw_distances[0], 50.0f);
+           }else if (distances[2]<=256 && path_change==0)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -1272,7 +1255,7 @@ int main(void)
                path_change+=1;
                flag = true;
              }
-           }else if (distances[3]>=150 && /* mean[3]>=70 && */ path_change==1)
+           }else if (distances[2]>=150 && path_change==1)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -1285,21 +1268,12 @@ int main(void)
              }
            }
          }else{
-           // 添加延迟判定
-           static uint32_t reach_target_time = 0;
-           if (reach_target_time == 0) {
-               reach_target_time = HAL_GetTick();
-           }
-           
-           if (HAL_GetTick() - reach_target_time >= 3000) {
-               path_change = 0;
-               path +=1;
-               PID_Reset(&pid_yaw);
-               PID_Reset(&pid_rear);
-               PID_Reset(&pid_front);
-               PID_Reset(&pid_position);
-               reach_target_time = 0; // 重置时间戳
-           }
+           // 直接执行旋转和路径切换
+           Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
+           path_change = 0;
+           flag = true;
+           path +=1;
+           PID_ResetAll();
          }
          OLED_ShowNum(4, 1, path, 2);
          break;

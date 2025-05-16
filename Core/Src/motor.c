@@ -457,14 +457,40 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
 
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float distance, float threshold) {
     static int prev_state = 0;  // 0: 未定义, 1: 小于等于31, 2: 大于等于61
+    static uint32_t adjust_start_time = 0;
+    static uint32_t last_adjustment_time = 0;  // 添加上次调整时间记录
+    const uint32_t COOLDOWN_PERIOD = 1500;    // 冷却时间1秒
     int current_state = 0;
     
-    if(distance <= 31) {
+    // 检查是否在冷却期内
+    if (HAL_GetTick() - last_adjustment_time < COOLDOWN_PERIOD) {
+        return;
+    }
+    
+    if(distance <= 32) {
         current_state = 1;
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 20, &yaw, &target_yaw);
-    } else if(distance >= 61) {
+        if(adjust_start_time == 0) {
+            adjust_start_time = HAL_GetTick();
+        }
+        if(HAL_GetTick() - adjust_start_time < 500) {
+            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 20, &yaw, &target_yaw);
+        } else {
+            adjust_start_time = 0;
+            last_adjustment_time = HAL_GetTick();  // 记录调整完成时间
+        }
+    } else if(distance >= 70) {
         current_state = 2;
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -20, &yaw, &target_yaw);
+        if(adjust_start_time == 0) {
+            adjust_start_time = HAL_GetTick();
+        }
+        if(HAL_GetTick() - adjust_start_time < 500) {
+            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -20, &yaw, &target_yaw);
+        } else {
+            adjust_start_time = 0;
+            last_adjustment_time = HAL_GetTick();  // 记录调整完成时间
+        }
+    } else {
+        adjust_start_time = 0;
     }
     
     // 只在状态改变时调整target_yaw
@@ -480,14 +506,40 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Mo
 
 void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, Motor_ID id3, float distance, float threshold) {
     static int prev_state = 0;  // 0: 未定义, 1: 小于等于31, 2: 大于等于61
+    static uint32_t adjust_start_time = 0;
+    static uint32_t last_adjustment_time = 0;  // 添加上次调整时间记录
+    const uint32_t COOLDOWN_PERIOD = 1500;    // 冷却时间1秒
     int current_state = 0;
     
-    if(distance <= 31) {
+    // 检查是否在冷却期内
+    if (HAL_GetTick() - last_adjustment_time < COOLDOWN_PERIOD) {
+        return;
+    }
+    
+    if(distance <= 28) {
         current_state = 1;
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -20, &yaw, &target_yaw);
-    } else if(distance >= 61) {
+        if(adjust_start_time == 0) {
+            adjust_start_time = HAL_GetTick();
+        }
+        if(HAL_GetTick() - adjust_start_time < 500) {
+            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -20, &yaw, &target_yaw);
+        } else {
+            adjust_start_time = 0;
+            last_adjustment_time = HAL_GetTick();  // 记录调整完成时间
+        }
+    } else if(distance >= 70) {
         current_state = 2;
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 20, &yaw, &target_yaw);
+        if(adjust_start_time == 0) {
+            adjust_start_time = HAL_GetTick();
+        }
+        if(HAL_GetTick() - adjust_start_time < 500) {
+            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 20, &yaw, &target_yaw);
+        } else {
+            adjust_start_time = 0;
+            last_adjustment_time = HAL_GetTick();  // 记录调整完成时间
+        }
+    } else {
+        adjust_start_time = 0;
     }
     
     // 只在状态改变时调整target_yaw
@@ -503,14 +555,40 @@ void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, M
 
 void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id2, Motor_ID id3, float distance, float threshold) {
     static int prev_state = 0;  // 0: 未定义, 1: 小于等于34, 2: 大于等于77
+    static uint32_t adjust_start_time = 0;
+    static uint32_t last_adjustment_time = 0;  // 添加上次调整时间记录
+    const uint32_t COOLDOWN_PERIOD = 1500;    // 冷却时间1秒
     int current_state = 0;
+    
+    // 检查是否在冷却期内
+    if (HAL_GetTick() - last_adjustment_time < COOLDOWN_PERIOD) {
+        return;
+    }
     
     if(distance <= 34) {
         current_state = 1;
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -12, &yaw, &target_yaw);
+        if(adjust_start_time == 0) {
+            adjust_start_time = HAL_GetTick();
+        }
+        if(HAL_GetTick() - adjust_start_time < 500) {
+            Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -12, &yaw, &target_yaw);
+        } else {
+            adjust_start_time = 0;
+            last_adjustment_time = HAL_GetTick();  // 记录调整完成时间
+        }
     } else if(distance >= 77) {
         current_state = 2;
-        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 12, &yaw, &target_yaw);
+        if(adjust_start_time == 0) {
+            adjust_start_time = HAL_GetTick();
+        }
+        if(HAL_GetTick() - adjust_start_time < 500) {
+            Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 12, &yaw, &target_yaw);
+        } else {
+            adjust_start_time = 0;
+            last_adjustment_time = HAL_GetTick();  // 记录调整完成时间
+        }
+    } else {
+        adjust_start_time = 0;
     }
     
     // 只在状态改变时调整target_yaw

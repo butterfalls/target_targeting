@@ -87,10 +87,10 @@ void US100_Init(US100Sensor* sensor, UART_HandleTypeDef* uart) {
     sensor->rx_index = 0;
     
     // 初始化卡尔曼滤波器
-    KalmanFilter_Init(&sensor->kalman, 0.993f, 0.011f, 0.005f);  // Q=0.1, R=1.0, dt=0.01
+    KalmanFilter_Init(&sensor->kalman, 0.91f, 0.1f, 0.005f);  // Q=0.1, R=1.0, dt=0.01
     
     // 初始化滑动窗口滤波器
-    SlidingWindowFilter_Init(&sensor->sliding, 4);  // 5点滑动窗口
+    SlidingWindowFilter_Init(&sensor->sliding, 3);  // 5点滑动窗口
     
     // 添加到活动传感器数组
     active_sensors[us100_sensor_count++] = sensor;
@@ -155,7 +155,7 @@ void US100_Update(US100Sensor* sensor) {
                 uint16_t raw_distance = (sensor->rx_buffer[1] << 8) | sensor->rx_buffer[0];
                 
                 // 检查距离值是否在合理范围内（例如0-4000mm）
-                if (raw_distance > 65535) {
+                if (raw_distance > 12000) {
                     // 距离值超出范围，视为无效数据
                     sensor->state = US100_STATE_IDLE;
                     sensor->rx_index = 0;
@@ -182,17 +182,26 @@ void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
             s->rx_index++;
             
             if (s->rx_index >= 2) {
+                // 尝试两种字节顺序
+                uint16_t distance1 = (s->rx_buffer[1] << 8) | s->rx_buffer[0];  // 原始顺序
+                uint16_t distance2 = (s->rx_buffer[0] << 8) | s->rx_buffer[1];  // 颠倒顺序
+                
+                // 选择在有效范围内的距离值（27mm到4500mm）
+                if (distance1 >= 27 && distance1 <= 4500) {
+                    s->distance = distance1;
+                    s->data_ready = 1;
+                } else if (distance2 >= 27 && distance2 <= 4500) {
+                    s->distance = distance2;
+                    s->data_ready = 1;
+                } else {
+                    s->data_ready = 0;  // 如果两种顺序都不在有效范围内，则标记为无效
+                }
+                
                 s->state = US100_STATE_RECEIVING;
             } else {
                 HAL_UART_Receive_IT(huart, &s->rx_buffer[s->rx_index], 1);
             }
-                        //debug
-            // if (i == 1){
-            //     OLED_ShowNum(4,7,HAL_GetTick(),5);
-            // }
-
             break;
-
         }
     }
 }
@@ -251,10 +260,10 @@ void US100_GetAllValidDistances(float* distances) {
         
         uint32_t current_time = HAL_GetTick();
         
-        if (current_time - last_measurement_time > 100) {
+        if (current_time - last_measurement_time > 10) {
             timeout_count++;
             
-            if (timeout_count >= 4) {
+            if (timeout_count >= 3) {
                 for (uint8_t i = 0; i < us100_sensor_count; i++) {
                     US100_StartMeasurement(active_sensors[i]);
                 }

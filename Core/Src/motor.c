@@ -524,3 +524,86 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
     }
 }
 
+// void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, bool clockwise) {
+//     static const float MAX_ROTATION_SPEED = 40.0f;  // 最大旋转速度
+//     static const float ANGLE_TOLERANCE = 1.0f;      // 角度容差
+//     float start_yaw = yaw;  // 记录起始角度
+//     float target_angle = start_yaw + (clockwise ? 90.0f : -90.0f);  // 计算目标角度
+    
+//     // 标准化目标角度到-180到180度范围
+//     if (target_angle > 180.0f) {
+//         target_angle -= 360.0f;
+//     } else if (target_angle < -180.0f) {
+//         target_angle += 360.0f;
+//     }
+    
+//     // 设置目标偏航角
+//     target_yaw = target_angle;
+    
+//     // 重置PID控制器
+//     PID_Reset(&pid_yaw);
+//     PID_Reset(&pid_front);
+//     PID_Reset(&pid_rear);
+//     PID_Reset(&pid_position);
+    
+//     // 开始旋转
+//     while (1) {
+//         // 获取当前偏航角
+//         float pitch, roll, current_yaw;
+//         if (MPU6050_DMP_Get_Data(&pitch, &roll, &current_yaw) != 0) {
+//             continue;  // 如果获取数据失败，继续尝试
+//         }
+//         yaw = current_yaw;  // 更新全局yaw值
+
+//         // 显示当前角度和目标角度
+//         OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-'); 
+//         OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
+//         OLED_ShowNum(3,14,fabsf(target_yaw),3);
+//         OLED_ShowNum(3,6,fabsf(yaw),3);
+        
+//         // 计算角度误差
+//         float angle_error = target_angle - yaw;
+//         if (angle_error > 180.0f) angle_error -= 360.0f;
+//         else if (angle_error < -180.0f) angle_error += 360.0f;
+        
+//         // 如果达到目标角度（考虑容差），停止旋转
+//         if (fabsf(angle_error) <= ANGLE_TOLERANCE) {
+//             // 停止所有电机
+//             Motor_SetSpeed(id1, 0);  // 左前
+//             Motor_SetSpeed(id2, 0);  // 右后
+//             Motor_SetSpeed(id3, 0);  // 左后
+//             Motor_SetSpeed(id4, 0);  // 右前
+//             break;
+//         }
+        
+//         // 使用PID控制器计算旋转速度
+//         float dt = 0.01f;  // 假设10ms的控制周期
+//         float pid_output = PID_Calculate(&pid_yaw, angle_error, dt);
+        
+//         // 限制PID输出范围
+//         float rotation_speed = fmaxf(fminf(fabsf(pid_output), MAX_ROTATION_SPEED), 0.0f);
+        
+//         // 根据旋转方向设置电机速度
+//         if (clockwise) {
+//             // 顺时针旋转：
+//             // 左前(id1)和右后(id2)正转
+//             // 左后(id3)和右前(id4)反转
+//             Motor_SetSpeed(id1, rotation_speed);   // 左前
+//             Motor_SetSpeed(id2, rotation_speed);   // 右后
+//             Motor_SetSpeed(id3, -rotation_speed);  // 左后
+//             Motor_SetSpeed(id4, -rotation_speed);  // 右前
+//         } else {
+//             // 逆时针旋转：
+//             // 左前(id1)和右后(id2)反转
+//             // 左后(id3)和右前(id4)正转
+//             Motor_SetSpeed(id1, -rotation_speed);  // 左前
+//             Motor_SetSpeed(id2, -rotation_speed);  // 右后
+//             Motor_SetSpeed(id3, rotation_speed);   // 左后
+//             Motor_SetSpeed(id4, rotation_speed);   // 右前
+//         }
+        
+//         // 短暂延时，避免过于频繁的更新
+//         HAL_Delay(10);
+//     }
+// }
+

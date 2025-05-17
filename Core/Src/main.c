@@ -275,6 +275,26 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
   Motor_SetSpeed(id4, 0);  // 右前
 }
 
+void Servo_open()
+{
+    // 使用正确的舵机变量名和角度
+    Servo_SetAngle(&servo1, 90);
+    Servo_SetAngle(&servo2, 90);
+    Servo_SetAngle(&servo3, 90);
+    Servo_SetAngle(&servo4, 90);
+    Servo_SetAngle(&servo5, 90);
+}
+
+void Servo_close()
+{
+    // 使用正确的舵机变量名和角度
+    Servo_SetAngle(&servo1, 60);
+    Servo_SetAngle(&servo2, 60);
+    Servo_SetAngle(&servo3, 60);
+    Servo_SetAngle(&servo4, 60);
+    Servo_SetAngle(&servo5, 60);
+}
+
 
 
 /* USER CODE END 0 */
@@ -562,19 +582,22 @@ int main(void)
 
     // }
     
-
-    
+    // while(1){
+    // Servo_open();
+    // HAL_Delay(1000);
+    // Servo_close();
+    // HAL_Delay(1000);
+    // }
 
      switch (path) {
        case 0: {
          // 参数定义
-         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 730.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 10;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
          const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
-         const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
-    
+         const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄  
          float current_distance = distances[1];
          if(time_enterpath_case0 == 0) {
              time_enterpath_case0 = HAL_GetTick();
@@ -622,7 +645,7 @@ int main(void)
        }
        case 1: {
          // 参数定义
-         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
@@ -731,7 +754,7 @@ int main(void)
 
        case 3: {
          // 参数定义
-         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
@@ -795,7 +818,7 @@ int main(void)
        }
 
        case 4: {
-         const uint32_t DELAY_ENTER = 200; //调试
+         const uint32_t DELAY_ENTER = 400; //调试
 
          if (path_change!=2)
          {
@@ -841,7 +864,7 @@ int main(void)
 
        case 5: {
          // 参数定义
-         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
@@ -951,7 +974,7 @@ int main(void)
 
        case 7: {
          // 参数定义
-         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
@@ -1015,7 +1038,7 @@ int main(void)
        }
 
        case 8: {
-         const uint32_t DELAY_ENTER = 200; //调试
+         const uint32_t DELAY_ENTER = 400; //调试
 
          if (path_change!=2)
          {
@@ -1061,7 +1084,7 @@ int main(void)
 
        case 9: {
          // 参数定义
-         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
@@ -1171,7 +1194,7 @@ int main(void)
 
        case 11: {
          // 参数定义
-         const float TARGET_DISTANCE = 140.0f;   // 调试，这个变量用于检测最终的目标距离
+         const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
@@ -1235,7 +1258,7 @@ int main(void)
        }
 
        case 12: {
-         const uint32_t DELAY_ENTER = 200; //调试
+         const uint32_t DELAY_ENTER = 400; //调试
 
          if (path_change!=2)
          {

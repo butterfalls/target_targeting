@@ -29,4 +29,7 @@ void Servo_SetPulse(Servo* servo, uint32_t pulse_us);
 // 添加缓动函数
 void Servo_SmoothMove(Servo* servo, float target_angle, uint32_t duration_ms);
 
+// 添加函数声明
+void Servo_SetMultipleAngles(Servo* servos[], float angles[], uint8_t count, uint32_t duration_ms);
+
 #endif

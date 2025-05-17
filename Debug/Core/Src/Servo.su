@@ -2,3 +2,5 @@
 ../Core/Src/Servo.c:25:6:Servo_SetAngle	24	static
 ../Core/Src/Servo.c:36:6:Servo_SetPulse	24	static
 ../Core/Src/Servo.c:55:6:Servo_SmoothMove	56	static
+../Core/Src/Servo.c:75:7:Servo_Rotate	24	static
+../Core/Src/Servo.c:99:7:Servo_SmoothRotate	32	static

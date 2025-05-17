@@ -200,8 +200,8 @@ void PID_ResetAll(void) {
 
 void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, bool clockwise) {
   float ROTATION_SPEED;  // 旋转速度
-  static const float ROTATION_SPEED_max = 20.0f;
-  static const float ANGLE_TOLERANCE = 5.0f;  // 角度容差
+  static const float ROTATION_SPEED_max = 30.0f;
+  static const float ANGLE_TOLERANCE = 6.3f;  // 角度容差
   // MPU6050_DMP_Get_Data(&pitchstart , &rollopen , &yaw);
   float const start_yaw = target_yaw;  // 记录起始角度
   float target_angle = start_yaw + (clockwise ? -90.0f : 90.0f);  // 计算目标角度
@@ -252,7 +252,7 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
           }
       } else {
           // 如果电压绝对值小于等于12，保持原符号但设为12
-          ROTATION_SPEED = (voltage >= 0) ? 15.0f : -15.0f;
+          ROTATION_SPEED = (voltage >= 0) ? 12.0f : -12.0f;
       }
       // 如果达到目标角度（考虑容差），停止旋转
       

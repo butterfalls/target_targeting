@@ -1,8 +1,8 @@
-!!! Warning !!!
+!!! 警告 !!!
 
-There are some incompatible arguments between 'eclipse' and 'eide', you need check and add them to eide project manually !
+在 eclipse 和 eide 之间有一些不兼容的参数，您需要检查并手动添加到 eide 项目 !
 
-When you have solved these incompatible problems, you need delete this note file, otherwise this file will be show again !
+当你解决了这些不兼容的参数，你需要删除这个提示文件，否则这个文件还会再次显示 !
 
 ---
 

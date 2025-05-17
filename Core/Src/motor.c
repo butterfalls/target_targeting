@@ -480,7 +480,7 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Mo
             adjust_start_time = 0;
             last_adjustment_time = HAL_GetTick();  // 记录调整完成时间
         }
-    } else if(raw_distance >= 113 && raw_distance <= 200) {
+    } else if(raw_distance >= 82 && raw_distance <= 130) {
         current_state = 2;
         if(adjust_start_time == 0) {
             adjust_start_time = HAL_GetTick();
@@ -529,7 +529,7 @@ void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, M
             adjust_start_time = 0;
             last_adjustment_time = HAL_GetTick();  // 记录调整完成时间
         }
-    } else if(raw_distance >= 113 && raw_distance <= 200) {
+    } else if(raw_distance >= 82 && raw_distance <= 130) {
         current_state = 2;
         if(adjust_start_time == 0) {
             adjust_start_time = HAL_GetTick();

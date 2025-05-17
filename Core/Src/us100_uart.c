@@ -234,7 +234,7 @@ void US100_GetAllValidDistances(float* distances) {
         if (current_distance > 0) {
             raw_distances[i] = active_sensors[i]->distance;
             // 使用0.6的原始距离和0.4的滤波距离
-            last_valid_distances[i] = 0.33f * raw_distances[i] + 0.67f * current_distance;
+            last_valid_distances[i] = 0.37f * raw_distances[i] + 0.63f * current_distance;
         }
         distances[i] = last_valid_distances[i];
     }

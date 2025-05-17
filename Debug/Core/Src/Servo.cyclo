@@ -2,3 +2,5 @@
 ../Core/Src/Servo.c:25:6:Servo_SetAngle	3
 ../Core/Src/Servo.c:36:6:Servo_SetPulse	3
 ../Core/Src/Servo.c:55:6:Servo_SmoothMove	2
+../Core/Src/Servo.c:75:7:Servo_Rotate	3
+../Core/Src/Servo.c:99:7:Servo_SmoothRotate	3

@@ -64,3 +64,51 @@ void Servo_SmoothMove(Servo* servo, float target_angle, uint32_t duration_ms) {
         HAL_Delay(20);
     }
 }
+
+
+/**
+  * @brief  舵机相对转动函数
+  * @param  servo 舵机对象指针
+  * @param  delta_angle 相对转动角度（+顺时针/-逆时针）
+  * @retval 无
+  */
+ void Servo_Rotate(Servo* servo, float delta_angle)
+ {
+     // 计算当前角度
+     float current_angle = ((float)(servo->pulse_width - SERVO_MIN_PULSE)) * 180.0f / 
+                          (SERVO_MAX_PULSE - SERVO_MIN_PULSE);
+     
+     // 计算目标角度
+     float target_angle = current_angle + delta_angle;
+     
+     // 角度限幅
+     target_angle = target_angle < 0.0f ? 0.0f : 
+                   (target_angle > 180.0f ? 180.0f : target_angle);
+     
+     // 调用绝对角度设置函数
+     Servo_SetAngle(servo, target_angle);
+ }
+ 
+ /**
+   * @brief  带缓动的相对转动函数
+   * @param  servo 舵机对象指针
+   * @param  delta_angle 相对转动角度
+   * @param  duration_ms 转动持续时间（毫秒）
+   * @retval 无
+   */
+ void Servo_SmoothRotate(Servo* servo, float delta_angle, uint32_t duration_ms)
+ {
+     // 计算当前角度
+     float current_angle = ((float)(servo->pulse_width - SERVO_MIN_PULSE)) * 180.0f / 
+                          (SERVO_MAX_PULSE - SERVO_MIN_PULSE);
+     
+     // 计算目标角度
+     float target_angle = current_angle + delta_angle;
+     
+     // 角度限幅
+     target_angle = target_angle < 0.0f ? 0.0f : 
+                   (target_angle > 180.0f ? 180.0f : target_angle);
+     
+     // 调用缓动函数
+     Servo_SmoothMove(servo, target_angle, duration_ms);
+ }

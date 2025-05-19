@@ -6,7 +6,8 @@
     ],
     "settings": {
         "files.associations": {
-            "servo.h": "c"
+            "servo.h": "c",
+            "type_traits": "c"
         }
     },
     "extensions": {}

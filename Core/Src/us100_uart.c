@@ -187,10 +187,20 @@ void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
                 uint16_t distance2 = (s->rx_buffer[0] << 8) | s->rx_buffer[1];  // 颠倒顺序
                 
                 // 选择在有效范围内的距离值（27mm到4500mm）
-                if (distance1 >= 27 && distance1 <= 4500) {
+                if(distance2 >= 20 && distance2 <= 4500 && distance1 >= 25 && distance1 <= 4500){
+                    if(distance1 < distance2){
+                        s->distance = distance1;
+                        s->data_ready = 1;
+                    }
+                    else {
+                        s->distance = distance2;
+                        s->data_ready = 1;
+                    }
+                }
+                else if (distance1 >= 20 && distance1 <= 4500) {
                     s->distance = distance1;
                     s->data_ready = 1;
-                } else if (distance2 >= 27 && distance2 <= 4500) {
+                } else if (distance2 >= 20 && distance2 <= 4500) {
                     s->distance = distance2;
                     s->data_ready = 1;
                 } else {

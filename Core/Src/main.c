@@ -85,7 +85,7 @@ static uint32_t time_enterpath_case9 = 0;
 static uint32_t time_enterpath_case10 = 0;
 static uint32_t time_enterpath_case11 = 0;
 
-uint8_t receivedata[2];
+uint8_t OpenMVdata;
 uint8_t message[] = "Hello World";
 uint8_t uart4_rx_buffer;
 Servo servo1, servo2 ,servo3 ,servo4 ,servo5;
@@ -120,8 +120,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     } 
     if (huart == &huart1) {
         // 处理其他串口的回调
-        HAL_UART_Transmit(&huart1, message, strlen(message), 100);
-        HAL_UART_Receive_IT(&huart1, receivedata, 2);
+        // HAL_UART_Transmit(&huart1, message, strlen(message), 100);
+        HAL_UART_Receive_IT(&huart1, OpenMVdata, 1);
     }
     // if (huart == &huart4) {
     //     // 输出调试信息
@@ -275,7 +275,27 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
   Motor_SetSpeed(id4, 0);  // 右前
 }
 
-void Servo_open()
+void Servo_open_red()
+{
+    // 使用正确的舵机变量名和角度
+    Servo_SetAngle(&servo1, 90);
+    Servo_SetAngle(&servo2, 90);
+    Servo_SetAngle(&servo3, 90);
+    Servo_SetAngle(&servo4, 90);
+    Servo_SetAngle(&servo5, 90);
+}
+
+void Servo_open_blue()
+{
+    // 使用正确的舵机变量名和角度
+    Servo_SetAngle(&servo1, 90);
+    Servo_SetAngle(&servo2, 90);
+    Servo_SetAngle(&servo3, 90);
+    Servo_SetAngle(&servo4, 90);
+    Servo_SetAngle(&servo5, 90);
+}
+
+void Servo_open_green()
 {
     // 使用正确的舵机变量名和角度
     Servo_SetAngle(&servo1, 90);
@@ -288,11 +308,11 @@ void Servo_open()
 void Servo_close()
 {
     // 使用正确的舵机变量名和角度
-    Servo_SetAngle(&servo1, 60);
-    Servo_SetAngle(&servo2, 60);
-    Servo_SetAngle(&servo3, 60);
-    Servo_SetAngle(&servo4, 60);
-    Servo_SetAngle(&servo5, 60);
+    Servo_SetAngle(&servo1, 38);
+    Servo_SetAngle(&servo2, 38);
+    Servo_SetAngle(&servo3, 128);
+    Servo_SetAngle(&servo4, 38);
+    Servo_SetAngle(&servo5, 38);
 }
 
 
@@ -348,9 +368,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
   OLED_Init();
 
-  HAL_UART_Receive_IT(&huart1, receivedata, 2);
+  HAL_UART_Receive_IT(&huart1, &OpenMVdata, 1);
   // 初始化UART4接收
-  HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
+  // HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
   
   HAL_TIM_Base_Start(&htim6);
   Reset_Timer();  // 重置计时器
@@ -359,9 +379,6 @@ int main(void)
   int mpu_result;
   int retry_count = 0;
   uint32_t init_start_time = HAL_GetTick();
-  
-
-
 
   do {
       mpu_result = MPU6050_DMP_Init();
@@ -491,11 +508,26 @@ int main(void)
     /* USER CODE BEGIN 3 */
     uint32_t current_time = HAL_GetTick();
     /*------------------------------------------------------------------------舵机执行部分--------------------------------------------------------------------*/
-    // Servo_SetAngle(&servo3, 0);
-    // HAL_Delay(200);
-    // Servo_SetAngle(&servo3, 60);
-    // HAL_Delay(200);
-    
+    static uint8_t last_data = 0;
+    static uint32_t last_time = 0;
+    OLED_ShowNum(4,15,OpenMVdata,1);
+
+    bool can_change_state = (current_time - last_time >= 800);
+
+    if(last_data != OpenMVdata && can_change_state) {
+        if(OpenMVdata == 0) {
+            Servo_close();
+        } else if(OpenMVdata == 1) {
+            Servo_open_red();
+        } else if(OpenMVdata == 2) {
+            Servo_open_green();
+        } else if(OpenMVdata == 3) {
+            Servo_open_blue();
+        }
+        
+        last_data = OpenMVdata;
+        last_time = current_time;
+    }
 
     /*-----------------------------------------------------------------超声波执行部分（暂不使用）-------------------------------------------------------------------------*/
 
@@ -521,11 +553,13 @@ int main(void)
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/
     US100_GetAllValidDistances(distances);
     
-    //  while (distances[1]==0)
-    //  {
-    //    US100_GetAllValidDistances(distances);
-    //    OLED_ShowNum(1, 13, fabs(distances[1]), 4);
-    //  }
+     while (1)
+     {
+    Servo_SetAngle(&servo3, 0);
+    HAL_Delay(1000);
+    Servo_SetAngle(&servo3, 180);
+    HAL_Delay(1000);
+     }
 
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
         // 显示原始距离和滤波后的距离
@@ -583,7 +617,7 @@ int main(void)
     // }
     
     // while(1){
-    // Servo_open();
+    // Servo_open_blue();
     // HAL_Delay(1000);
     // Servo_close();
     // HAL_Delay(1000);
@@ -594,7 +628,7 @@ int main(void)
          // 参数定义
          const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 730.0f;      // 调试，这个变量用于设置减速区间范围
-         const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
+         const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 10;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
          const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄  
@@ -647,10 +681,10 @@ int main(void)
          // 参数定义
          const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
-         const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
+         const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
          const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
-         const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
+         const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[1];
          if(time_enterpath_case1 == 0) {
@@ -756,10 +790,10 @@ int main(void)
          // 参数定义
          const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
-         const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
+         const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
          const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
-         const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
+         const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[3];
          if(time_enterpath_case3 == 0) {
@@ -809,7 +843,7 @@ int main(void)
          // 使用前后电机调整
          float avg_distance = distances[0];
          if(HAL_GetTick() - time_enterpath_case3 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
+             Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[3], 82.0f);
          }
     
          OLED_ShowNum(4, 4, motor_speed, 2);
@@ -866,10 +900,10 @@ int main(void)
          // 参数定义
          const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
-         const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
+         const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
          const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
-         const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
+         const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[1];
          if(time_enterpath_case5 == 0) {
@@ -919,7 +953,7 @@ int main(void)
          // 使用前后电机调整
          float avg_distance = distances[0];
          if(HAL_GetTick() - time_enterpath_case5 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
+             Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[3], 82.0f);
          }
     
          OLED_ShowNum(4, 4, motor_speed, 2);
@@ -976,10 +1010,10 @@ int main(void)
          // 参数定义
          const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
-         const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
+         const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
          const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
-         const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
+         const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[3];
          if(time_enterpath_case7 == 0) {
@@ -1029,7 +1063,7 @@ int main(void)
          // 使用前后电机调整
          float avg_distance = distances[0];
          if(HAL_GetTick() - time_enterpath_case7 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
+             Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[3], 82.0f);
          }
     
          OLED_ShowNum(4, 4, motor_speed, 2);
@@ -1086,10 +1120,10 @@ int main(void)
          // 参数定义
          const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
-         const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
+         const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
          const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
-         const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
+         const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[1];
          if(time_enterpath_case9 == 0) {
@@ -1138,8 +1172,8 @@ int main(void)
         
          // 使用前后电机调整
          float avg_distance = distances[0];
-         if(HAL_GetTick() - time_enterpath_case9 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
+         if(HAL_GetTick() - time_enterpath_case9 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE + 100 ){
+             Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[3], 82.0f);
          }
     
          OLED_ShowNum(4, 4, motor_speed, 2);
@@ -1196,10 +1230,10 @@ int main(void)
          // 参数定义
          const float TARGET_DISTANCE = 160.0f;   // 调试，这个变量用于检测最终的目标距离
          const float DECEL_RANGE = 700.0f;      // 调试，这个变量用于设置减速区间范围
-         const uint16_t ADJUST_DISTANCE = 200;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
+         const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 25;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
          const uint8_t MAX_SPEED = 42;          // 调试，这个变量用于设置离目标较远时的速度
-         const uint16_t DELAY_ADJUST = 5000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
+         const uint16_t DELAY_ADJUST = 3000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[3];
          if(time_enterpath_case11 == 0) {
@@ -1249,7 +1283,7 @@ int main(void)
          // 使用前后电机调整
          float avg_distance = distances[0];
          if(HAL_GetTick() - time_enterpath_case11 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
-             Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
+             Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[3], 82.0f);
          }
     
          OLED_ShowNum(4, 4, motor_speed, 2);

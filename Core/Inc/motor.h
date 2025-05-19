@@ -64,6 +64,7 @@ void Reset_Timer(void);  // 重置计时器
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float distance, float threshold);
 void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, Motor_ID id3, float distance, float threshold);
 void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id2, Motor_ID id3, float distance, float threshold);
+void Adjust_Motors_By_Side_Distances(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float left_distance, float right_distance, float threshold);
 void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, bool clockwise);
 
 #ifdef __cplusplus

@@ -102,15 +102,15 @@ void US100_Init(US100Sensor* sensor, UART_HandleTypeDef* uart) {
         }
     }
     
-    // 启动串口接收
-    HAL_UART_Receive_IT(uart, &sensor->rx_buffer[0], 1);
+    // 启动串口接收，一次性接收2个字节
+    HAL_UART_Receive_IT(uart, sensor->rx_buffer, 2);
 }
 
 void US100_StartMeasurement(US100Sensor* sensor) {
     if (sensor->state != US100_STATE_IDLE) {
         sensor->state = US100_STATE_IDLE;
         sensor->rx_index = 0;
-        HAL_UART_Receive_IT(sensor->uart, &sensor->rx_buffer[0], 1);
+        HAL_UART_Receive_IT(sensor->uart, sensor->rx_buffer, 2);
     }
     
     // 开始新的测量
@@ -179,38 +179,24 @@ void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         US100Sensor* s = active_sensors[i];
         
         if (huart == s->uart) {
-            s->rx_index++;
+            // 尝试两种字节顺序
+            uint16_t distance1 = (s->rx_buffer[1] << 8) | s->rx_buffer[0];  // 原始顺序
+            uint16_t distance2 = (s->rx_buffer[0] << 8) | s->rx_buffer[1];  // 颠倒顺序
             
-            if (s->rx_index >= 2) {
-                // 尝试两种字节顺序
-                uint16_t distance1 = (s->rx_buffer[1] << 8) | s->rx_buffer[0];  // 原始顺序
-                uint16_t distance2 = (s->rx_buffer[0] << 8) | s->rx_buffer[1];  // 颠倒顺序
-                
-                // 选择在有效范围内的距离值（27mm到4500mm）
-                if(distance2 >= 20 && distance2 <= 4500 && distance1 >= 25 && distance1 <= 4500){
-                    if(distance1 < distance2){
-                        s->distance = distance1;
-                        s->data_ready = 1;
-                    }
-                    else {
-                        s->distance = distance2;
-                        s->data_ready = 1;
-                    }
-                }
-                else if (distance1 >= 20 && distance1 <= 4500) {
-                    s->distance = distance1;
-                    s->data_ready = 1;
-                } else if (distance2 >= 20 && distance2 <= 4500) {
-                    s->distance = distance2;
-                    s->data_ready = 1;
-                } else {
-                    s->data_ready = 0;  // 如果两种顺序都不在有效范围内，则标记为无效
-                }
-                
-                s->state = US100_STATE_RECEIVING;
+            if (distance1 >= 20 && distance1 <= 4500) {
+                s->distance = distance1;
+                s->data_ready = 1;
+            } else if (distance2 >= 20 && distance2 <= 4500) {
+                s->distance = distance2;
+                s->data_ready = 1;
             } else {
-                HAL_UART_Receive_IT(huart, &s->rx_buffer[s->rx_index], 1);
+                s->data_ready = 0;  // 如果两种顺序都不在有效范围内，则标记为无效
             }
+            
+            s->state = US100_STATE_RECEIVING;
+            
+            // 重新启动接收，准备下一次测量
+            HAL_UART_Receive_IT(huart, s->rx_buffer, 2);
             break;
         }
     }
@@ -244,7 +230,7 @@ void US100_GetAllValidDistances(float* distances) {
         if (current_distance > 0) {
             raw_distances[i] = active_sensors[i]->distance;
             // 使用0.6的原始距离和0.4的滤波距离
-            last_valid_distances[i] = 0.37f * raw_distances[i] + 0.63f * current_distance;
+            last_valid_distances[i] = 0.5f * raw_distances[i] + 0.5f * current_distance;
         }
         distances[i] = last_valid_distances[i];
     }

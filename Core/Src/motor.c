@@ -458,8 +458,8 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float raw_distance, float threshold) {
     static uint32_t adjust_start_time = 0;
     static uint32_t last_adjustment_time = 0;  // 添加上次调整时间记录
-    const uint32_t COOLDOWN_PERIOD = 1500;    // 冷却时间1.5秒
-    const uint32_t ADJUST_DURATION = 200;      // 调整持续时间200ms
+    const uint32_t COOLDOWN_PERIOD = 1000;    // 冷却时间1.5秒
+    const uint32_t ADJUST_DURATION = 230;      // 调整持续时间200ms
     
     // 检查是否在冷却期内
     if (HAL_GetTick() - last_adjustment_time < COOLDOWN_PERIOD) {
@@ -477,7 +477,7 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Mo
         // 在调整时间内继续执行调整
         if (raw_distance >= 25 && raw_distance <= 45) {
             Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-        } else if (raw_distance >= 82 && raw_distance <= 130) {
+        } else if (raw_distance >= 82 && raw_distance <= 150) {
             Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
         }
         return;
@@ -666,8 +666,8 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
 void Adjust_Motors_By_Side_Distances(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float left_distance, float right_distance, float threshold) {
     static uint32_t adjust_start_time = 0;
     static uint32_t last_adjustment_time = 0;  // 添加上次调整时间记录
-    const uint32_t COOLDOWN_PERIOD = 1500;    // 冷却时间1.5秒
-    const uint32_t ADJUST_DURATION = 750;      // 调整持续时间750ms
+    const uint32_t COOLDOWN_PERIOD = 1200;    // 冷却时间1.5秒
+    const uint32_t ADJUST_DURATION = 250;      // 调整持续时间750ms
     
     // 检查是否在冷却期内
     if (HAL_GetTick() - last_adjustment_time < COOLDOWN_PERIOD) {
@@ -683,19 +683,19 @@ void Adjust_Motors_By_Side_Distances(Motor_ID id1, Motor_ID id3, Motor_ID id2, M
             return;
         }
         // 在调整时间内继续执行调整
-        if ((left_distance >= 25 && left_distance <= 45) || (right_distance >= 92 && right_distance <= 130)) {
+        if ((left_distance >= 25 && left_distance <= 43) || (right_distance >= 122 && right_distance <= 135)) {
             Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -25, &yaw, &target_yaw);
-        } else if ((right_distance >= 25 && right_distance <= 45) || (left_distance >= 92 && left_distance <= 130)) {
+        } else if ((right_distance >= 25 && right_distance <= 43) || (left_distance >= 122 && left_distance <= 135)) {
             Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 25, &yaw, &target_yaw);
         }
         return;
     }
     
     // 检测是否超出阈值，如果是则开始调整
-    if ((left_distance >= 25 && left_distance <= 45) || (right_distance >= 92 && right_distance <= 130)) {
+    if ((left_distance >= 22 && left_distance <= 43) || (right_distance >= 132 && right_distance <= 150)) {
         adjust_start_time = HAL_GetTick();
         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-    } else if ((right_distance >= 25 && right_distance <= 45) || (left_distance >= 92 && left_distance <= 130)) {
+    } else if ((right_distance >= 22 && right_distance <= 43) || (left_distance >= 132 && left_distance <= 150)) {
         adjust_start_time = HAL_GetTick();
         Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
     }

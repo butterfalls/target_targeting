@@ -1337,46 +1337,25 @@ int main(void)
        }
 
        case 12: {
-         const uint32_t DELAY_ENTER = 300; //调试
-
-         if (path_change!=2)
-         {
-           if ((distances[2]>=150 && path_change==0)||(distances[2]<=150 && path_change==1))
-           {
+         static uint32_t start_backward_time = 0;
+         
+         if (start_backward_time == 0) {
+             start_backward_time = HAL_GetTick();
+         }
+         
+         uint32_t current_time = HAL_GetTick();
+         if (current_time - start_backward_time < 5000) {  // 5秒内后退
              Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
              // 使用左侧电机调整
              Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_3, MOTOR_2, MOTOR_4, raw_distances[0], 50.0f);
-           }else if (distances[2]<=190 && path_change==0)
-           {
-             if(flag){
-               time_start = HAL_GetTick();
-               flag = false;
-             }
-             uint32_t time = HAL_GetTick();
-             if(time - time_start >=100){
-               path_change+=1;
-               flag = true;
-             }
-           }else if (distances[2]>=180 && path_change==1)
-           {
-             if(flag){
-               time_start = HAL_GetTick();
-               flag = false;
-             }
-             uint32_t time = HAL_GetTick();
-             if(time - time_start >= DELAY_ENTER ){
-               path_change+=1;
-               flag = true;
-             }
-           }
-         }else{
-           // 直接执行旋转和路径切换
-           Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
-           path_change = 0;
-           flag = true;
-           path +=1;
-           PID_ResetAll();
+         } else {
+             // 5秒后停车
+             Motor_SetSpeed(MOTOR_1, 0);
+             Motor_SetSpeed(MOTOR_2, 0);
+             Motor_SetSpeed(MOTOR_3, 0);
+             Motor_SetSpeed(MOTOR_4, 0);
          }
+         
          OLED_ShowNum(4, 1, path, 2);
          break;
        }

@@ -313,11 +313,11 @@ void Servo_open_green_right()
 void Servo_close()
 {
     // 使用正确的舵机变量名和角度
+    Servo_SetAngle(&servo5, 105);
     Servo_SetAngle(&servo1, 35);
     Servo_SetAngle(&servo2, 35);
     Servo_SetAngle(&servo3, 38);
     Servo_SetAngle(&servo4, 48);
-    Servo_SetAngle(&servo5, 105);
 }
 
 

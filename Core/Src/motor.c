@@ -54,13 +54,16 @@ void Motor_SetSpeed(Motor_ID id, int16_t speed)
 {
     speed = (speed > 100) ? 100 : (speed < -100) ? -100 : speed;
 
-    if(speed >= 0) {
+    if(speed > 0) {
         HAL_GPIO_WritePin(motors[id].in1_port, motors[id].in1_pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(motors[id].in2_port, motors[id].in2_pin, GPIO_PIN_RESET);
-    } else {
+    } else if (speed<0) {
         HAL_GPIO_WritePin(motors[id].in1_port, motors[id].in1_pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(motors[id].in2_port, motors[id].in2_pin, GPIO_PIN_SET);
         speed = -speed;
+    }else if(speed ==0){
+        HAL_GPIO_WritePin(motors[id].in1_port, motors[id].in1_pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(motors[id].in2_port, motors[id].in2_pin, GPIO_PIN_SET);
     }
 
     uint32_t duty = (speed * 9999) / 100;
@@ -458,13 +461,26 @@ void Adjust_Speed_By_Side_Distance(Motor_ID id1, Motor_ID id2, int16_t base_spee
 void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float raw_distance, float threshold) {
     static uint32_t adjust_start_time = 0;
     static uint32_t last_adjustment_time = 0;  // 添加上次调整时间记录
-    const uint32_t COOLDOWN_PERIOD = 1000;    // 冷却时间1.5秒
-    const uint32_t ADJUST_DURATION = 230;      // 调整持续时间200ms
+    const uint32_t COOLDOWN_PERIOD = 500;    // 冷却时间0.5秒
+    const uint32_t ADJUST_DURATION = 300;      // 调整持续时间300ms
+    const float SPEED_ADJUST_RATIO = 0.1f;     // 速度调整比例10%
     
     // 检查是否在冷却期内
     if (HAL_GetTick() - last_adjustment_time < COOLDOWN_PERIOD) {
         return;
     }
+    
+    // 获取当前电机速度
+    uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
+    uint32_t current_speed2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
+    uint32_t current_speed3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
+    uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+    
+    // 计算速度调整量
+    uint32_t speed_adjust1 = current_speed1 * SPEED_ADJUST_RATIO;
+    uint32_t speed_adjust2 = current_speed2 * SPEED_ADJUST_RATIO;
+    uint32_t speed_adjust3 = current_speed3 * SPEED_ADJUST_RATIO;
+    uint32_t speed_adjust4 = current_speed4 * SPEED_ADJUST_RATIO;
     
     // 如果已经开始调整，检查是否达到调整时间
     if (adjust_start_time != 0) {
@@ -475,34 +491,63 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Mo
             return;
         }
         // 在调整时间内继续执行调整
-        if (raw_distance >= 25 && raw_distance <= 45) {
-            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-        } else if (raw_distance >= 82 && raw_distance <= 150) {
-            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        if (raw_distance >= 22 && raw_distance <= 45) {
+            // 向右调整，左侧轮子加速
+            __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjust1);  // 左前加速
+            __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjust3);  // 左后减速
+            __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjust2);  // 右后加速
+            __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjust4);  // 右前减速
+        } else if (raw_distance >= 126 && raw_distance <= 156) {
+            // 向左调整，右侧轮子加速
+            __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjust1);  // 左前减速
+            __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjust3);  // 左后加速
+            __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjust2);  // 右后减速
+            __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjust4);  // 右前加速
         }
         return;
     }
     
     // 检测是否超出阈值，如果是则开始调整
-    if (raw_distance >= 25 && raw_distance <= 45) {
+    if (raw_distance >= 22 && raw_distance <= 45) {
         adjust_start_time = HAL_GetTick();
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-    } else if (raw_distance >= 92 && raw_distance <= 130) {
+        // 向右调整，左侧轮子加速
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjust1);  // 左前加速
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjust3);  // 左后减速
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjust2);  // 右后加速
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjust4);  // 右前减速
+    } else if (raw_distance >= 126 && raw_distance <= 156) {
         adjust_start_time = HAL_GetTick();
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        // 向左调整，右侧轮子加速
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjust1);  // 左前减速
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjust3);  // 左后加速
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjust2);  // 右后减速
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjust4);  // 右前加速
     }
 }
 
 void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, Motor_ID id3, float raw_distance, float threshold) {
     static uint32_t adjust_start_time = 0;
     static uint32_t last_adjustment_time = 0;  // 添加上次调整时间记录
-    const uint32_t COOLDOWN_PERIOD = 1500;    // 冷却时间1.5秒
-    const uint32_t ADJUST_DURATION = 750;      // 调整持续时间200ms
+    const uint32_t COOLDOWN_PERIOD = 500;    // 冷却时间0.5秒
+    const uint32_t ADJUST_DURATION = 300;      // 调整持续时间300ms
+    const float SPEED_ADJUST_RATIO = 0.1f;     // 速度调整比例10%
     
     // 检查是否在冷却期内
     if (HAL_GetTick() - last_adjustment_time < COOLDOWN_PERIOD) {
         return;
     }
+    
+    // 获取当前电机速度
+    uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
+    uint32_t current_speed2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
+    uint32_t current_speed3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
+    uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+    
+    // 计算速度调整量
+    uint32_t speed_adjust1 = current_speed1 * SPEED_ADJUST_RATIO;
+    uint32_t speed_adjust2 = current_speed2 * SPEED_ADJUST_RATIO;
+    uint32_t speed_adjust3 = current_speed3 * SPEED_ADJUST_RATIO;
+    uint32_t speed_adjust4 = current_speed4 * SPEED_ADJUST_RATIO;
     
     // 如果已经开始调整，检查是否达到调整时间
     if (adjust_start_time != 0) {
@@ -513,21 +558,37 @@ void Adjust_Right_Motors_By_Distance(Motor_ID id2, Motor_ID id4, Motor_ID id1, M
             return;
         }
         // 在调整时间内继续执行调整
-        if (raw_distance >= 25 && raw_distance <= 45) {
-            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -25, &yaw, &target_yaw);
-        } else if (raw_distance >= 92 && raw_distance <= 130) {
-            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 25, &yaw, &target_yaw);
+        if (raw_distance >= 22 && raw_distance <= 52) {
+            // 向左调整，右侧轮子加速
+            __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjust1);  // 左前减速
+            __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjust3);  // 左后加速
+            __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjust2);  // 右后减速
+            __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjust4);  // 右前加速
+        } else if (raw_distance >= 126 && raw_distance <= 156) {
+            // 向右调整，左侧轮子加速
+            __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjust1);  // 左前加速
+            __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjust3);  // 左后减速
+            __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjust2);  // 右后加速
+            __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjust4);  // 右前减速
         }
         return;
     }
     
     // 检测是否超出阈值，如果是则开始调整
-    if (raw_distance >= 25 && raw_distance <= 52) {
+    if (raw_distance >= 22 && raw_distance <= 52) {
         adjust_start_time = HAL_GetTick();
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -25, &yaw, &target_yaw);
-    } else if (raw_distance >= 82 && raw_distance <= 130) {
+        // 向左调整，右侧轮子加速
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjust1);  // 左前减速
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjust3);  // 左后加速
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjust2);  // 右后减速
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjust4);  // 右前加速
+    } else if (raw_distance >= 126 && raw_distance <= 156) {
         adjust_start_time = HAL_GetTick();
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 25, &yaw, &target_yaw);
+        // 向右调整，左侧轮子加速
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjust1);  // 左前加速
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjust3);  // 左后减速
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjust2);  // 右后加速
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjust4);  // 右前减速
     }
 }
 
@@ -666,13 +727,26 @@ void Adjust_Motors_By_FrontBack_Distance(Motor_ID id1, Motor_ID id4, Motor_ID id
 void Adjust_Motors_By_Side_Distances(Motor_ID id1, Motor_ID id3, Motor_ID id2, Motor_ID id4, float left_distance, float right_distance, float threshold) {
     static uint32_t adjust_start_time = 0;
     static uint32_t last_adjustment_time = 0;  // 添加上次调整时间记录
-    const uint32_t COOLDOWN_PERIOD = 1200;    // 冷却时间1.5秒
-    const uint32_t ADJUST_DURATION = 250;      // 调整持续时间750ms
+    const uint32_t COOLDOWN_PERIOD = 500;    // 冷却时间0.6秒
+    const uint32_t ADJUST_DURATION = 230;      // 调整持续时间230ms
+    const float SPEED_ADJUST_RATIO = 0.1f;     // 速度调整比例10%
     
     // 检查是否在冷却期内
     if (HAL_GetTick() - last_adjustment_time < COOLDOWN_PERIOD) {
         return;
     }
+    
+    // 获取当前电机速度
+    uint32_t current_speed1 = __HAL_TIM_GET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel);
+    uint32_t current_speed2 = __HAL_TIM_GET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel);
+    uint32_t current_speed3 = __HAL_TIM_GET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel);
+    uint32_t current_speed4 = __HAL_TIM_GET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel);
+    
+    // 计算速度调整量
+    uint32_t speed_adjust1 = current_speed1 * SPEED_ADJUST_RATIO;
+    uint32_t speed_adjust2 = current_speed2 * SPEED_ADJUST_RATIO;
+    uint32_t speed_adjust3 = current_speed3 * SPEED_ADJUST_RATIO;
+    uint32_t speed_adjust4 = current_speed4 * SPEED_ADJUST_RATIO;
     
     // 如果已经开始调整，检查是否达到调整时间
     if (adjust_start_time != 0) {
@@ -683,20 +757,36 @@ void Adjust_Motors_By_Side_Distances(Motor_ID id1, Motor_ID id3, Motor_ID id2, M
             return;
         }
         // 在调整时间内继续执行调整
-        if ((left_distance >= 25 && left_distance <= 43) || (right_distance >= 122 && right_distance <= 135)) {
-            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -25, &yaw, &target_yaw);
-        } else if ((right_distance >= 25 && right_distance <= 43) || (left_distance >= 122 && left_distance <= 135)) {
-            Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 25, &yaw, &target_yaw);
+        if ((left_distance >= 22 && left_distance <= 42) || (right_distance >= 121 && right_distance <= 142)) {
+            // 左侧近或右侧远，向右平移
+            __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjust1);  // 左前加速
+            __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjust3);  // 左后减速
+            __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjust2);  // 右后加速
+            __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjust4);  // 右前减速
+        } else if ((right_distance >= 22 && right_distance <= 42) || (left_distance >= 121 && left_distance <= 142)) {
+            // 右侧近或左侧远，向左平移
+            __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjust1);  // 左前减速
+            __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjust3);  // 左后加速
+            __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjust2);  // 右后减速
+            __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjust4);  // 右前加速
         }
         return;
     }
     
     // 检测是否超出阈值，如果是则开始调整
-    if ((left_distance >= 22 && left_distance <= 43) || (right_distance >= 132 && right_distance <= 150)) {
+    if ((left_distance >= 22 && left_distance <= 38) || (right_distance >= 132 && right_distance <= 150)) {
         adjust_start_time = HAL_GetTick();
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 30, &yaw, &target_yaw);
-    } else if ((right_distance >= 22 && right_distance <= 43) || (left_distance >= 132 && left_distance <= 150)) {
+        // 左侧近或右侧远，向右平移
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjust1);  // 左前加速
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjust3);  // 左后减速
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjust2);  // 右后加速
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjust4);  // 右前减速
+    } else if ((right_distance >= 22 && right_distance <= 38) || (left_distance >= 132 && left_distance <= 150)) {
         adjust_start_time = HAL_GetTick();
-        Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -30, &yaw, &target_yaw);
+        // 右侧近或左侧远，向左平移
+        __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjust1);  // 左前减速
+        __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 + speed_adjust3);  // 左后加速
+        __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 - speed_adjust2);  // 右后减速
+        __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 + speed_adjust4);  // 右前加速
     }
 }

@@ -59,49 +59,33 @@ uint8_t ledState = 0;
 Motor motors[MOTOR_COUNT] = {0};
 float target_speed = 50.0f;
 uint32_t prev_time = 0;
-uint32_t oled_prev_time = 0;  // 添加OLED刷新时间变量
-uint32_t path=0;
-uint32_t path_change=0,count_100ms=0;
+uint32_t oled_prev_time = 0;
+uint32_t path = 0;
+uint32_t path_change = 0;
+uint32_t count_100ms = 0;
 uint32_t time_start = 0;
 float distances[4] = {2000.0f, 2000.0f, 2000.0f, 2000.0f};
 float sum[4] = {0, 0, 0, 0};
 float mean[4] = {0, 0, 0, 0};
-static uint32_t start = 0, now = 0, cz = 1;
-static uint32_t start_start = 0,start_now = 0;
 bool start_flag = true;
 uint32_t time = 0;
 bool flag = true;
 bool delay_flag = true;
-
-// 添加各个case的进入时间记录
-static uint32_t time_enterpath_case0 = 0;
-static uint32_t time_enterpath_case1 = 0;
-static uint32_t time_enterpath_case2 = 0;
-static uint32_t time_enterpath_case3 = 0;
-static uint32_t time_enterpath_case4 = 0;
-static uint32_t time_enterpath_case5 = 0;
-static uint32_t time_enterpath_case6 = 0;
-static uint32_t time_enterpath_case7 = 0;
-static uint32_t time_enterpath_case8 = 0;
-static uint32_t time_enterpath_case9 = 0;
-static uint32_t time_enterpath_case10 = 0;
-static uint32_t time_enterpath_case11 = 0;
-
-uint8_t OpenMVdata = 0;  // 修改为变量声明
+uint8_t OpenMVdata = 0;
 uint8_t message[] = "Hello World";
 uint8_t uart4_rx_buffer;
-Servo servo1, servo2 ,servo3 ,servo4 ,servo5;
+Servo servo1, servo2, servo3, servo4, servo5;
+US100Sensor us100_sensor1, us100_sensor2, us100_sensor3, us100_sensor4;
 
-// 定义超声波传感器实例
-// UltrasonicSensor ultrasonic_sensors[5];  // 最多5个超声波传感器
-// float ultrasonic_distances[5];  // 存储所有超声波传感器的距离值
-
-// 定义US100传感器实例
-US100Sensor us100_sensor1;  // US100传感器实例
-US100Sensor us100_sensor2;  // US100传感器实例
-US100Sensor us100_sensor3;  // US100传感器实例
-US100Sensor us100_sensor4;  // US100传感器实例
-
+// 添加缺失的变量定义
+uint32_t start_start = 0;
+uint32_t time_enterpath_case0 = 0;
+uint32_t time_enterpath_case1 = 0;
+uint32_t time_enterpath_case3 = 0;
+uint32_t time_enterpath_case5 = 0;
+uint32_t time_enterpath_case7 = 0;
+uint32_t time_enterpath_case9 = 0;
+uint32_t time_enterpath_case11 = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -129,51 +113,51 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     } 
 }
 
-float* meandistances(float* distances)
-{
+// float* meandistances(float* distances)
+// {
 
-    if (cz)
-    {
-        cz = 0;
-        count_100ms = 1;
-        start = HAL_GetTick();
-        now = start;
-        sum[0] = distances[0];
-        sum[1] = distances[1];
-        sum[2] = distances[2];
-        sum[3] = distances[3];
-        return mean;  // 初始返回0值
-    }
-    else
-    {
-        now = HAL_GetTick();
-        if (now - start <= 100)
-        {
-            sum[0] += distances[0];
-            sum[1] += distances[1];
-            sum[2] += distances[2];
-            sum[3] += distances[3];
-            count_100ms += 1;
-            return mean;  // 返回当前均值
-        }
-        else
-        {
-            sum[0] += distances[0];
-            sum[1] += distances[1];
-            sum[2] += distances[2];
-            sum[3] += distances[3];
-            count_100ms += 1;
+//     if (cz)
+//     {
+//         cz = 0;
+//         count_100ms = 1;
+//         start = HAL_GetTick();
+//         now = start;
+//         sum[0] = distances[0];
+//         sum[1] = distances[1];
+//         sum[2] = distances[2];
+//         sum[3] = distances[3];
+//         return mean;  // 初始返回0值
+//     }
+//     else
+//     {
+//         now = HAL_GetTick();
+//         if (now - start <= 100)
+//         {
+//             sum[0] += distances[0];
+//             sum[1] += distances[1];
+//             sum[2] += distances[2];
+//             sum[3] += distances[3];
+//             count_100ms += 1;
+//             return mean;  // 返回当前均值
+//         }
+//         else
+//         {
+//             sum[0] += distances[0];
+//             sum[1] += distances[1];
+//             sum[2] += distances[2];
+//             sum[3] += distances[3];
+//             count_100ms += 1;
 
-            mean[0] = sum[0] / count_100ms;
-            mean[1] = sum[1] / count_100ms;
-            mean[2] = sum[2] / count_100ms;
-            mean[3] = sum[3] / count_100ms;
+//             mean[0] = sum[0] / count_100ms;
+//             mean[1] = sum[1] / count_100ms;
+//             mean[2] = sum[2] / count_100ms;
+//             mean[3] = sum[3] / count_100ms;
 
-            cz = 1;
-            return mean;
-        }
-    }
-}
+//             cz = 1;
+//             return mean;
+//         }
+//     }
+// }
 
 #define MAX_SPEED_STEP 5  // 每次最大速度变化量
 uint8_t smooth_speed_transition(uint8_t current, uint8_t target) {
@@ -195,14 +179,16 @@ void PID_ResetAll(void) {
 
 void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, bool clockwise) {
   float ROTATION_SPEED;  // 旋转速度
-  static const float ROTATION_SPEED_max = 30.0f;
-  static const float ANGLE_TOLERANCE = 6.9f;  // 角度容差
+  static const float ROTATION_SPEED_max = 35.0f;  // 增加最大旋转速度
+  static const float ANGLE_TOLERANCE = 8.0f;  // 增加角度容差
   float const start_yaw = target_yaw;  // 记录起始角度
   float target_angle = start_yaw + (clockwise ? -90.0f : 90.0f);  // 计算目标角度
   unsigned int num = 0;
   static uint32_t last_time = 0;
   uint32_t current_time;
   float dt;
+  uint32_t start_time = HAL_GetTick();  // 添加开始时间记录
+  const uint32_t TIMEOUT_MS = 3000;     // 3秒超时
   
   // 标准化目标角度到-180到180度范围
   if (target_angle > 180.0f) {
@@ -226,6 +212,12 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
       dt = (current_time - last_time) / 1000.0f;  // 转换为秒
       last_time = current_time;
 
+      // 检查超时
+      if (current_time - start_time > TIMEOUT_MS) {
+          OLED_ShowString(1,1,"ROT TIMEOUT");
+          break;
+      }
+
       // 获取当前偏航角
       float pitch, roll, current_yaw;
       if (MPU6050_DMP_Get_Data(&pitch, &roll, &current_yaw) != 0) {
@@ -241,6 +233,13 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
       
       // 计算角度误差
       float angle_error = target_angle - current_yaw;
+      
+      // 标准化角度误差到-180到180度范围
+      if (angle_error > 180.0f) {
+          angle_error -= 360.0f;
+      } else if (angle_error < -180.0f) {
+          angle_error += 360.0f;
+      }
       
       // 使用PID控制器计算输出
       ROTATION_SPEED = PID_Calculate(&pid_yaw, angle_error, dt);
@@ -315,7 +314,7 @@ void Servo_close()
 {
     // 使用正确的舵机变量名和角度
     Servo_SetAngle(&servo5, 105);
-    Servo_SetAngle(&servo1, 35);
+    Servo_SetAngle(&servo1, 40);
     Servo_SetAngle(&servo2, 35);
     Servo_SetAngle(&servo3, 38);
     Servo_SetAngle(&servo4, 48);
@@ -374,41 +373,47 @@ int main(void)
   /* USER CODE BEGIN 2 */
   OLED_Init();
 
-  // 修改为UART6的接收中断初始化
-  HAL_UART_Receive_IT(&huart6, &OpenMVdata, 1); 
-  HAL_UART_Receive_IT(&huart1, &OpenMVdata, 1); 
+  HAL_UART_Receive_IT(&huart1, aRxBuffer, 1); 
   
   HAL_TIM_Base_Start(&htim6);
   Reset_Timer();  // 重置计时器
   
   // while(1){
   // HAL_GPIO_WritePin(GPIOF, GPIO_PIN_9, GPIO_PIN_RESET);
-  // HAL_Delay(1000);
+  // HAL_Delay(100);
   // HAL_GPIO_WritePin(GPIOF, GPIO_PIN_9, GPIO_PIN_SET);
-  // HAL_Delay(1000);
+  // HAL_Delay(100);
   // }
 
   // 初始化MPU6050 DMP
   int mpu_result;
   int retry_count = 0;
-  uint32_t init_start_time = HAL_GetTick();
+  uint32_t timeout_start = HAL_GetTick();
+
+  // HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_9);
 
   do {
       mpu_result = MPU6050_DMP_Init();
       if (mpu_result != 0) {
           retry_count++;
-          // 只在每10次重试时更新显示，减少OLED操作
           if (retry_count % 10 == 0) {
               OLED_ShowString(1,1,"INITING...");
               OLED_ShowNum(1,11,retry_count,2);
           }
+          // 添加超时检查
+          if (HAL_GetTick() - timeout_start > 5000) { // 5秒超时
+              OLED_ShowString(1,1,"MPU INIT FAIL");
+              break;
+          }
       }
   } while (mpu_result != 0);
   
+  // HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_9);
+
   OLED_Clear();
   OLED_ShowString(1,1,"SUCCESS");
   // 显示初始化耗时
-  uint32_t init_time = HAL_GetTick() - init_start_time;
+  uint32_t init_time = HAL_GetTick() - timeout_start;
   OLED_ShowNum(2,1,init_time,4);
   OLED_ShowString(2,5,"ms");
 
@@ -424,9 +429,6 @@ int main(void)
   US100_Init(&us100_sensor1, &huart4);
   US100_Init(&us100_sensor4, &huart3);
   US100_Init(&us100_sensor3, &huart2);
-  
-  // 等待一段时间，确保传感器稳定
-  HAL_Delay(50);
   
   // 开始第一次测量
   US100_StartMeasurement(&us100_sensor1);
@@ -1424,8 +1426,9 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  while (1)
-  {
+  while (1) {
+    HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_9);  // 使用LED指示错误
+    HAL_Delay(500);
   }
   /* USER CODE END Error_Handler_Debug */
 }

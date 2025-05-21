@@ -99,7 +99,6 @@ void Error_Handler(void);
 #define Trig_3_GPIO_Port GPIOE
 #define Echo_3_Pin GPIO_PIN_11
 #define Echo_3_GPIO_Port GPIOB
-#define Echo_3_EXTI_IRQn EXTI15_10_IRQn
 #define M2_E1_Pin GPIO_PIN_12
 #define M2_E1_GPIO_Port GPIOD
 #define M2_E2_Pin GPIO_PIN_13
@@ -118,7 +117,6 @@ void Error_Handler(void);
 #define RX_1_GPIO_Port GPIOC
 #define Echo_2_Pin GPIO_PIN_13
 #define Echo_2_GPIO_Port GPIOG
-#define Echo_2_EXTI_IRQn EXTI15_10_IRQn
 #define Trig_2_Pin GPIO_PIN_15
 #define Trig_2_GPIO_Port GPIOG
 #define M4_E2_Pin GPIO_PIN_3

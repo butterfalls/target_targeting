@@ -97,9 +97,6 @@ void Error_Handler(void);
 #define Trig_4_GPIO_Port GPIOE
 #define Trig_3_Pin GPIO_PIN_15
 #define Trig_3_GPIO_Port GPIOE
-#define Echo_4_Pin GPIO_PIN_10
-#define Echo_4_GPIO_Port GPIOB
-#define Echo_4_EXTI_IRQn EXTI15_10_IRQn
 #define Echo_3_Pin GPIO_PIN_11
 #define Echo_3_GPIO_Port GPIOB
 #define Echo_3_EXTI_IRQn EXTI15_10_IRQn

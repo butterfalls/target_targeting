@@ -64,8 +64,8 @@ all: main-build
 main-build: Hello.elf secondary-outputs
 
 # Tool invocations
-Hello.elf Hello.map: $(OBJS) $(USER_OBJS) C:\Users\汪岂凫\Documents\GitHub\target_targeting\STM32F407ZETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Hello.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\汪岂凫\Documents\GitHub\target_targeting\STM32F407ZETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Hello.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Hello.elf Hello.map: $(OBJS) $(USER_OBJS) D:\Files\STM32_Project\Hello\STM32F407ZETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Hello.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Files\STM32_Project\Hello\STM32F407ZETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Hello.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

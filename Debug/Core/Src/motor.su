@@ -9,5 +9,6 @@
 ../Core/Src/motor.c:348:6:Update_Target_Yaw	80	static
 ../Core/Src/motor.c:414:6:Adjust_Speed_By_Side_Distance	48	static
 ../Core/Src/motor.c:458:6:Adjust_Left_Motors_By_Distance	56	static
-../Core/Src/motor.c:509:6:Adjust_Right_Motors_By_Distance	56	static
-../Core/Src/motor.c:558:6:Adjust_Motors_By_FrontBack_Distance	56	static
+../Core/Src/motor.c:496:6:Adjust_Right_Motors_By_Distance	56	static
+../Core/Src/motor.c:534:6:Adjust_Motors_By_FrontBack_Distance	56	static
+../Core/Src/motor.c:666:6:Adjust_Motors_By_Side_Distances	56	static

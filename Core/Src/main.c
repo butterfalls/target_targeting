@@ -54,6 +54,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t aRxBuffer[1];
+uint8_t ledState = 0;
 Motor motors[MOTOR_COUNT] = {0};
 float target_speed = 50.0f;
 uint32_t prev_time = 0;
@@ -85,7 +87,7 @@ static uint32_t time_enterpath_case9 = 0;
 static uint32_t time_enterpath_case10 = 0;
 static uint32_t time_enterpath_case11 = 0;
 
-uint8_t OpenMVdata;
+uint8_t OpenMVdata = 0;  // 修改为变量声明
 uint8_t message[] = "Hello World";
 uint8_t uart4_rx_buffer;
 Servo servo1, servo2 ,servo3 ,servo4 ,servo5;
@@ -114,24 +116,17 @@ void SystemClock_Config(void);
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // 检查是否是UART5（US100传感器使用的串口）
+    if (huart == &huart1) {
+    ledState = !ledState;
+    HAL_GPIO_WritePin(GPIOF, GPIO_PIN_9, ledState ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    // 继续接收下一个字节
+    HAL_UART_Receive_IT(&huart1, aRxBuffer, 1);
+    }
     if (huart == &huart5||huart == &huart2||huart == &huart3||huart == &huart4) {
         // 调用US100库的回调函数
         US100_UART_RxCpltCallback(huart);
+        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);  // 收到'a'后关闭LED
     } 
-    if (huart == &huart1) {
-        // 处理其他串口的回调
-        // HAL_UART_Transmit(&huart1, message, strlen(message), 100);
-        HAL_UART_Receive_IT(&huart1, OpenMVdata, 1);
-    }
-    // if (huart == &huart4) {
-    //     // 输出调试信息
-    //     char debug_msg[50];
-    //     sprintf(debug_msg, "UART4 received: 0x%02X\r\n", uart4_rx_buffer);
-    //     HAL_UART_Transmit(&huart1, (uint8_t*)debug_msg, strlen(debug_msg), 100);
-        
-    //     // 继续接收下一个字节
-    //     HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
-    // }
 }
 
 float* meandistances(float* distances)
@@ -398,13 +393,20 @@ int main(void)
   /* USER CODE BEGIN 2 */
   OLED_Init();
 
-  HAL_UART_Receive_IT(&huart1, &OpenMVdata, 1);
-  // 初始化UART4接收
-  // HAL_UART_Receive_IT(&huart4, &uart4_rx_buffer, 1);
+  // 修改为UART6的接收中断初始化
+  HAL_UART_Receive_IT(&huart6, &OpenMVdata, 1); 
+  HAL_UART_Receive_IT(&huart1, &OpenMVdata, 1); 
   
   HAL_TIM_Base_Start(&htim6);
   Reset_Timer();  // 重置计时器
   
+  // while(1){
+  // HAL_GPIO_WritePin(GPIOF, GPIO_PIN_9, GPIO_PIN_RESET);
+  // HAL_Delay(1000);
+  // HAL_GPIO_WritePin(GPIOF, GPIO_PIN_9, GPIO_PIN_SET);
+  // HAL_Delay(1000);
+  // }
+
   // 初始化MPU6050 DMP
   int mpu_result;
   int retry_count = 0;
@@ -540,26 +542,26 @@ int main(void)
     /*------------------------------------------------------------------------舵机执行部分--------------------------------------------------------------------*/
     static uint8_t last_data = 0;
     static uint32_t last_time = 0;
-    OLED_ShowNum(4,15,OpenMVdata,1);
+    OLED_ShowNum(4,13,aRxBuffer[0],2);
 
     bool can_change_state = (current_time - last_time >= 800);
 
-    if(last_data != OpenMVdata && can_change_state) {
-        if(OpenMVdata == 0) {
+    if(last_data != aRxBuffer[0] && can_change_state) {
+        if(aRxBuffer[0] == 48) {
             Servo_close();
-        } else if(OpenMVdata == 1) {
+        } else if(aRxBuffer[0] == 49) {
             if(path == 3 || path == 7 || path == 11) {
                 Servo_open_red_left();
             } else if(path == 5 || path == 9) {
                 Servo_open_red_right();
             }
-        } else if(OpenMVdata == 2) {
+        } else if(aRxBuffer[0] == 50) {
             if(path == 3 || path == 7 || path == 11) {
                 Servo_open_green_left();
             } else if(path == 5 || path == 9) {
                 Servo_open_green_right();
             }
-        } else if(OpenMVdata == 3) {
+        } else if(aRxBuffer[0] == 51) {
             if(path == 3 || path == 7 || path == 11) {
                 Servo_open_blue_left();
             } else if(path == 5 || path == 9) {
@@ -567,7 +569,7 @@ int main(void)
             }
         }
         
-        last_data = OpenMVdata;
+        last_data = aRxBuffer[0];
         last_time = current_time;
     }
 

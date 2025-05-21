@@ -11,6 +11,6 @@
 ../Core/Src/stm32f4xx_it.c:223:6:USART2_IRQHandler	1
 ../Core/Src/stm32f4xx_it.c:237:6:USART3_IRQHandler	1
 ../Core/Src/stm32f4xx_it.c:251:6:EXTI15_10_IRQHandler	1
-../Core/Src/stm32f4xx_it.c:267:6:UART4_IRQHandler	1
-../Core/Src/stm32f4xx_it.c:281:6:UART5_IRQHandler	1
-../Core/Src/stm32f4xx_it.c:295:6:USART6_IRQHandler	1
+../Core/Src/stm32f4xx_it.c:266:6:UART4_IRQHandler	1
+../Core/Src/stm32f4xx_it.c:280:6:UART5_IRQHandler	1
+../Core/Src/stm32f4xx_it.c:294:6:USART6_IRQHandler	1

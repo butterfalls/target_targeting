@@ -273,71 +273,51 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
 void Servo_open_red_left()
 {
     // 使用正确的舵机变量名和角度
-    Servo_SetAngle(&servo1, 128);
-    Servo_SetAngle(&servo2, 128);
-    Servo_SetAngle(&servo3, 128);
-    Servo_SetAngle(&servo4, 128);
-    Servo_SetAngle(&servo5, 128);
+    Servo_SetAngle(&servo1, 115);
+    Servo_SetAngle(&servo2, 122);
+    Servo_SetAngle(&servo3, 38);
+    Servo_SetAngle(&servo4, 48);
+    Servo_SetAngle(&servo5, 15);
 }
 
 void Servo_open_red_right()
 {
     // 使用正确的舵机变量名和角度
-    Servo_SetAngle(&servo1, 128);
-    Servo_SetAngle(&servo2, 128);
-    Servo_SetAngle(&servo3, 128);
-    Servo_SetAngle(&servo4, 128);
-    Servo_SetAngle(&servo5, 128);
-}
-
-void Servo_open_blue_left()
-{
-    // 使用正确的舵机变量名和角度
-    Servo_SetAngle(&servo1, 128);
-    Servo_SetAngle(&servo2, 128);
-    Servo_SetAngle(&servo3, 128);
-    Servo_SetAngle(&servo4, 128);
-    Servo_SetAngle(&servo5, 128);
-}
-
-void Servo_open_blue_right()
-{
-    // 使用正确的舵机变量名和角度
-    Servo_SetAngle(&servo1, 128);
-    Servo_SetAngle(&servo2, 128);
-    Servo_SetAngle(&servo3, 128);
-    Servo_SetAngle(&servo4, 128);
-    Servo_SetAngle(&servo5, 128);
+    Servo_SetAngle(&servo1, 35);
+    Servo_SetAngle(&servo2, 35);
+    Servo_SetAngle(&servo3, 123);
+    Servo_SetAngle(&servo4, 138);
+    Servo_SetAngle(&servo5, 15);
 }
 
 void Servo_open_green_left()
 {
     // 使用正确的舵机变量名和角度
-    Servo_SetAngle(&servo1, 128);
-    Servo_SetAngle(&servo2, 128);
-    Servo_SetAngle(&servo3, 128);
-    Servo_SetAngle(&servo4, 128);
-    Servo_SetAngle(&servo5, 128);
+    Servo_SetAngle(&servo1, 35);
+    Servo_SetAngle(&servo2, 35);
+    Servo_SetAngle(&servo3, 123);
+    Servo_SetAngle(&servo4, 48);
+    Servo_SetAngle(&servo5, 15);
 }
 
 void Servo_open_green_right()
 {
     // 使用正确的舵机变量名和角度
-    Servo_SetAngle(&servo1, 128);
-    Servo_SetAngle(&servo2, 128);
-    Servo_SetAngle(&servo3, 128);
-    Servo_SetAngle(&servo4, 128);
-    Servo_SetAngle(&servo5, 128);
+    Servo_SetAngle(&servo1, 35);
+    Servo_SetAngle(&servo2, 35);
+    Servo_SetAngle(&servo3, 38);
+    Servo_SetAngle(&servo4, 138);
+    Servo_SetAngle(&servo5, 15);
 }
 
 void Servo_close()
 {
     // 使用正确的舵机变量名和角度
-    Servo_SetAngle(&servo1, 38);
-    Servo_SetAngle(&servo2, 38);
+    Servo_SetAngle(&servo1, 35);
+    Servo_SetAngle(&servo2, 35);
     Servo_SetAngle(&servo3, 38);
-    Servo_SetAngle(&servo4, 38);
-    Servo_SetAngle(&servo5, 38);
+    Servo_SetAngle(&servo4, 48);
+    Servo_SetAngle(&servo5, 105);
 }
 
 
@@ -563,9 +543,9 @@ int main(void)
             }
         } else if(aRxBuffer[0] == 51) {
             if(path == 3 || path == 7 || path == 11) {
-                Servo_open_blue_left();
+                Servo_close();
             } else if(path == 5 || path == 9) {
-                Servo_open_blue_right();
+                Servo_close();
             }
         }
         
@@ -597,13 +577,15 @@ int main(void)
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/
     US100_GetAllValidDistances(distances);
     
-    //  while (1)
-    //  {
-    // Servo_SetAngle(&servo3, 38);
-    // HAL_Delay(1000);
-    // Servo_SetAngle(&servo3, 128);
-    // HAL_Delay(1000);
-    //  }
+     while (1)//舵机测试
+     {
+    Servo_close();
+    HAL_Delay(2000);
+    Servo_open_green_right();
+    HAL_Delay(1000);
+
+    // Servo_close();
+     }
 
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
         // 显示原始距离和滤波后的距离

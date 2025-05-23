@@ -184,12 +184,6 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
       dt = (current_time - last_time) / 1000.0f;  // 转换为秒
       last_time = current_time;
 
-      // 检查超时
-      if (current_time - start_time > TIMEOUT_MS) {
-          OLED_ShowString(1,1,"ROT TIMEOUT");
-          break;
-      }
-
       // 获取当前偏航角
       float pitch, roll, current_yaw;
       if (MPU6050_DMP_Get_Data(&pitch, &roll, &current_yaw) != 0) {
@@ -235,11 +229,6 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
       HAL_Delay(10);
   }
 
-  // 停止所有电机
-  Motor_SetSpeed(id1, 0);  // 左前
-  Motor_SetSpeed(id2, 0);  // 右后
-  Motor_SetSpeed(id3, 0);  // 左后
-  Motor_SetSpeed(id4, 0);  // 右前
 }
 
 void Servo_open_red_left()
@@ -401,6 +390,8 @@ int main(void)
   Servo_Init(&servo4, &htim9, TIM_CHANNEL_2, Servo_4_GPIO_Port, Servo_4_Pin);
   Servo_Init(&servo5, &htim10, TIM_CHANNEL_1, Servo_5_GPIO_Port, Servo_5_Pin);
 
+  Servo_close();
+
   prev_time = HAL_GetTick();
 
   /*------------------------------------MPU6050 DMP执行部分-------------------------------------*/
@@ -447,7 +438,7 @@ int main(void)
              }  
          } else if(opendata == 'n') 
          {
-          // Servo_close();
+          Servo_close();
          }
 
          last_data = opendata;
@@ -505,12 +496,6 @@ int main(void)
          uint8_t motor_speed = 0;  // 默认最大速度
         //  motor_speed = MAX_SPEED;
         if (current_distance <= TARGET_DISTANCE && current_distance != 0 && (HAL_GetTick() - time_enterpath_case0 >= 4000)) {
-             // 区域3：到达目标距离（≤80mm）
-             Motor_SetSpeed(MOTOR_1, 0);
-             Motor_SetSpeed(MOTOR_2, 0);
-             Motor_SetSpeed(MOTOR_3, 0);
-             Motor_SetSpeed(MOTOR_4, 0);
-             HAL_Delay(100);
              motor_speed = MIN_SPEED;
              Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true);
              path += 1;
@@ -584,11 +569,6 @@ int main(void)
              
              // 执行路径切换逻辑
              if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 3000)) {
-                Motor_SetSpeed(MOTOR_1, 0);
-                Motor_SetSpeed(MOTOR_2, 0);
-                Motor_SetSpeed(MOTOR_3, 0);
-                Motor_SetSpeed(MOTOR_4, 0);
-                HAL_Delay(100);
                 Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
                  path += 1;
                  PID_ResetAll(); // 重置所有PID控制器

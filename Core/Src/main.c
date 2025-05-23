@@ -421,6 +421,9 @@ int main(void)
     /*------------------------------------------------------------------------舵机执行部分--------------------------------------------------------------------*/
      static uint8_t last_data = 0;
      static uint32_t last_time = 0;
+     static uint32_t servo_delay_start = 0;
+     static bool waiting_for_delay = false;
+     static uint8_t pending_servo_action = 0;  // 0:无动作, 1:红左, 2:红右, 3:绿左, 4:绿右, 5:关闭
      char opendata = aRxBuffer[0];
      OLED_ShowNum(4,13,opendata,3);
 
@@ -429,23 +432,58 @@ int main(void)
      if(last_data != opendata && can_change_state) {
          if(opendata == 'r') {
              if(path == 3 || path == 7 || path == 11) {
-                 Servo_open_red_left();
+                 servo_delay_start = current_time;
+                 waiting_for_delay = true;
+                 pending_servo_action = 1;  // 红左
              } else if(path == 5 || path == 9) {
-                 Servo_open_red_right();
+                 servo_delay_start = current_time;
+                 waiting_for_delay = true;
+                 pending_servo_action = 2;  // 红右
              }
          } else if(opendata == 'g') {
              if(path == 3 || path == 7 || path == 11) {
-                 Servo_open_green_left();
+                 servo_delay_start = current_time;
+                 waiting_for_delay = true;
+                 pending_servo_action = 3;  // 绿左
              } else if(path == 5 || path == 9) {
-                 Servo_open_green_right();
+                 servo_delay_start = current_time;
+                 waiting_for_delay = true;
+                 pending_servo_action = 4;  // 绿右
              }  
          } else if(opendata == 'n') 
          {
-          Servo_close();
+             servo_delay_start = current_time;
+             waiting_for_delay = true;
+             pending_servo_action = 5;  // 关闭
          }
 
          last_data = opendata;
          last_time = current_time;
+     }
+
+     // 处理舵机延迟和动作
+     if(waiting_for_delay) {
+         uint32_t delay_time;
+         switch(pending_servo_action) {
+             case 1: delay_time = 300; break;  // 红左
+             case 2: delay_time = 500; break;  // 红右
+             case 3: delay_time = 400; break;  // 绿左
+             case 4: delay_time = 600; break;  // 绿右
+             case 5: delay_time = 200; break;  // 关闭
+             default: delay_time = 0;
+         }
+
+         if(current_time - servo_delay_start >= delay_time) {
+             switch(pending_servo_action) {
+                 case 1: Servo_open_red_left(); break;
+                 case 2: Servo_open_red_right(); break;
+                 case 3: Servo_open_green_left(); break;
+                 case 4: Servo_open_green_right(); break;
+                 case 5: Servo_close(); break;
+             }
+             waiting_for_delay = false;
+             pending_servo_action = 0;
+         }
      }
 
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/

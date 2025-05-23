@@ -151,16 +151,12 @@ void PID_ResetAll(void) {
 
 void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, bool clockwise) {
   float ROTATION_SPEED;  // 旋转速度
-  static const float ROTATION_SPEED_max = 35.0f;  // 增加最大旋转速度
-  static const float ANGLE_TOLERANCE = 8.0f;  // 增加角度容差
+  static const float ROTATION_SPEED_max = 30.0f;
+  static const float ANGLE_TOLERANCE = 6.9f;  // 角度容差
+  // MPU6050_DMP_Get_Data(&pitchstart , &rollopen , &yaw);
   float const start_yaw = target_yaw;  // 记录起始角度
   float target_angle = start_yaw + (clockwise ? -90.0f : 90.0f);  // 计算目标角度
   unsigned int num = 0;
-  static uint32_t last_time = 0;
-  uint32_t current_time;
-  float dt;
-  uint32_t start_time = HAL_GetTick();  // 添加开始时间记录
-  const uint32_t TIMEOUT_MS = 3000;     // 3秒超时
   
   // 标准化目标角度到-180到180度范围
   if (target_angle > 180.0f) {
@@ -172,18 +168,15 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
   // 设置目标偏航角
   target_yaw = target_angle;
   
-  // 重置PID控制器
-  PID_Reset(&pid_yaw);
-  PID_Reset(&pid_front);
-  PID_Reset(&pid_rear);
-  PID_Reset(&pid_position);
+  // // 重置PID控制器
+  // PID_Reset(&pid_yaw);
+  // PID_Reset(&pid_front);
+  // PID_Reset(&pid_rear);
+  // PID_Reset(&pid_position);
 
+  
   // 开始旋转
   while (num <= 20) {
-      current_time = HAL_GetTick();
-      dt = (current_time - last_time) / 1000.0f;  // 转换为秒
-      last_time = current_time;
-
       // 获取当前偏航角
       float pitch, roll, current_yaw;
       if (MPU6050_DMP_Get_Data(&pitch, &roll, &current_yaw) != 0) {
@@ -199,23 +192,20 @@ void Rotate_90_Degrees(Motor_ID id1, Motor_ID id2, Motor_ID id3, Motor_ID id4, b
       
       // 计算角度误差
       float angle_error = target_angle - current_yaw;
-      
-      // 标准化角度误差到-180到180度范围
-      if (angle_error > 180.0f) {
-          angle_error -= 360.0f;
-      } else if (angle_error < -180.0f) {
-          angle_error += 360.0f;
+      float voltage=angle_error*1.12-roll*0.3;
+
+      // 根据电压的正负分别限制速度，且要求绝对值大于12
+      if (fabsf(voltage) > 10.0f) {
+          if (voltage >= 0) {
+              ROTATION_SPEED = fmin(voltage, ROTATION_SPEED_max);
+          } else {
+              ROTATION_SPEED = fmax(voltage, -ROTATION_SPEED_max);
+          }
+      } else {
+          // 如果电压绝对值小于等于12，保持原符号但设为12
+          ROTATION_SPEED = (voltage >= 0) ? 10.0f : -10.0f;
       }
-      
-      // 使用PID控制器计算输出
-      ROTATION_SPEED = PID_Calculate(&pid_yaw, angle_error, dt);
-      
-      // 限制最大速度
-      if (ROTATION_SPEED > ROTATION_SPEED_max) {
-          ROTATION_SPEED = ROTATION_SPEED_max;
-      } else if (ROTATION_SPEED < -ROTATION_SPEED_max) {
-          ROTATION_SPEED = -ROTATION_SPEED_max;
-      }
+      // 如果达到目标角度（考虑容差），停止旋转
       
       // 根据旋转方向设置电机速度
       Motor_SetSpeed(id1, ROTATION_SPEED);  // 左前

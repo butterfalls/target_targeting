@@ -238,8 +238,8 @@ void Servo_open_red_left()
 {
     // 使用正确的舵机变量名和角度
     Servo_SetAngle(&servo1, 115);
-    Servo_SetAngle(&servo2, 122);
-    Servo_SetAngle(&servo3, 38);
+    Servo_SetAngle(&servo2, 35);
+    Servo_SetAngle(&servo3, 123);
     Servo_SetAngle(&servo4, 48);
     Servo_SetAngle(&servo5, 15);
 }
@@ -248,8 +248,8 @@ void Servo_open_red_right()
 {
     // 使用正确的舵机变量名和角度
     Servo_SetAngle(&servo1, 35);
-    Servo_SetAngle(&servo2, 35);
-    Servo_SetAngle(&servo3, 123);
+    Servo_SetAngle(&servo2, 122);
+    Servo_SetAngle(&servo3, 38);
     Servo_SetAngle(&servo4, 138);
     Servo_SetAngle(&servo5, 15);
 }
@@ -419,7 +419,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
     uint32_t current_time = HAL_GetTick();
     /*------------------------------------------------------------------------舵机执行部分--------------------------------------------------------------------*/
-     static uint8_t last_data = 0;
+    
+    static uint8_t last_data = 0;
      static uint32_t last_time = 0;
      static uint32_t servo_delay_start = 0;
      static bool waiting_for_delay = false;
@@ -427,7 +428,7 @@ int main(void)
      char opendata = aRxBuffer[0];
      OLED_ShowNum(4,13,opendata,3);
 
-     bool can_change_state = (current_time - last_time >= 800);
+     bool can_change_state = (current_time - last_time >= 500);
 
      if(last_data != opendata && can_change_state) {
          if(opendata == 'r') {
@@ -465,11 +466,11 @@ int main(void)
      if(waiting_for_delay) {
          uint32_t delay_time;
          switch(pending_servo_action) {
-             case 1: delay_time = 300; break;  // 红左
-             case 2: delay_time = 500; break;  // 红右
-             case 3: delay_time = 400; break;  // 绿左
-             case 4: delay_time = 600; break;  // 绿右
-             case 5: delay_time = 200; break;  // 关闭
+             case 1: delay_time = 0; break;  // 红左
+             case 2: delay_time = 0; break;  // 红右
+             case 3: delay_time = 0; break;  // 绿左
+             case 4: delay_time = 0; break;  // 绿右
+             case 5: delay_time = 0; break;  // 关闭
              default: delay_time = 0;
          }
 
@@ -526,7 +527,7 @@ int main(void)
          const float DECEL_RANGE = 600.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 13;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 67;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 8000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
          float current_distance = distances[1]; // 前面的超声波
          if(time_enterpath_case0 == 0) {
@@ -583,7 +584,7 @@ int main(void)
          const float DECEL_RANGE = 600.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 16;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 67;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 2700;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[1];
@@ -690,7 +691,7 @@ int main(void)
          const float DECEL_RANGE = 600.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 21;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 67;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 2700;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[3];
@@ -706,7 +707,6 @@ int main(void)
          if (reach_target_time == 0) {
              reach_target_time = HAL_GetTick();
          }
-    
          if (current_distance <= TARGET_DISTANCE) {
              // 区域3：到达目标距离（≤130mm）
              motor_speed = MIN_SPEED;
@@ -798,7 +798,7 @@ int main(void)
          const float DECEL_RANGE = 600.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 21;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 67;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 2700;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[1];
@@ -906,7 +906,7 @@ int main(void)
          const float DECEL_RANGE = 600.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 21;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 67;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 2700;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[3];
@@ -1014,7 +1014,7 @@ int main(void)
          const float DECEL_RANGE = 600.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 21;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 67;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 2700;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[1];
@@ -1122,7 +1122,7 @@ int main(void)
          const float DECEL_RANGE = 600.0f;      // 调试，这个变量用于设置减速区间范围
          const uint16_t ADJUST_DISTANCE = 250;  // 调试，这个变量用于在距离最终目标距离较近时的取消调校
          const uint8_t MIN_SPEED = 21;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
-         const uint8_t MAX_SPEED = 67;          // 调试，这个变量用于设置离目标较远时的速度
+         const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 2700;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
     
          float current_distance = distances[3];

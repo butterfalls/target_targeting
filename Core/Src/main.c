@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "OLED.h"
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -107,57 +108,28 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     HAL_UART_Receive_IT(&huart1, aRxBuffer, 1);
     }
     if (huart == &huart5||huart == &huart2||huart == &huart3||huart == &huart4) {
-        // 调用US100库的回调函数
-        US100_UART_RxCpltCallback(huart);
-        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);  // 收到'a'后关闭LED
+      US100_UART_RxCpltCallback(huart);
+      HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);  // 收到'a'后关闭LED
     } 
+    // if (huart == &huart5) {
+    //     // 调用US100库的回调函数
+    //   US100_UART_RxCpltCallback(huart,5);
+    //   HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);  // 收到'a'后关闭LED
+    // }else if (huart == &huart2)
+    // {
+    //   US100_UART_RxCpltCallback(huart,2);
+    //   HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);
+    // }else if (huart == &huart3)
+    // {
+    //   US100_UART_RxCpltCallback(huart,3);
+    //   HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);
+    // }else if (huart == &huart4)
+    // {
+    //   US100_UART_RxCpltCallback(huart,4);
+    //   HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);
+    // }
+    
 }
-
-// float* meandistances(float* distances)
-// {
-
-//     if (cz)
-//     {
-//         cz = 0;
-//         count_100ms = 1;
-//         start = HAL_GetTick();
-//         now = start;
-//         sum[0] = distances[0];
-//         sum[1] = distances[1];
-//         sum[2] = distances[2];
-//         sum[3] = distances[3];
-//         return mean;  // 初始返回0值
-//     }
-//     else
-//     {
-//         now = HAL_GetTick();
-//         if (now - start <= 100)
-//         {
-//             sum[0] += distances[0];
-//             sum[1] += distances[1];
-//             sum[2] += distances[2];
-//             sum[3] += distances[3];
-//             count_100ms += 1;
-//             return mean;  // 返回当前均值
-//         }
-//         else
-//         {
-//             sum[0] += distances[0];
-//             sum[1] += distances[1];
-//             sum[2] += distances[2];
-//             sum[3] += distances[3];
-//             count_100ms += 1;
-
-//             mean[0] = sum[0] / count_100ms;
-//             mean[1] = sum[1] / count_100ms;
-//             mean[2] = sum[2] / count_100ms;
-//             mean[3] = sum[3] / count_100ms;
-
-//             cz = 1;
-//             return mean;
-//         }
-//     }
-// }
 
 #define MAX_SPEED_STEP 5  // 每次最大速度变化量
 uint8_t smooth_speed_transition(uint8_t current, uint8_t target) {
@@ -330,28 +302,9 @@ void Servo_close()
   */
 int main(void)
 {
-
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_I2C3_Init();
@@ -377,20 +330,11 @@ int main(void)
   
   HAL_TIM_Base_Start(&htim6);
   Reset_Timer();  // 重置计时器
-  
-  // while(1){
-  // HAL_GPIO_WritePin(GPIOF, GPIO_PIN_9, GPIO_PIN_RESET);
-  // HAL_Delay(100);
-  // HAL_GPIO_WritePin(GPIOF, GPIO_PIN_9, GPIO_PIN_SET);
-  // HAL_Delay(100);
-  // }
 
   // 初始化MPU6050 DMP
   int mpu_result;
   int retry_count = 0;
   uint32_t timeout_start = HAL_GetTick();
-
-  // HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_9);
 
   do {
       mpu_result = MPU6050_DMP_Init();
@@ -407,8 +351,6 @@ int main(void)
           }
       }
   } while (mpu_result != 0);
-  
-  // HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_9);
 
   OLED_Clear();
   OLED_ShowString(1,1,"SUCCESS");
@@ -416,13 +358,6 @@ int main(void)
   uint32_t init_time = HAL_GetTick() - timeout_start;
   OLED_ShowNum(2,1,init_time,4);
   OLED_ShowString(2,5,"ms");
-
-  // 初始化超声波传感器
-  // Ultrasonic_Init(&ultrasonic_sensors[1], Trig_1_GPIO_Port, Trig_1_Pin, Echo_1_GPIO_Port, Echo_1_Pin);  // 传感器1
-  // Ultrasonic_Init(&ultrasonic_sensors[0], Trig_2_GPIO_Port, Trig_2_Pin, Echo_2_GPIO_Port, Echo_2_Pin);  // 传感器2
-  // Ultrasonic_Init(&ultrasonic_sensors[2], Trig_3_GPIO_Port, Trig_3_Pin, Echo_3_GPIO_Port, Echo_3_Pin);  // 传感器3
-  // Ultrasonic_Init(&ultrasonic_sensors[3], Trig_4_GPIO_Port, Trig_4_Pin, Echo_4_GPIO_Port, Echo_4_Pin);  // 传感器4
-  // Ultrasonic_Init(&ultrasonic_sensors[4], Trig_5_GPIO_Port, Trig_5_Pin, Echo_5_GPIO_Port, Echo_5_Pin);  // 传感器5
 
   // 初始化US100传感器顺时针1234
   US100_Init(&us100_sensor2, &huart5);
@@ -460,11 +395,11 @@ int main(void)
             M4_IN2_GPIO_Port, M4_IN2_Pin,
             &htim2);
 
-  Servo_Init(&servo1, &htim8, TIM_CHANNEL_1, Servo_1_GPIO_Port, Servo_1_Pin);
-  Servo_Init(&servo2, &htim8, TIM_CHANNEL_2, Servo_2_GPIO_Port, Servo_2_Pin);
-  Servo_Init(&servo3, &htim9, TIM_CHANNEL_1, Servo_3_GPIO_Port, Servo_3_Pin);
-  Servo_Init(&servo4, &htim9, TIM_CHANNEL_2, Servo_4_GPIO_Port, Servo_4_Pin);
-  Servo_Init(&servo5, &htim10, TIM_CHANNEL_1, Servo_5_GPIO_Port, Servo_5_Pin);
+  // Servo_Init(&servo1, &htim8, TIM_CHANNEL_1, Servo_1_GPIO_Port, Servo_1_Pin);
+  // Servo_Init(&servo2, &htim8, TIM_CHANNEL_2, Servo_2_GPIO_Port, Servo_2_Pin);
+  // Servo_Init(&servo3, &htim9, TIM_CHANNEL_1, Servo_3_GPIO_Port, Servo_3_Pin);
+  // Servo_Init(&servo4, &htim9, TIM_CHANNEL_2, Servo_4_GPIO_Port, Servo_4_Pin);
+  // Servo_Init(&servo5, &htim10, TIM_CHANNEL_1, Servo_5_GPIO_Port, Servo_5_Pin);
 
   prev_time = HAL_GetTick();
 
@@ -472,7 +407,6 @@ int main(void)
     OLED_ShowString(3,1,"yaw:");
     OLED_ShowString(3,9,"TAR:");
 
-  
   // 设置目标偏航角为当前偏航角
   target_yaw = yaw;
   
@@ -480,41 +414,9 @@ int main(void)
   PID_Reset(&pid_yaw);
   PID_Reset(&pid_encoder);
   OLED_Clear_Part(1,1,5);
-  // OLED_ShowString(1, 6, "mm");
-  // OLED_ShowString(1, 14, "mm");
-  // OLED_ShowString(2, 6, "mm");
-  // OLED_ShowString(2, 14, "mm");
 
   /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-
   start_start = HAL_GetTick();
-  // OLED_Clear();
-  // while(1)
-  // {
-  //   // 发送0x55命令到sensor2
-  //   uint8_t cmd = 0x55;
-  //   uint8_t rx_data[2] = {0};  // 用于存储接收到的数据
-    
-  //   HAL_UART_Transmit(&huart4, &cmd, 1, 100);
-    
-  //   // 接收数据
-  //   if(HAL_UART_Receive(&huart4, rx_data, 2, 1000) == HAL_OK) {
-  //     // 计算距离值：低字节在前，高字节在后
-  //     uint16_t distance = (rx_data[1] << 8) | rx_data[0];
-      
-  //     // 显示原始数据用于调试
-  //     OLED_ShowNum(1,1,rx_data[0],3);  // 显示低字节
-  //     OLED_ShowNum(1,5,rx_data[1],3);  // 显示高字节
-  //     OLED_ShowNum(2,1,rx_data[1] << 8,3);    // 显示左移8位后的值
-  //     OLED_ShowNum(2,5,distance,5);    // 显示最终距离值
-  //   }
-    
-  //   HAL_Delay(1000);
-  //   OLED_Clear();
-  // }
 
   while (1)
   {
@@ -523,72 +425,43 @@ int main(void)
     /* USER CODE BEGIN 3 */
     uint32_t current_time = HAL_GetTick();
     /*------------------------------------------------------------------------舵机执行部分--------------------------------------------------------------------*/
-    static uint8_t last_data = 0;
-    static uint32_t last_time = 0;
-    OLED_ShowNum(4,13,aRxBuffer[0],2);
+     static uint8_t last_data = 0;
+     static uint32_t last_time = 0;
+     uint8_t opendata = aRxBuffer[0];
+     OLED_ShowNum(4,13,opendata,2);
 
-    bool can_change_state = (current_time - last_time >= 800);
+     bool can_change_state = (current_time - last_time >= 800);
 
-    if(last_data != aRxBuffer[0] && can_change_state) {
-        if(aRxBuffer[0] == 49) {
-            if(path == 3 || path == 7 || path == 11) {
-                Servo_open_red_left();
-            } else if(path == 5 || path == 9) {
-                Servo_open_red_right();
-            }
-        } else if(aRxBuffer[0] == 50) {
-            if(path == 3 || path == 7 || path == 11) {
-                Servo_open_green_left();
-            } else if(path == 5 || path == 9) {
-                Servo_open_green_right();
-            }
-        } else if(aRxBuffer[0] == 51) {
-            if(path == 3 || path == 7 || path == 11) {
-                Servo_close();
-            } else if(path == 5 || path == 9) {
-                Servo_close();
-            }
-        }else{
-          Servo_close();
-        }
-        
-        last_data = aRxBuffer[0];
-        last_time = current_time;
-    }
+     if(last_data != opendata && can_change_state) {
+         if(opendata == 49) {
+             if(path == 3 || path == 7 || path == 11) {
+                 Servo_open_red_left();
+             } else if(path == 5 || path == 9) {
+                 Servo_open_red_right();
+             }
+         } else if(opendata == 50) {
+             if(path == 3 || path == 7 || path == 11) {
+                 Servo_open_green_left();
+             } else if(path == 5 || path == 9) {
+                 Servo_open_green_right();
+             }
+         } else if(opendata == 51) {
+             if(path == 3 || path == 7 || path == 11) {
+                 Servo_close();
+             } else if(path == 5 || path == 9) {
+                 Servo_close();
+             }
+         }
+//         }else if(opendata == 48){
+//           Servo_close();
+//         }
 
-    /*-----------------------------------------------------------------超声波执行部分（暂不使用）-------------------------------------------------------------------------*/
-
-    // 更新超声波传感器状态
-    // Ultrasonic_Update(&ultrasonic_sensors[0]);
-    
-    // 获取超声波传感器的距离值
-    // float distance = Ultrasonic_GetDistance(&ultrasonic_sensors[0]);
-    
-    // 输出超声波传感器的距离值
-    // if (distance > 0) {
-    //     char buf[32];
-    //     sprintf(buf, "US1: %.1f cm\r\n", distance);
-    //     HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
-    // }
-    
-    // 开始下一次测量
-    // Ultrasonic_StartMeasurement(&ultrasonic_sensors[0]);
-    
-    // 添加延时，确保超声波传感器有足够的时间完成测量
-    // HAL_Delay(50);  // 增加延时到50ms，给传感器更多恢复时间
+         last_data = opendata;
+         last_time = current_time;
+     }
 
     /*----------------------------------------------------------------------------US100传感器执行部分-------------------------------------------------------------*/
     US100_GetAllValidDistances(distances);
-    
-    //  while (1)//舵机测试
-    //  {
-    // Servo_close();
-    // HAL_Delay(2000);
-    // Servo_open_green_right();
-    // HAL_Delay(1000);
-
-    // Servo_close();
-    //  }
 
     if (current_time - oled_prev_time >= 100) {  // 每100ms更新一次显示
         // 显示原始距离和滤波后的距离
@@ -605,7 +478,6 @@ int main(void)
         OLED_ShowNum(2, 5, distances[2], 4);
         OLED_ShowNum(2, 13, distances[3], 4);
         
-
         oled_prev_time = current_time;
     }
 
@@ -615,45 +487,11 @@ int main(void)
       delay_flag=false;
     }
     /*---------------------------------------------------------------电机执行部分---------------------------------------------------------------------------------*/
-    // straight_us100(distances[0]);
-    // Motor_Rightward(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
-    // Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 60, &yaw, &target_yaw);
-    // Update_Target_Yaw(&yaw, &target_yaw);
-
-
-  
 
     OLED_ShowChar(3,5,yaw >= 0 ? '+' : '-');
     OLED_ShowNum(3,6,fabsf(yaw),3);
     OLED_ShowChar(3,13,target_yaw >= 0 ? '+' : '-'); 
     OLED_ShowNum(3,14,fabsf(target_yaw),3);
-    
-    //OLED_ShowNum(4,1,path,2);  // 显示毫秒
-    // OLED_ShowNum(4,4,time,4); OLED_ShowNum(4,10,time_start,4);
-    // meandistances(distances);  
-    // static bool rotation_test_done = false;
-
-    // if (rotation_test_done==false)
-    // {
-    //   Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true);
-
-    //   HAL_Delay(1000);
-
-    //   Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
-
-    //   rotation_test_done = true; 
-
-    // }
-    
-    // while(1){
-    // Servo_open_blue();
-    // HAL_Delay(1000);
-    // Servo_close();
-    // HAL_Delay(1000);
-    // }
-
-    // Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[2], 82.0f);
-
 
      switch (path) {
        case 0: {
@@ -664,29 +502,38 @@ int main(void)
          const uint8_t MIN_SPEED = 21;          // 调试，这个变量用于设置接近目标时的速度最小速度（靠近时）
          const uint8_t MAX_SPEED = 60;          // 调试，这个变量用于设置离目标较远时的速度
          const uint16_t DELAY_ADJUST = 8000;    // 调试，这个变量用于路径转换后的校准延时时间，需要确保进入垄
-         float current_distance = distances[1];
+         float current_distance = distances[1]; // 前面的超声波
          if(time_enterpath_case0 == 0) {
              time_enterpath_case0 = HAL_GetTick();
          }
     
          // 速度计算逻辑
-         uint8_t motor_speed = MAX_SPEED;  // 默认最大速度
-    
-         if (current_distance <= (TARGET_DISTANCE - 20.0f)) {
-             // 距离小于目标距离减20mm时停止所有电机
+         uint8_t motor_speed = 0;  // 默认最大速度
+        //  motor_speed = MAX_SPEED;
+        if (current_distance <= (TARGET_DISTANCE - 20.0f)) {
+        //      // 距离小于目标距离减20mm时停止所有电机
              Motor_SetSpeed(MOTOR_1, 0);
              Motor_SetSpeed(MOTOR_2, 0);
              Motor_SetSpeed(MOTOR_3, 0);
              Motor_SetSpeed(MOTOR_4, 0);
-             return;
-         }
-         else if (current_distance <= TARGET_DISTANCE && current_distance != 0 && (HAL_GetTick() - time_enterpath_case0 >= 3000)) {
+        //     //  return;
+        }
+        else if (current_distance <= TARGET_DISTANCE && current_distance != 0 && (HAL_GetTick() - time_enterpath_case0 >= 4000)) {
              // 区域3：到达目标距离（≤80mm）
              motor_speed = MIN_SPEED;
-             Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true );
+             Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true);
              path += 1;
              PID_ResetAll(); // 重置所有PID控制器
+            //  break;
          }
+        else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE) /* && mean[1] <= (TARGET_DISTANCE + DECEL_RANGE) */) {
+               // 区域2：减速区间（70~170mm）
+               // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
+               float distance_from_target = current_distance - TARGET_DISTANCE;
+               float ratio = (distance_from_target / DECEL_RANGE);
+               motor_speed = MIN_SPEED + (uint8_t)((MAX_SPEED - MIN_SPEED) * ratio);
+               motor_speed = CLAMP(motor_speed, MIN_SPEED, MAX_SPEED);
+           }
          else if (current_distance <= (TARGET_DISTANCE + DECEL_RANGE) /* && mean[1] <= (TARGET_DISTANCE + DECEL_RANGE) */) {
              // 区域2：减速区间（70~170mm）
              // 距离越近速度越慢，线性变化：170mm->60, 70mm->10
@@ -704,8 +551,9 @@ int main(void)
          static uint8_t last_speed = 0;
          motor_speed = smooth_speed_transition(last_speed, motor_speed);
          last_speed = motor_speed;
-    
-         Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
+
+        // OLED_ShowNum(3,14,fabsf(motor_speed),3);
+        Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
         
          // 使用左侧电机调整
          if(HAL_GetTick() - time_enterpath_case0 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
@@ -745,7 +593,7 @@ int main(void)
              Motor_SetSpeed(MOTOR_2, 0);
              Motor_SetSpeed(MOTOR_3, 0);
              Motor_SetSpeed(MOTOR_4, 0);
-             return;
+            //  return;
          }
          else if (current_distance <= TARGET_DISTANCE) {
              // 区域3：到达目标距离（≤130mm）
@@ -798,7 +646,7 @@ int main(void)
              Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -33, &yaw, &target_yaw);
              // 使用右侧电机调整
              Adjust_Right_Motors_By_Distance(MOTOR_2, MOTOR_4, MOTOR_1, MOTOR_3, raw_distances[2], 50.0f);
-           }else if (distances[0]<=190 && path_change==0)
+           }else if (distances[0]<=180 && path_change==0)
            {
              if(flag){
                time_start = HAL_GetTick();
@@ -1427,8 +1275,8 @@ void Error_Handler(void)
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1) {
-    HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_9);  // 使用LED指示错误
-    HAL_Delay(500);
+//    HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_9);  // 使用LED指示错误
+//    HAL_Delay(500);
   }
   /* USER CODE END Error_Handler_Debug */
 }

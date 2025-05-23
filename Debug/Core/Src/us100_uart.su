@@ -6,6 +6,6 @@
 ../Core/Src/us100_uart.c:77:6:US100_Init	16	static
 ../Core/Src/us100_uart.c:109:6:US100_StartMeasurement	24	static
 ../Core/Src/us100_uart.c:125:6:US100_Update	24	static
-../Core/Src/us100_uart.c:177:6:US100_UART_RxCpltCallback	32	static
-../Core/Src/us100_uart.c:205:7:US100_GetDistance	32	static
-../Core/Src/us100_uart.c:221:6:US100_GetAllValidDistances	32	static
+../Core/Src/us100_uart.c:202:6:US100_UART_RxCpltCallback	32	static
+../Core/Src/us100_uart.c:229:7:US100_GetDistance	32	static
+../Core/Src/us100_uart.c:245:6:US100_GetAllValidDistances	32	static

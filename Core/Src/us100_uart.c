@@ -174,6 +174,31 @@ void US100_Update(US100Sensor* sensor) {
     }
 }
 
+// void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart, int index) {
+//     US100Sensor* s = active_sensors[index];
+    
+//     if (huart == s->uart) {
+//             // 尝试两种字节顺序
+//             uint16_t distance1 = (s->rx_buffer[1] << 8) | s->rx_buffer[0];  // 原始顺序
+//             uint16_t distance2 = (s->rx_buffer[0] << 8) | s->rx_buffer[1];  // 颠倒顺序
+            
+//             if (distance1 >= 20 && distance1 <= 4500) {
+//                 s->distance = distance1;
+//                 s->data_ready = 1;
+//             } else if (distance2 >= 20 && distance2 <= 4500) {
+//                 s->distance = distance2;
+//                 s->data_ready = 1;
+//             } else {
+//                 s->data_ready = 0;  // 如果两种顺序都不在有效范围内，则标记为无效
+//             }
+            
+//             s->state = US100_STATE_RECEIVING;
+        
+//         // 重新启动接收，准备下一次测量
+//         HAL_UART_Receive_IT(huart, s->rx_buffer, 2);
+//     }
+
+// }
 void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     for (uint8_t i = 0; i < us100_sensor_count; i++) {
         US100Sensor* s = active_sensors[i];
@@ -194,8 +219,7 @@ void US100_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
                 }
                 
                 s->state = US100_STATE_RECEIVING;
-            
-            // 重新启动接收，准备下一次测量
+                            // 重新启动接收，准备下一次测量
             HAL_UART_Receive_IT(huart, s->rx_buffer, 2);
             break;
         }

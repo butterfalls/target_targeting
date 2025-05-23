@@ -4,12 +4,6 @@
             "path": "."
         }
     ],
-    "settings": {
-        "files.associations": {
-            "servo.h": "c",
-            "type_traits": "c",
-            "limits": "c"
-        }
-    },
+    "settings": {},
     "extensions": {}
 }

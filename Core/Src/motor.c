@@ -491,7 +491,7 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Mo
             return;
         }
         // 在调整时间内继续执行调整
-        if (raw_distance >= 22 && raw_distance <= 45) {
+        if (raw_distance >= 22 && raw_distance <= 48) {
             // 向右调整，左侧轮子加速
             __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjust1);  // 左前加速
             __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjust3);  // 左后减速
@@ -508,7 +508,7 @@ void Adjust_Left_Motors_By_Distance(Motor_ID id1, Motor_ID id3, Motor_ID id2, Mo
     }
     
     // 检测是否超出阈值，如果是则开始调整
-    if (raw_distance >= 22 && raw_distance <= 45) {
+    if (raw_distance >= 22 && raw_distance <= 48) {
         adjust_start_time = HAL_GetTick();
         // 向右调整，左侧轮子加速
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjust1);  // 左前加速
@@ -774,14 +774,14 @@ void Adjust_Motors_By_Side_Distances(Motor_ID id1, Motor_ID id3, Motor_ID id2, M
     }
     
     // 检测是否超出阈值，如果是则开始调整
-    if ((left_distance >= 22 && left_distance <= 38) || (right_distance >= 132 && right_distance <= 150)) {
+    if ((left_distance >= 22 && left_distance <= 52) || (right_distance >= 132 && right_distance <= 150)) {
         adjust_start_time = HAL_GetTick();
         // 左侧近或右侧远，向右平移
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 + speed_adjust1);  // 左前加速
         __HAL_TIM_SET_COMPARE(motors[id3].pwm_tim, motors[id3].pwm_channel, current_speed3 - speed_adjust3);  // 左后减速
         __HAL_TIM_SET_COMPARE(motors[id2].pwm_tim, motors[id2].pwm_channel, current_speed2 + speed_adjust2);  // 右后加速
         __HAL_TIM_SET_COMPARE(motors[id4].pwm_tim, motors[id4].pwm_channel, current_speed4 - speed_adjust4);  // 右前减速
-    } else if ((right_distance >= 22 && right_distance <= 38) || (left_distance >= 132 && left_distance <= 150)) {
+    } else if ((right_distance >= 22 && right_distance <= 52) || (left_distance >= 132 && left_distance <= 150)) {
         adjust_start_time = HAL_GetTick();
         // 右侧近或左侧远，向左平移
         __HAL_TIM_SET_COMPARE(motors[id1].pwm_tim, motors[id1].pwm_channel, current_speed1 - speed_adjust1);  // 左前减速

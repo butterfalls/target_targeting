@@ -55,7 +55,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t aRxBuffer[1]={48};
+char aRxBuffer[1]={51};
 uint8_t ledState = 0;
 Motor motors[MOTOR_COUNT] = {0};
 float target_speed = 50.0f;
@@ -395,11 +395,11 @@ int main(void)
             M4_IN2_GPIO_Port, M4_IN2_Pin,
             &htim2);
 
-  // Servo_Init(&servo1, &htim8, TIM_CHANNEL_1, Servo_1_GPIO_Port, Servo_1_Pin);
-  // Servo_Init(&servo2, &htim8, TIM_CHANNEL_2, Servo_2_GPIO_Port, Servo_2_Pin);
-  // Servo_Init(&servo3, &htim9, TIM_CHANNEL_1, Servo_3_GPIO_Port, Servo_3_Pin);
-  // Servo_Init(&servo4, &htim9, TIM_CHANNEL_2, Servo_4_GPIO_Port, Servo_4_Pin);
-  // Servo_Init(&servo5, &htim10, TIM_CHANNEL_1, Servo_5_GPIO_Port, Servo_5_Pin);
+  Servo_Init(&servo1, &htim8, TIM_CHANNEL_1, Servo_1_GPIO_Port, Servo_1_Pin);
+  Servo_Init(&servo2, &htim8, TIM_CHANNEL_2, Servo_2_GPIO_Port, Servo_2_Pin);
+  Servo_Init(&servo3, &htim9, TIM_CHANNEL_1, Servo_3_GPIO_Port, Servo_3_Pin);
+  Servo_Init(&servo4, &htim9, TIM_CHANNEL_2, Servo_4_GPIO_Port, Servo_4_Pin);
+  Servo_Init(&servo5, &htim10, TIM_CHANNEL_1, Servo_5_GPIO_Port, Servo_5_Pin);
 
   prev_time = HAL_GetTick();
 
@@ -427,34 +427,28 @@ int main(void)
     /*------------------------------------------------------------------------舵机执行部分--------------------------------------------------------------------*/
      static uint8_t last_data = 0;
      static uint32_t last_time = 0;
-     uint8_t opendata = aRxBuffer[0];
-     OLED_ShowNum(4,13,opendata,2);
+     char opendata = aRxBuffer[0];
+     OLED_ShowNum(4,13,opendata,3);
 
      bool can_change_state = (current_time - last_time >= 800);
 
      if(last_data != opendata && can_change_state) {
-         if(opendata == 49) {
+         if(opendata == 'r') {
              if(path == 3 || path == 7 || path == 11) {
                  Servo_open_red_left();
              } else if(path == 5 || path == 9) {
                  Servo_open_red_right();
              }
-         } else if(opendata == 50) {
+         } else if(opendata == 'g') {
              if(path == 3 || path == 7 || path == 11) {
                  Servo_open_green_left();
              } else if(path == 5 || path == 9) {
                  Servo_open_green_right();
-             }
-         } else if(opendata == 51) {
-             if(path == 3 || path == 7 || path == 11) {
-                 Servo_close();
-             } else if(path == 5 || path == 9) {
-                 Servo_close();
-             }
+             }  
+         } else if(opendata == 'n') 
+         {
+          // Servo_close();
          }
-//         }else if(opendata == 48){
-//           Servo_close();
-//         }
 
          last_data = opendata;
          last_time = current_time;
@@ -510,16 +504,13 @@ int main(void)
          // 速度计算逻辑
          uint8_t motor_speed = 0;  // 默认最大速度
         //  motor_speed = MAX_SPEED;
-        if (current_distance <= (TARGET_DISTANCE - 20.0f)) {
-        //      // 距离小于目标距离减20mm时停止所有电机
+        if (current_distance <= TARGET_DISTANCE && current_distance != 0 && (HAL_GetTick() - time_enterpath_case0 >= 4000)) {
+             // 区域3：到达目标距离（≤80mm）
              Motor_SetSpeed(MOTOR_1, 0);
              Motor_SetSpeed(MOTOR_2, 0);
              Motor_SetSpeed(MOTOR_3, 0);
              Motor_SetSpeed(MOTOR_4, 0);
-        //     //  return;
-        }
-        else if (current_distance <= TARGET_DISTANCE && current_distance != 0 && (HAL_GetTick() - time_enterpath_case0 >= 4000)) {
-             // 区域3：到达目标距离（≤80mm）
+             HAL_Delay(100);
              motor_speed = MIN_SPEED;
              Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, true);
              path += 1;
@@ -587,20 +578,17 @@ int main(void)
              reach_target_time = HAL_GetTick();
          }
     
-         if (current_distance <= (TARGET_DISTANCE - 20.0f)) {
-             // 距离小于目标距离减20mm时停止所有电机
-             Motor_SetSpeed(MOTOR_1, 0);
-             Motor_SetSpeed(MOTOR_2, 0);
-             Motor_SetSpeed(MOTOR_3, 0);
-             Motor_SetSpeed(MOTOR_4, 0);
-            //  return;
-         }
-         else if (current_distance <= TARGET_DISTANCE) {
+        if (current_distance <= TARGET_DISTANCE) {
              // 区域3：到达目标距离（≤130mm）
              motor_speed = MIN_SPEED;
              
              // 执行路径切换逻辑
              if(current_distance <= TARGET_DISTANCE && (HAL_GetTick() - reach_target_time >= 3000)) {
+                Motor_SetSpeed(MOTOR_1, 0);
+                Motor_SetSpeed(MOTOR_2, 0);
+                Motor_SetSpeed(MOTOR_3, 0);
+                Motor_SetSpeed(MOTOR_4, 0);
+                HAL_Delay(100);
                 Rotate_90_Degrees(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, false );
                  path += 1;
                  PID_ResetAll(); // 重置所有PID控制器
@@ -626,8 +614,6 @@ int main(void)
     
          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
         
-         // 使用前后电机调整
-         float avg_distance = distances[0];
          if(HAL_GetTick() - time_enterpath_case1 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
              Adjust_Left_Motors_By_Distance(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], 82.0f);
          }
@@ -735,8 +721,6 @@ int main(void)
     
          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
         
-         // 使用前后电机调整
-         float avg_distance = distances[0];
          if(HAL_GetTick() - time_enterpath_case3 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
              Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[2], 82.0f);
          }
@@ -844,9 +828,7 @@ int main(void)
          last_speed = motor_speed;
     
          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
-        
-         // 使用前后电机调整
-         float avg_distance = distances[0];
+
          if(HAL_GetTick() - time_enterpath_case5 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
              Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[2], 82.0f);
          }
@@ -955,8 +937,6 @@ int main(void)
     
          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
         
-         // 使用前后电机调整
-         float avg_distance = distances[0];
          if(HAL_GetTick() - time_enterpath_case7 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
              Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[2], 82.0f);
          }
@@ -1065,8 +1045,6 @@ int main(void)
     
          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, motor_speed, &yaw, &target_yaw);
         
-         // 使用前后电机调整
-         float avg_distance = distances[0];
          if(HAL_GetTick() - time_enterpath_case9 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE + 100 ){
              Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[2], 82.0f);
          }
@@ -1175,8 +1153,6 @@ int main(void)
     
          Motor_Straight(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, -motor_speed, &yaw, &target_yaw);
         
-         // 使用前后电机调整
-         float avg_distance = distances[0];
          if(HAL_GetTick() - time_enterpath_case11 >= DELAY_ADJUST && current_distance >= ADJUST_DISTANCE ){
              Adjust_Motors_By_Side_Distances(MOTOR_1, MOTOR_4, MOTOR_2, MOTOR_3, raw_distances[0], raw_distances[2], 82.0f);
          }
